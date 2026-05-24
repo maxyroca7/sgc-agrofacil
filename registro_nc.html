@@ -159,6 +159,57 @@ select:focus, input:focus { outline:1.5px solid #2a6f3c; border-radius:2px; back
   font-size:12px; font-weight:700; opacity:0; transition:opacity .3s; pointer-events:none; z-index:999; }
 .toast.show { opacity:1; }
 
+/* ══ MOBILE / TABLET — vista de tarjetas ══ */
+@media (max-width: 900px) {
+  body { padding: 8px; font-size: 13px; background: #0f1117; color: #e2e8f0; }
+  .page { background: #1a1a2e; box-shadow: none; padding: 10px; border-radius: 10px; max-width: 100%; }
+
+  /* Encabezado compacto */
+  .header { flex-direction: column; border-color: #3a4570; }
+  .logo-area { width: 100%; min-height: 36px; border-right: none; border-bottom: 1px solid #3a4570; }
+  .logo-area span { color: #4ade80; }
+  .doc-title span:first-child { font-size: 13px; color: #e2e8f0; }
+  .doc-title span:last-child { color: #94a3b8; }
+  .doc-meta { width: 100%; border-left: none; border-top: 1px solid #3a4570; font-size: 11px; }
+  .meta-label { background: #0f1117; color: #94a3b8; border-color: #3a4570; }
+  .meta-val { color: #e2e8f0; }
+
+  /* KPI cards */
+  .kpi-bar { gap: 8px; }
+  .kpi-card { background: #0f1117; border-color: #3a4570; border-radius: 8px; }
+  .kpi-label { color: #94a3b8; }
+  .kpi-val { color: #4ade80; font-size: 26px; }
+  .kpi-card.warn .kpi-val { color: #f87171; }
+  .kpi-card.mid  .kpi-val { color: #fb923c; }
+  .kpi-sub { color: #64748b; }
+
+  /* Severidad */
+  .sev-leve { background: #14532d; color: #bbf7d0; border-color: #4ade80; }
+  .sev-mod  { background: #451a03; color: #fed7aa; border-color: #fb923c; }
+  .sev-crit { background: #450a0a; color: #fecaca; border-color: #f87171; }
+
+  /* Ocultar tabla, mostrar tarjetas */
+  table, thead { display: none; }
+  #tBody { display: block; }
+  #tBody tr { display: block; background: #0f1117; border: 1px solid #3a4570; border-radius: 10px; margin-bottom: 12px; padding: 12px; }
+  #tBody td { display: none; } /* ocultar celdas — se muestran las que tienen data-label */
+  #tBody td[data-label] { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; border: none; font-size: 12px; }
+  #tBody td[data-label]::before { content: attr(data-label); color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; min-width: 90px; flex-shrink: 0; padding-top: 2px; }
+  #tBody td[data-label] input, #tBody td[data-label] select { background: #1a1a2e; color: #e2e8f0; border: 1px solid #3a4570; border-radius: 5px; padding: 5px 8px; font-size: 12px; width: 100%; }
+  #tBody td[data-label] select { color: #e2e8f0; }
+  #tBody td[data-label] input:focus, #tBody td[data-label] select:focus { border-color: #4ade80; outline: none; }
+  .c0 { display: flex !important; font-size: 16px; font-weight: 700; color: #4ade80; padding-bottom: 6px !important; border-bottom: 1px solid #3a4570 !important; margin-bottom: 4px; }
+
+  /* Save bar */
+  .save-bar { background: #0f1117; border-radius: 6px; padding: 6px 10px; }
+  .save-msg { color: #94a3b8; }
+
+  /* Legend oculta en mobile */
+  .legend { display: none; }
+  .sigs { display: none; }
+}
+
+
 @media print {
   body { background:#fff; padding:0; font-size:8.5px; }
   .page { box-shadow:none; padding:6px; max-width:100%; }
@@ -254,6 +305,8 @@ select:focus, input:focus { outline:1.5px solid #2a6f3c; border-radius:2px; back
       <div class="meta-row"><span class="meta-label">Versión</span><span class="meta-val" contenteditable>00</span></div>
       <div class="meta-row"><span class="meta-label">Período</span><span class="meta-val" id="periodo-val" contenteditable></span></div>
       <div class="meta-row"><span class="meta-label">Área</span><span class="meta-val" contenteditable>Aseg. Calidad</span></div>
+      <div class="meta-row"><span class="meta-label">Elab.</span><span class="meta-val">Maximiliano Roca</span></div>
+      <div class="meta-row"><span class="meta-label">Aprob.</span><span class="meta-val">Evelin Alcaraz</span></div>
     </div>
   </div>
 
@@ -351,11 +404,11 @@ select:focus, input:focus { outline:1.5px solid #2a6f3c; border-radius:2px; back
     </div>
     <strong>Estimación horas·hombre (AQ-IND-06):</strong>
     <div class="legend-row">
-      <span>⏱ Inducción débil → <strong>30 min/pallet</strong></span>
-      <span>⏱ Pérdida por inducción → <strong>30 min/pallet</strong></span>
-      <span>⏱ Pérdida (bidón/es pinchados) → <strong>30 min/pallet</strong></span>
-      <span>⏱ Palét chocado → <strong>30 min/pallet</strong></span>
-      <span>⏱ Bidón/es por inducción → <strong>10 min/bidón</strong> (trabajo puntual)</span>
+      <span>⏱ Inducción débil → <strong>20 min/pallet</strong></span>
+      <span>⏱ Pérdida por inducción → <strong>20 min/pallet</strong></span>
+      <span>⏱ Pérdida (bidón/es pinchados) → <strong>20 min/pallet</strong></span>
+      <span>⏱ Palét chocado → <strong>20 min/pallet</strong></span>
+      <span>⏱ Bidón/es por inducción → <strong>5 min/bidón</strong> (trabajo puntual)</span>
       <span style="color:#888">Otros tipos → 30 min (genérico)</span>
     </div>
     <strong>Estados:</strong>
@@ -483,11 +536,11 @@ function render(){
   rows.forEach((r,i)=>{
     const tr=document.createElement('tr');
     mkTd(tr,'c0',String(i+1),true);
-    mkInp(tr,'c1','date',r.fecha,   v=>{rows[i].fecha=v;  autoCalcPlazo(i);scheduleSave();updateKPIs();});
-    mkInp(tr,'c2','text',r.lote,    v=>{rows[i].lote=v;   scheduleSave();});
-    mkInp(tr,'c3','text',r.prod,    v=>{rows[i].prod=v;   scheduleSave();});
+    mkInp(tr,'c1','date',r.fecha,   v=>{rows[i].fecha=v;  autoCalcPlazo(i);scheduleSave();updateKPIs();},'Fecha');
+    mkInp(tr,'c2','text',r.lote,    v=>{rows[i].lote=v;   scheduleSave();},'N° Lote');
+    mkInp(tr,'c3','text',r.prod,    v=>{rows[i].prod=v;   scheduleSave();},'Producto');
 
-    const tdT=mkTdEl(tr,'c4');
+    const tdT=mkTdEl(tr,'c4','Tipo de Desvío');
     const sT=mkSelect(TIPOS.map(t=>({v:t.label,l:t.label||'—'})),r.tipo,e=>{
       rows[i].tipo=e.target.value;
       const f=TIPOS.find(t=>t.label===e.target.value);
@@ -496,7 +549,7 @@ function render(){
     });
     tdT.appendChild(sT);
 
-    const tdG=mkTdEl(tr,'c5');
+    const tdG=mkTdEl(tr,'c5','Gravedad');
     const sG=mkSelect(SEVS.map(s=>({v:s,l:s||'—'})),r.sev,e=>{
       rows[i].sev=e.target.value; renderSevBadge(tdG,rows[i].sev); scheduleSave(); updateKPIs();
     });
@@ -504,21 +557,20 @@ function render(){
     tdG.appendChild(document.createElement('span'));
     renderSevBadge(tdG,r.sev);
 
-    // DETECCION — alineado con columna DETECCION del Excel de Power BI
     const DETEC_OPTS = ['','CONTROL LÍNEA','CONTROL FINAL','CONTROL INGRESO'];
-    const tdD=mkTdEl(tr,'c5b');
+    const tdD=mkTdEl(tr,'c5b','Detección');
     const sD=mkSelect(DETEC_OPTS.map(s=>({v:s,l:s||'—'})),r.detec,e=>{
       rows[i].detec=e.target.value; scheduleSave();
     });
     tdD.appendChild(sD);
 
-    mkInp(tr,'c6','text', r.desc,   v=>{rows[i].desc=v;   scheduleSave();});
-    mkInp(tr,'c7','number',r.litNC, v=>{rows[i].litNC=v;  scheduleSave();updateKPIs();});
-    mkInp(tr,'c8','number',r.litTot,v=>{rows[i].litTot=v; scheduleSave();updateKPIs();});
-    mkInp(tr,'c9','text', r.ac,     v=>{rows[i].ac=v;     scheduleSave();});
-    mkInp(tr,'c10','date',r.plazo,  v=>{rows[i].plazo=v;  scheduleSave();updateKPIs();});
+    mkInp(tr,'c6','text', r.desc,   v=>{rows[i].desc=v;   scheduleSave();},'Descripción');
+    mkInp(tr,'c7','number',r.litNC, v=>{rows[i].litNC=v;  scheduleSave();updateKPIs();},'Litros NC');
+    mkInp(tr,'c8','number',r.litTot,v=>{rows[i].litTot=v; scheduleSave();updateKPIs();},'Litros Tot.');
+    mkInp(tr,'c9','text', r.ac,     v=>{rows[i].ac=v;     scheduleSave();},'Acción');
+    mkInp(tr,'c10','date',r.plazo,  v=>{rows[i].plazo=v;  scheduleSave();updateKPIs();},'Plazo');
 
-    const tdE=mkTdEl(tr,'c11');
+    const tdE=mkTdEl(tr,'c11','Estado');
     const sE=mkSelect(ESTADOS.map(s=>({v:s,l:s})),r.est,e=>{
       rows[i].est=e.target.value; renderEstBadge(tdE,rows[i].est); scheduleSave(); updateKPIs();
     });
@@ -526,11 +578,11 @@ function render(){
     tdE.appendChild(document.createElement('span'));
     renderEstBadge(tdE,r.est);
 
-    mkInp(tr,'c12','date',r.cierre, v=>{rows[i].cierre=v; scheduleSave();updateKPIs();});
-    mkInp(tr,'c13','number',r.pallets,v=>{rows[i].pallets=v; scheduleSave();updateKPIs();});
-    mkInp(tr,'c14','text',r.resp,    v=>{rows[i].resp=v;    scheduleSave();});
+    mkInp(tr,'c12','date',r.cierre, v=>{rows[i].cierre=v; scheduleSave();updateKPIs();},'Fecha Cierre');
+    mkInp(tr,'c13','number',r.pallets,v=>{rows[i].pallets=v; scheduleSave();updateKPIs();},'Pallets NC');
+    mkInp(tr,'c14','text',r.resp,    v=>{rows[i].resp=v;    scheduleSave();},'Responsable');
 
-    const tdEf=mkTdEl(tr,'c15');
+    const tdEf=mkTdEl(tr,'c15','Verif. Eficacia');
     const sEf=mkSelect(EFICACIA.map(s=>({v:s,l:s})),r.eficacia,e=>{
       rows[i].eficacia=e.target.value; renderEfBadge(tdEf,rows[i].eficacia); scheduleSave();
     });
@@ -543,10 +595,10 @@ function render(){
   updateKPIs();
 }
 
-function mkTdEl(tr,cls){ const el=document.createElement('td');el.className=cls;tr.appendChild(el);return el; }
-function mkTd(tr,cls,text,center){ const el=mkTdEl(tr,cls);el.textContent=text;if(center)el.style.textAlign='center';return el; }
-function mkInp(tr,cls,type,val,cb){
-  const el=mkTdEl(tr,cls);
+function mkTdEl(tr,cls,label){ const el=document.createElement('td');el.className=cls;if(label)el.dataset.label=label;tr.appendChild(el);return el; }
+function mkTd(tr,cls,text,center){ const el=document.createElement('td');el.className=cls;el.textContent=text;if(center)el.style.textAlign='center';tr.appendChild(el);return el; }
+function mkInp(tr,cls,type,val,cb,label){
+  const el=mkTdEl(tr,cls,label);
   const inp=document.createElement('input');inp.type=type;inp.value=val||'';
   if(type==='number'){inp.min=0;inp.step='any';}
   inp.oninput=e=>cb(e.target.value);
@@ -625,11 +677,11 @@ function updateKPIs(){
   // Bidón/es por inducción = trabajo puntual por bidón → 10 min
   // Todo lo demás (inducción débil, pérdida, pallet chocado, pinchado) → 30 min por pallet
   const MINS = {
-    'Bidón/es por inducción':       10,
-    'Pérdida por inducción':        30,
-    'Inducción débil':              30,
-    'Pérdida (bidón/es pinchados)': 30,
-    'Palét chocado':                30,
+    'Bidón/es por inducción':       5,
+    'Pérdida por inducción':        20,
+    'Inducción débil':              20,
+    'Pérdida (bidón/es pinchados)': 20,
+    'Palét chocado':                20,
   };
   const pendientes = a.filter(r => r.est === 'Pendiente' || r.est === 'En proceso');
   let totalPallets = 0, totalMins = 0;
@@ -659,11 +711,11 @@ function updateKPIs(){
   if(totalMins > 0){
     const hh = (totalMins / 60).toFixed(1);
     k6.textContent = hh + ' h';
-    k6s.textContent = totalMins + ' min · 30min: ind.débil/pérdida/chocado · 10min: bidón/es';
+    k6s.textContent = totalMins + ' min · 20min: ind.débil/pérdida/chocado · 5min: bidón/es';
     k6c.className = 'kpi-card' + (totalMins >= 120 ? ' warn' : ' mid');
   } else {
     k6.textContent = '—';
-    k6s.textContent = '30 min: ind.débil / pérdida / chocado  ·  10 min: bidón/es por inducción';
+    k6s.textContent = '20 min: ind.débil / pérdida / chocado  ·  5 min: bidón/es por inducción';
     k6c.className = 'kpi-card';
   }
 }
@@ -721,7 +773,7 @@ function exportarExcel(){
     const litNC  = parseFloat(r.litNC)  || 0;
     const litTot = parseFloat(r.litTot) || 0;
     // MINUTOS: calcular desde litNC y tipo (mismas reglas que AQ-IND-06)
-    const MINS_POR_PALLET = {'Bidón/es por inducción':10,'Pérdida por inducción':30,'Inducción débil':30,'Pérdida (bidón/es pinchados)':30,'Palét chocado':30};
+    const MINS_POR_PALLET = {'Bidón/es por inducción':5,'Pérdida por inducción':20,'Inducción débil':20,'Pérdida (bidón/es pinchados)':20,'Palét chocado':20};
     const pallets = parseInt(r.pallets) || 0;
     const minsBase = MINS_POR_PALLET[r.tipo] !== undefined ? MINS_POR_PALLET[r.tipo] : 30;
     const minutos = pallets > 0 ? pallets * minsBase : null;
