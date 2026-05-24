@@ -4,7 +4,7 @@
 // network-first para recursos externos (fuentes, libs)
 // ════════════════════════════════════════════════════
 
-const CACHE = 'reg01-v4';
+const CACHE = 'reg01-v5';
 const ARCHIVOS = [
   './REG01_planilla_digital.html',
   './registro_nc.html',
