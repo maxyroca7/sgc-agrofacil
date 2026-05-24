@@ -284,8 +284,7 @@ select:focus, input:focus { outline:1.5px solid #2a6f3c; border-radius:2px; back
     <button class="btn btn-add"   onclick="addRow()">+ Agregar fila</button>
     <button class="btn btn-del"   onclick="delRow()">− Eliminar última</button>
     <button class="btn btn-print" onclick="window.print()">🖨 Imprimir / PDF</button>
-    <button class="btn btn-copy"  onclick="copyToClipboard()">📋 Copiar para Excel</button>
-    <button class="btn btn-export" onclick="exportarExcel()" style="background:#14532d;border:1px solid #4ade80;color:#bbf7d0;" title="Genera un .xlsx con las columnas exactas del Excel de Power BI. El campo CLIENTE se incluye en el export aunque no aparezca en la tabla.">⬇ Exportar .xlsx Power BI</button>
+    <button class="btn btn-export" onclick="exportarExcel()" style="background:#14532d;border:1px solid #4ade80;color:#bbf7d0;">⬇ Descargar Excel</button>
     <button class="btn btn-clear" onclick="clearData()">🗑 Borrar todo</button>
   </div>
 
@@ -720,102 +719,83 @@ function updateKPIs(){
   }
 }
 
-function copyToClipboard(){
-  const lines=[COLS_HDR.join('\t')];
-  rows.forEach((r,i)=>{
-    const vals=[i+1,r.fecha,r.lote,r.prod,r.tipo,r.sev,r.detec,r.desc,r.litNC,r.litTot,r.ac,r.plazo,r.est,r.cierre,r.pallets,r.resp,r.eficacia];
-    lines.push(vals.map(v=>v||'').join('\t'));
-  });
-  navigator.clipboard.writeText(lines.join('\n'))
-    .then(()=>showToast('✅ Datos copiados — pegá con Ctrl+V en Excel'))
-    .catch(()=>showToast('⚠ No se pudo copiar. Intentá de nuevo.'));
-}
 
-/* ── Exportar .xlsx compatible con el Excel de Power BI de la empresa ──
-   Columnas exactas: FECHA | PRODUCTO | CLIENTE | LITROS | LOTE | MOTIVO | LT REPROCESADOS | MINUTOS | DETECCION | HORAS | Estado
-   Solo se exportan las filas que tienen MOTIVO (tipo de desvío) — las líneas sin NC no se incluyen.
-*/
 // ════════════════════════════════════════════
-// BLOQUE 5: EXPORTACIÓN A EXCEL (Power BI)
-// exportarExcel(): genera un .xlsx con las columnas exactas
-// del Excel de la coordinadora que alimenta Power BI:
-// FECHA|PRODUCTO|CLIENTE|LITROS|LOTE|MOTIVO|
-// LT REPROCESADOS|MINUTOS|DETECCION|HORAS|Estado
-// Solo exporta filas con MOTIVO (tipo de desvío) cargado.
-// Las fechas se convierten a número serial Excel.
+// BLOQUE 5: EXPORTACIÓN A EXCEL — registro completo
+// Exporta todas las filas con datos. Incluye todos los campos.
+// Fechas en formato DD/MM/YYYY legible.
 // ════════════════════════════════════════════
 function exportarExcel(){
   if(typeof XLSX === 'undefined'){
     showToast('⚠ SheetJS no cargó. Verificá conexión a internet.');
     return;
   }
-  // Filas con NC (tienen tipo de desvío cargado)
-  const ncRows = rows.filter(r => r.tipo && r.tipo.trim() !== '');
-  if(ncRows.length === 0){
-    showToast('⚠ No hay filas con tipo de desvío para exportar.');
+  const expRows = rows.filter(r => r.lote || r.prod || r.tipo);
+  if(expRows.length === 0){
+    showToast('⚠ No hay datos para exportar.');
     return;
   }
 
-  // Convertir fecha ISO a número serial Excel (días desde 1900-01-01)
-  function isoToExcelDate(iso){
+  function isoToDisplay(iso){
     if(!iso) return '';
-    const d = new Date(iso + 'T00:00:00');
-    // Excel serial: days since Dec 30, 1899
-    return Math.floor((d - new Date('1899-12-30T00:00:00')) / 86400000);
+    const [y,m,d] = iso.split('-');
+    return `${d}/${m}/${y}`;
   }
 
-  const wsData = [
-    // Encabezado exacto del Excel de la coordinadora
-    ['FECHA','PRODUCTO','CLIENTE','LITROS','LOTE ','MOTIVO','LT REPROCESADOS','MINUTOS','DETECCION','HORAS','Estado']
-  ];
+  const MINS_POR_PALLET = {'Bidón/es por inducción':5,'Pérdida por inducción':20,'Inducción débil':20,'Pérdida (bidón/es pinchados)':20,'Palét chocado':20};
 
-  ncRows.forEach(r => {
-    const litNC  = parseFloat(r.litNC)  || 0;
-    const litTot = parseFloat(r.litTot) || 0;
-    // MINUTOS: calcular desde litNC y tipo (mismas reglas que AQ-IND-06)
-    const MINS_POR_PALLET = {'Bidón/es por inducción':5,'Pérdida por inducción':20,'Inducción débil':20,'Pérdida (bidón/es pinchados)':20,'Palét chocado':20};
+  const wsData = [[
+    '#','Fecha Detección','N° Lote','Producto','Cliente',
+    'Tipo de Desvío','Gravedad','Detección',
+    'Descripción NC','Litros NC','Litros Tot. Lote',
+    'Acción Correctiva','Plazo Reproceso','Estado',
+    'Fecha Cierre','Pallets NC','HH estimadas (min)',
+    'Responsable','Verif. Eficacia'
+  ]];
+
+  expRows.forEach((r, i) => {
     const pallets = parseInt(r.pallets) || 0;
-    const minsBase = MINS_POR_PALLET[r.tipo] !== undefined ? MINS_POR_PALLET[r.tipo] : 30;
-    const minutos = pallets > 0 ? pallets * minsBase : null;
-    const horas   = minutos ? +(minutos / 60).toFixed(4) : null;
-
+    const minsBase = MINS_POR_PALLET[r.tipo] !== undefined ? MINS_POR_PALLET[r.tipo] : 20;
+    const minutos = pallets > 0 ? pallets * minsBase : '';
     wsData.push([
-      isoToExcelDate(r.fecha),   // FECHA — número serial para que Excel la reconozca
-      r.prod  || '',             // PRODUCTO
-      r.cliente || '',           // CLIENTE
-      litTot || '',              // LITROS (litros totales del lote)
-      r.lote  || '',             // LOTE
-      r.tipo  || '',             // MOTIVO
-      litNC   || '',             // LT REPROCESADOS
-      minutos || '',             // MINUTOS
-      r.detec || '',             // DETECCION
-      horas   || '',             // HORAS
-      r.est   || '',             // Estado
+      i + 1,
+      isoToDisplay(r.fecha),
+      r.lote    || '',
+      r.prod    || '',
+      r.cliente || '',
+      r.tipo    || '',
+      r.sev     || '',
+      r.detec   || '',
+      r.desc    || '',
+      r.litNC   || '',
+      r.litTot  || '',
+      r.ac      || '',
+      isoToDisplay(r.plazo),
+      r.est     || '',
+      isoToDisplay(r.cierre),
+      r.pallets || '',
+      minutos,
+      r.resp    || '',
+      r.eficacia|| '',
     ]);
   });
 
   const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-  // Formato de fecha para columna A (col 0)
-  const fmtFecha = 'DD/MM/YYYY';
-  for(let i = 1; i < wsData.length; i++){
-    const cellAddr = XLSX.utils.encode_cell({r:i, c:0});
-    if(ws[cellAddr]) ws[cellAddr].t = 'n', ws[cellAddr].z = fmtFecha;
-  }
-
-  // Anchos de columna
   ws['!cols'] = [
-    {wch:12},{wch:28},{wch:14},{wch:10},{wch:16},
-    {wch:26},{wch:16},{wch:10},{wch:16},{wch:8},{wch:12}
+    {wch:4},{wch:14},{wch:14},{wch:24},{wch:14},
+    {wch:26},{wch:10},{wch:16},{wch:36},{wch:10},
+    {wch:14},{wch:32},{wch:14},{wch:12},{wch:14},
+    {wch:10},{wch:18},{wch:20},{wch:14}
   ];
 
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'REGISTRO');
+  XLSX.utils.book_append_sheet(wb, ws, 'REGISTRO NC');
 
-  // Nombre del archivo con mes/año del primer registro
-  const primerFecha = ncRows[0].fecha ? ncRows[0].fecha.substring(0,7).replace('-','_') : 'export';
-  XLSX.writeFile(wb, `Registro_NC_${primerFecha}.xlsx`);
-  showToast(`✅ Exportado: ${ncRows.length} NCs → Registro_NC_${primerFecha}.xlsx`);
+  const periodo = document.getElementById('periodo-val')?.textContent?.trim() || 
+                  (expRows[0].fecha ? expRows[0].fecha.substring(0,7).replace('-','_') : 'export');
+  const nombre = `Registro_NC_${periodo.replace(' ','_')}.xlsx`;
+  XLSX.writeFile(wb, nombre);
+  showToast(`✅ ${expRows.length} registro/s exportados → ${nombre}`);
 }
 
 function showToast(msg){
