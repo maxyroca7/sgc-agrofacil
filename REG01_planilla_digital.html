@@ -340,6 +340,14 @@ input, textarea, select, button {
   .drow,.lts-row{grid-template-columns:1fr}
   .mf{grid-template-columns:1fr}
 }
+/* ── TOPBAR MOBILE: pestañas en segunda fila cuando hay poco espacio ── */
+@media(max-width:560px){
+  #topbar{flex-wrap:wrap;padding:6px 10px;min-height:auto;gap:4px}
+  #tabs-wrap{order:10;width:100%;flex:none;border-top:1px solid var(--border);padding:4px 0 2px;margin-top:2px;min-height:0}
+  #tabs-wrap:empty{display:none}
+  .tab{font-size:9px;padding:4px 8px;gap:4px}
+  .logo{padding-right:10px;margin-right:6px}
+}
 /* ── OVERLAY ROTAR DISPOSITIVO ── */
 #rotate-overlay{
   display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);

@@ -1,10 +1,10 @@
-// ════════════════════════════════════════════════════
-// SERVICE WORKER — REG-01 Agrofacil SGC Digital
-// Estrategia: cache-first para el HTML principal,
-// network-first para recursos externos (fuentes, libs)
-// ════════════════════════════════════════════════════
+// ════════════════════════════════════════════
+// SERVICE WORKER — SGC Digital Agrofacil
+// Versión: v15
+// Estrategia: cache-first local · network-first externos
+// ════════════════════════════════════════════
 
-const CACHE = 'reg01-v14';
+const CACHE = 'reg01-v15';
 const ARCHIVOS = [
   './REG01_planilla_digital.html',
   './registro_nc.html',
@@ -18,54 +18,53 @@ const ARCHIVOS = [
   './icon-512x512.png',
 ];
 
-// Instalar: cachear archivos del proyecto
+// Instalar: pre-cachear todos los archivos
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE)
-      .then(cache => cache.addAll(ARCHIVOS))
-      .then(() => self.skipWaiting())
-      .catch(err => console.log('Cache install error:', err))
+    caches.open(CACHE).then(c => c.addAll(ARCHIVOS))
   );
+  self.skipWaiting();
 });
 
-// Activar: limpiar caches viejos
+// Activar: eliminar cachés viejos
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(
+    caches.keys().then(keys =>
+      Promise.all(
         keys.filter(k => k !== CACHE).map(k => caches.delete(k))
-      ))
-      .then(() => clients.claim())
+      )
+    )
   );
+  self.clients.claim();
 });
 
-// Fetch: cache-first para archivos locales
+// Fetch: cache-first para archivos locales, network-first para externos
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
+  // Ignorar extensiones de Chrome y peticiones no GET
+  if (e.request.method !== 'GET') return;
+  if (url.protocol === 'chrome-extension:') return;
 
-  // Recursos externos (fuentes Google, SheetJS CDN): red con fallback
-  if(url.origin !== self.location.origin){
+  // Para archivos externos (CDN, fonts) → network-first
+  if (url.origin !== self.location.origin) {
     e.respondWith(
-      fetch(e.request)
-        .then(r => {
-          const clone = r.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
-          return r;
-        })
-        .catch(() => caches.match(e.request))
+      fetch(e.request).catch(() => caches.match(e.request))
     );
     return;
   }
 
-  // Archivos locales: cache-first (funciona offline)
+  // Para archivos locales → cache-first (ignorar querystring para el match)
   e.respondWith(
-    caches.match(e.request)
-      .then(cached => {
-        if(cached) return cached;
-        return fetch(e.request).then(r => {
-          caches.open(CACHE).then(c => c.put(e.request, r.clone()));
-          return r;
+    caches.open(CACHE).then(cache =>
+      cache.match(url.pathname).then(cached => {
+        if (cached) return cached;
+        return fetch(e.request).then(resp => {
+          if (resp && resp.status === 200) {
+            cache.put(url.pathname, resp.clone());
+          }
+          return resp;
         });
       })
+    )
   );
 });
