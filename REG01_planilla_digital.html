@@ -1573,8 +1573,8 @@ function acNC(){
   const l=getLote();if(!l)return;
   const nokInd  = l.linea.filter(p=>p.indOK===false&&!p.repro);
   const reproInd = l.linea.filter(p=>p.indOK===false&&p.repro);
-  const nokFin  = l.final.pallets.filter(p=>(p.idOK===false||p.qrOK===false||p.paletOK===false)&&!p.repro);
-  const reproFin = l.final.pallets.filter(p=>(p.idOK===false||p.qrOK===false||p.paletOK===false)&&p.repro);
+  const nokFin  = l.final.pallets.filter(p=>(p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false)&&!p.repro);
+  const reproFin = l.final.pallets.filter(p=>(p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false)&&p.repro);
 
   const totalEventos = nokInd.length + reproInd.length + nokFin.length + reproFin.length;
   if(!totalEventos){
@@ -1632,11 +1632,17 @@ function acNC(){
     if(p.idOK===false)d.push('ID NOK');
     if(p.qrOK===false)d.push('QR NOK');
     if(p.paletOK===false)d.push('Estado pallet NOK');
+    if(p.indCFOK===false)d.push('Inducción CF NOK');
+    const indObj=cfg.inductoras.find(i=>i.id===l.cab.indId)||{};
+    const vCF=parseFloat(p.indCFVal);
+    const tipoCF=p.indCFOK===false?((!isNaN(vCF)&&vCF<indObj.tolMin)?'Inducción débil':'Pérdida por inducción'):null;
+    const tipoFinal = tipoCF || 'Mal estado del packaging';
+    const sevFinal  = tipoCF ? '' : 'Leve';
     filas.push({
       fecha:l.cab.fecha, lote:l.cab.lote, cliente:l.cab.cliente||'',
-      prod:l.cab.prod, tipo:'Mal estado del packaging', sev:'Leve',
+      prod:l.cab.prod, tipo:tipoFinal, sev:sevFinal,
       detec:'CONTROL FINAL',
-      desc:`Pallet CF${idx} — ${d.join(', ')}${p.obs?' · '+p.obs:''}`,
+      desc:`Pallet CF${idx} — ${d.join(', ')}${p.indCFVal?' · valor: '+p.indCFVal:''}${p.obs?' · '+p.obs:''}`,
       litNC:'', litTot:l.final.ltsAprobado||'',
       ac:`Corrección pallet CF${idx}`,
       plazo:'', est:'Pendiente',
@@ -1652,11 +1658,16 @@ function acNC(){
     if(p.idOK===false)d.push('ID NOK');
     if(p.qrOK===false)d.push('QR NOK');
     if(p.paletOK===false)d.push('Estado pallet NOK');
+    if(p.indCFOK===false)d.push('Inducción CF NOK');
+    const indObj=cfg.inductoras.find(i=>i.id===l.cab.indId)||{};
+    const vCF=parseFloat(p.indCFVal);
+    const tipoCF=p.indCFOK===false?((!isNaN(vCF)&&vCF<indObj.tolMin)?'Inducción débil':'Pérdida por inducción'):null;
+    const tipoFinal = tipoCF || 'Mal estado del packaging';
     filas.push({
       fecha:l.cab.fecha, lote:l.cab.lote, cliente:l.cab.cliente||'',
-      prod:l.cab.prod, tipo:'Mal estado del packaging', sev:'Leve',
+      prod:l.cab.prod, tipo:tipoFinal, sev:'Leve',
       detec:'CONTROL FINAL',
-      desc:`Pallet CF${idx} — ${d.join(', ')} · CORREGIDO EN FINAL${p.obs?' · '+p.obs:''}`,
+      desc:`Pallet CF${idx} — ${d.join(', ')}${p.indCFVal?' · valor: '+p.indCFVal:''} · CORREGIDO EN FINAL${p.obs?' · '+p.obs:''}`,
       litNC:'', litTot:l.final.ltsAprobado||'',
       ac:`Corrección en final — pallet CF${idx}`,
       plazo:l.cab.fecha, est:'Finalizado',
