@@ -59,7 +59,7 @@ body { font-family: Arial, sans-serif; font-size: 11px; background: #0c1414; pad
 .meta-row { display: flex; border-bottom: 1px solid #2e5252; }
 .meta-row:last-child { border-bottom: none; }
 .meta-label { width: 80px; padding: 4px 6px; background: #182424; font-weight: 700; color: #94a3b8; border-right: 1px solid #2e5252; }
-.meta-val { padding: 4px 6px; flex: 1; }
+.meta-val { padding: 4px 6px; flex: 1; background: #182424; color: #e2e8f0; }
 
 .kpi-bar { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
 .kpi-card { flex: 1; min-width: 130px; border: 1px solid #2e5252; border-radius: 6px; padding: 8px 12px; background: #182424; }
@@ -143,7 +143,7 @@ tr:nth-child(even) td { background: #162222; }
 .btn-clear:hover { background:#7c2d12; }
 
 select, input[type="text"], input[type="date"], input[type="number"] {
-  width:100%; border:none; background:transparent; font-size:9.5px;
+  width:100%; border:none; background:inherit; font-size:9.5px;
   font-family:Arial,sans-serif; padding:1px 2px; color:#e2e8f0;
 }
 /* Texto largo en inputs: permitir wrap visual */
@@ -193,8 +193,9 @@ select:focus, input:focus { outline:1.5px solid #4db8b8; border-radius:2px; back
   .sev-crit { background: #450a0a; color: #fecaca; border-color: #f87171; }
 
   /* Ocultar tabla, mostrar tarjetas */
-  table, thead { display: none; }
-  #tBody { display: block; }
+  table { display: block; width: 100%; border: none; background: transparent; }
+  thead { display: none; }
+  #tBody { display: block; width: 100%; }
   #tBody tr { display: block; background: #0c1414; border: 1px solid #2e5252; border-radius: 10px; margin-bottom: 12px; padding: 12px; }
   #tBody td { display: none; } /* ocultar celdas — se muestran las que tienen data-label */
   #tBody td[data-label] { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; border: none; font-size: 12px; }
