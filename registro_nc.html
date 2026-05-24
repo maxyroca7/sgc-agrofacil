@@ -124,13 +124,19 @@ tr:nth-child(even) td { background: #f7fbf8; }
 .sigs { display:flex; gap:24px; margin-top:20px; }
 .sig-box { flex:1; border-top:1.5px solid #333; padding-top:4px; text-align:center; font-size:10px; color:#444; }
 
-.toolbar { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
-.btn { padding:6px 14px; border:none; border-radius:4px; cursor:pointer; font-size:11px; font-weight:700; }
-.btn-add   { background:#2a6f3c; color:#fff; }
-.btn-del   { background:#c0392b; color:#fff; }
-.btn-print { background:#2c3e50; color:#fff; }
-.btn-copy  { background:#2980b9; color:#fff; }
-.btn-clear { background:#e74c3c; color:#fff; font-size:10px; padding:4px 10px; margin-left:auto; }
+.toolbar { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; background:#1a1a2e; border-radius:8px; padding:10px 12px; }
+.btn { padding:7px 14px; border:1px solid rgba(255,255,255,.15); border-radius:6px; cursor:pointer; font-size:11px; font-weight:700; background:rgba(255,255,255,.08); color:#e2e8f0; transition:background .15s; }
+.btn:hover { background:rgba(255,255,255,.16); }
+.btn-add   { background:#166534; border-color:#22c55e; color:#bbf7d0; }
+.btn-add:hover { background:#15803d; }
+.btn-del   { background:#7f1d1d; border-color:#ef4444; color:#fecaca; }
+.btn-del:hover { background:#991b1b; }
+.btn-print { background:#1e3a5f; border-color:#60a5fa; color:#bfdbfe; }
+.btn-print:hover { background:#1e40af; }
+.btn-copy  { background:#1e3a4f; border-color:#38bdf8; color:#bae6fd; }
+.btn-copy:hover { background:#0369a1; }
+.btn-clear { background:#451a03; border-color:#f97316; color:#fed7aa; font-size:10px; padding:5px 10px; margin-left:auto; }
+.btn-clear:hover { background:#7c2d12; }
 
 select, input[type="text"], input[type="date"], input[type="number"] {
   width:100%; border:none; background:transparent; font-size:9.5px;
@@ -213,7 +219,7 @@ select:focus, input:focus { outline:1.5px solid #2a6f3c; border-radius:2px; back
 <div class="page">
 
   <!-- Banner de importación desde REG-01 -->
-  <div id="import-banner" style="display:none;background:#1e3a1e;border:2px solid #22c55e;border-radius:6px;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+  <div id="import-banner" style="display:none;background:#1e3a1e;border:2px solid #22c55e;border-radius:6px;padding:12px 16px;margin-bottom:10px;align-items:center;gap:12px;flex-wrap:wrap">
     <span style="font-size:20px">📥</span>
     <div style="flex:1;min-width:0">
       <div style="font-weight:700;color:#22c55e;font-size:13px" id="import-titulo">NC pendientes del REG-01</div>
@@ -228,7 +234,7 @@ select:focus, input:focus { outline:1.5px solid #2a6f3c; border-radius:2px; back
     <button class="btn btn-del"   onclick="delRow()">− Eliminar última</button>
     <button class="btn btn-print" onclick="window.print()">🖨 Imprimir / PDF</button>
     <button class="btn btn-copy"  onclick="copyToClipboard()">📋 Copiar para Excel</button>
-    <button class="btn btn-export" onclick="exportarExcel()" style="background:#1d6f42;color:#fff;" title="Genera un .xlsx con las columnas exactas del Excel de Power BI. El campo CLIENTE se incluye en el export aunque no aparezca en la tabla.">⬇ Exportar .xlsx Power BI</button>
+    <button class="btn btn-export" onclick="exportarExcel()" style="background:#14532d;border:1px solid #4ade80;color:#bbf7d0;" title="Genera un .xlsx con las columnas exactas del Excel de Power BI. El campo CLIENTE se incluye en el export aunque no aparezca en la tabla.">⬇ Exportar .xlsx Power BI</button>
     <button class="btn btn-clear" onclick="clearData()">🗑 Borrar todo</button>
   </div>
 
@@ -246,7 +252,7 @@ select:focus, input:focus { outline:1.5px solid #2a6f3c; border-radius:2px; back
     <div class="doc-meta">
       <div class="meta-row"><span class="meta-label">Código</span><span class="meta-val" contenteditable>SGC-RNC-01</span></div>
       <div class="meta-row"><span class="meta-label">Versión</span><span class="meta-val" contenteditable>00</span></div>
-      <div class="meta-row"><span class="meta-label">Período</span><span class="meta-val" contenteditable>Marzo 2026</span></div>
+      <div class="meta-row"><span class="meta-label">Período</span><span class="meta-val" id="periodo-val" contenteditable></span></div>
       <div class="meta-row"><span class="meta-label">Área</span><span class="meta-val" contenteditable>Aseg. Calidad</span></div>
     </div>
   </div>
@@ -788,25 +794,13 @@ window.addEventListener('afterprint',()=>{
   });
 });
 
-const DATOS_MARZO = [
-  {fecha:'2026-03-05',lote:'MS02-26',  cliente:'AGROFACIL', prod:'LEYCOSATO',         tipo:'Inducción débil',          sev:'Crítico',  detec:'CONTROL FINAL',   desc:'Pallets 11-14 con inducción débil (NC Aduana Nueva)',                              litNC:'1920', litTot:'12480', ac:'Reproceso pallets 11-14',                            plazo:'2026-03-12', est:'Finalizado', cierre:'2026-03-13', pallets:'4',  resp:'', eficacia:'Pendiente'},
-  {fecha:'2026-03-05',lote:'MS02-26',  cliente:'AGROFACIL', prod:'LEYCOSATO',         tipo:'Pérdida por inducción',    sev:'Moderado', detec:'CONTROL FINAL',   desc:'Pallets 1, 5, 7 y 8 con bidón con falla en inducción (NC Aduana Nueva)',         litNC:'1920', litTot:'12480', ac:'Reproceso pallets 1, 5, 7 y 8',                         plazo:'2026-03-12', est:'Finalizado', cierre:'2026-03-13', pallets:'4',  resp:'', eficacia:'Pendiente'},
-  {fecha:'2026-03-07',lote:'AF03-26',  cliente:'AGROFACIL', prod:'CONTROL 2,4D',      tipo:'Tapas incorrectas',        sev:'Crítico',  detec:'CONTROL LÍNEA',   desc:'25 bidones inducidos con tapas amarillas de Sigma (tapa incorrecta)',              litNC:'500',  litTot:'500',   ac:'Reacondicionamiento de lote completo',               plazo:'2026-03-14', est:'Pendiente',  cierre:'',           pallets:'',   resp:'', eficacia:'Pendiente'},
-  {fecha:'2026-03-09',lote:'AF19-26',  cliente:'AGROFACIL', prod:'RINDER',            tipo:'Pérdida por inducción',    sev:'Leve',     detec:'CONTROL LÍNEA',   desc:'Pallet 1 con bidón con falla en inducción. Error en fecha de envasado.',         litNC:'960',  litTot:'12480', ac:'Reemplazo de bidón. Corrección de identificaciones', plazo:'2026-03-18', est:'Finalizado', cierre:'2026-03-13', pallets:'1',  resp:'', eficacia:'Pendiente'},
-  {fecha:'2026-03-09',lote:'AF32-26',  cliente:'AGROFACIL', prod:'2,4D CONTROLER EH', tipo:'Pérdida por inducción',    sev:'Leve',     detec:'CONTROL LÍNEA',   desc:'Bidón con falla en inducción en pallet afectado',                                  litNC:'960',  litTot:'10560', ac:'Reproceso del bidón afectado',                       plazo:'2026-03-18', est:'Pendiente',  cierre:'',           pallets:'1',  resp:'', eficacia:'Pendiente'},
-  {fecha:'2026-03-09',lote:'AF33-26',  cliente:'AGROFACIL', prod:'2,4D CONTROLER EH', tipo:'Inducción débil',          sev:'Crítico',  detec:'CONTROL LÍNEA',   desc:'Pallet 10 con inducción débil',                                                    litNC:'960',  litTot:'10560', ac:'Reproceso de pallet 10',                              plazo:'2026-03-18', est:'Pendiente',  cierre:'',           pallets:'1',  resp:'', eficacia:'Pendiente'},
-  {fecha:'2026-03-09',lote:'INS04-26', cliente:'INSUAGRO',  prod:'BIFENTRIN 10 BAC',  tipo:'Mal estado del packaging', sev:'Leve',     detec:'CONTROL FINAL',   desc:'Pallet 1 sin esquineros, cajas abolladas',                                         litNC:'720',  litTot:'4320',  ac:'Reemplazo de packaging dañado',                      plazo:'2026-03-18', est:'Pendiente',  cierre:'',           pallets:'1',  resp:'', eficacia:'Pendiente'},
-  {fecha:'2026-03-10',lote:'AF20-26',  cliente:'AGROFACIL', prod:'RINDER POTASICO',   tipo:'Trazabilidad errónea',     sev:'Crítico',  detec:'CONTROL INGRESO', desc:'Fecha de identificación incorrecta en 13 pallets rackeados en MP',                 litNC:'20480',litTot:'20480', ac:'Corrección de identificaciones de los 13 pallets',   plazo:'2026-03-19', est:'Finalizado', cierre:'2026-03-12', pallets:'13', resp:'', eficacia:'Pendiente'},
-  {fecha:'2026-03-11',lote:'AF13-26',  cliente:'AGROFACIL', prod:'CONTROL QUAT',      tipo:'Pérdida por inducción',    sev:'Leve',     detec:'CONTROL LÍNEA',   desc:'Pallets 14 y 15 con fallas en inducción',                                         litNC:'960',  litTot:'19920', ac:'Reproceso pallets 14 y 15',                           plazo:'2026-03-20', est:'Finalizado', cierre:'2026-03-13', pallets:'2',  resp:'', eficacia:'Pendiente'},
-  {fecha:'2026-03-11',lote:'AF34-26',  cliente:'AGROFACIL', prod:'2,4D CONTROLER EH', tipo:'Pérdida por inducción',    sev:'Moderado', detec:'CONTROL LÍNEA',   desc:'Pallets 4 y 5 con falla en inducción',                                            litNC:'1920', litTot:'9600',  ac:'Reproceso pallets 4 y 5',                                plazo:'2026-03-20', est:'Finalizado', cierre:'2026-03-13', pallets:'2',  resp:'', eficacia:'Pendiente'},
-  {fecha:'2026-03-12',lote:'AF38-26',  cliente:'AGROFACIL', prod:'2,4D CONTROLER EH', tipo:'Pérdida por inducción',    sev:'Leve',     detec:'CONTROL LÍNEA',   desc:'Pallet 4 con falla en inducción',                                                  litNC:'960',  litTot:'10560', ac:'Reproceso pallet 4',                                  plazo:'2026-03-21', est:'Pendiente',  cierre:'',           pallets:'1',  resp:'', eficacia:'Pendiente'},
-  {fecha:'2026-03-18',lote:'AF-60028', cliente:'ATANOR',    prod:'HERBIFEN ADVANCE',  tipo:'Pérdida por inducción',    sev:'Leve',     detec:'CONTROL LÍNEA',   desc:'Pallet N°37 con falla en inducción',                                               litNC:'960',  litTot:'54720', ac:'Reproceso pallet 37',                                 plazo:'2026-03-27', est:'Pendiente',  cierre:'',           pallets:'1',  resp:'', eficacia:'Pendiente'},
-  {fecha:'2026-03-26',lote:'CAS10-26', cliente:'TRAPALCO',  prod:'CASTER LV',         tipo:'Mal estado del packaging', sev:'Leve',     detec:'CONTROL FINAL',   desc:'Pallet N°4 con bidones abollados',                                                 litNC:'960',  litTot:'11520', ac:'Reemplazo de bidones dañados',                       plazo:'2026-04-04', est:'Pendiente',  cierre:'',           pallets:'1',  resp:'', eficacia:'Pendiente'},
-  {fecha:'2026-03-27',lote:'AF-60034', cliente:'ATANOR',    prod:'HERBIFEN ADVANCE',  tipo:'Pérdida por inducción',    sev:'Moderado', detec:'CONTROL LÍNEA',   desc:'Pallets 9, 10, 11, 22 y 25 con fallas en inducción',                              litNC:'2880', litTot:'21120', ac:'Reproceso de pallets afectados',                      plazo:'2026-04-05', est:'Finalizado', cierre:'2026-03-30', pallets:'5',  resp:'', eficacia:'Pendiente'},
-  {fecha:'2026-03-30',lote:'AF60086',  cliente:'ATANOR',    prod:'HERBIFEN ADVANCE',  tipo:'Pérdida por inducción',    sev:'Leve',     detec:'CONTROL LÍNEA',   desc:'Pallet 4 con falla en inducción',                                                  litNC:'960',  litTot:'8640',  ac:'Reproceso pallet 4',                                 plazo:'2026-04-08', est:'Pendiente',  cierre:'',           pallets:'1',  resp:'', eficacia:'Pendiente'},
-  {fecha:'2026-03-31',lote:'AF60091',  cliente:'ATANOR',    prod:'HERBIFEN ADVANCE',  tipo:'Pérdida por inducción',    sev:'Leve',     detec:'CONTROL LÍNEA',   desc:'Pallet N°10 con fallas en inducción',                                              litNC:'960',  litTot:'11520', ac:'Reproceso pallet 10',                                 plazo:'2026-04-09', est:'Pendiente',  cierre:'',           pallets:'1',  resp:'', eficacia:'Pendiente'},
-  {fecha:'2026-03-31',lote:'AF60092',  cliente:'ATANOR',    prod:'HERBIFEN ADVANCE',  tipo:'Pérdida por inducción',    sev:'Leve',     detec:'CONTROL LÍNEA',   desc:'Pallet N°5 con fallas en inducción',                                               litNC:'960',  litTot:'9600',  ac:'Reproceso pallet 5',                                 plazo:'2026-04-09', est:'Pendiente',  cierre:'',           pallets:'1',  resp:'', eficacia:'Pendiente'},
-];
+// ── Período dinámico ──
+(function(){
+  const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const hoy=new Date();
+  const el=document.getElementById('periodo-val');
+  if(el&&!el.textContent.trim()) el.textContent=meses[hoy.getMonth()]+' '+hoy.getFullYear();
+})();
 
 idbGet('rows',saved=>{
   if(saved){
@@ -814,15 +808,14 @@ idbGet('rows',saved=>{
       rows=JSON.parse(saved);
       document.getElementById('saveMsg').textContent='✅ Datos restaurados — '+rows.length+' registro/s';
     }catch(e){
-      rows=DATOS_MARZO.map(r=>Object.assign(newRow(),r));
-      document.getElementById('saveMsg').textContent='✅ Datos de Marzo 2026 cargados — '+rows.length+' registros';
+      rows=[];
+      document.getElementById('saveMsg').textContent='Registro vacío — listo para cargar NCs del mes.';
     }
   } else {
-    rows=DATOS_MARZO.map(r=>Object.assign(newRow(),r));
-    document.getElementById('saveMsg').textContent='✅ Datos de Marzo 2026 cargados — '+rows.length+' registros';
+    rows=[];
+    document.getElementById('saveMsg').textContent='Registro vacío — listo para cargar NCs del mes.';
   }
   render();
-  scheduleSave();
   // Verificar si hay NC pendientes del REG-01
   verificarImportPendiente();
 });
@@ -846,6 +839,7 @@ function verificarImportPendiente(){
     if(!payload||!payload.filas||!payload.filas.length)return;
     const banner=document.getElementById('import-banner');
     banner.style.display='flex';
+    banner.style.flexWrap='wrap';
     document.getElementById('import-titulo').textContent=
       `📥 Desvíos desde REG-01 — ${payload.origen}`;
     const ab = payload.resumen?.abiertas ?? payload.filas.filter(f=>f.est==='Pendiente').length;
