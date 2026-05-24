@@ -201,12 +201,12 @@ select:focus, input:focus { outline:1.5px solid #4db8b8; border-radius:2px; back
   #tBody { display: block; width: 100%; }
   #tBody tr { display: block; background: #0c1414; border: 1px solid #2e5252; border-radius: 10px; margin-bottom: 12px; padding: 12px; }
   #tBody td { display: none; } /* ocultar celdas — se muestran las que tienen data-label */
-  #tBody td[data-label] { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; border: none; font-size: 12px; color: #e2e8f0; }
+  #tBody td[data-label] { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; border: none; font-size: 12px; color: #e2e8f0; max-width: none; overflow: visible; width: 100%; }
   #tBody td[data-label]::before { content: attr(data-label); color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; min-width: 90px; flex-shrink: 0; padding-top: 2px; }
   #tBody td[data-label] input, #tBody td[data-label] select { background: #121d1d; color: #e2e8f0; -webkit-text-fill-color: #e2e8f0; border: 1px solid #2e5252; border-radius: 5px; padding: 5px 8px; font-size: 12px; width: 100%; }
   #tBody td[data-label] select { color: #e2e8f0; -webkit-text-fill-color: #e2e8f0; }
   #tBody td[data-label] input:focus, #tBody td[data-label] select:focus { border-color: #4db8b8; outline: none; }
-  .c0 { display: flex !important; font-size: 16px; font-weight: 700; color: #4db8b8; padding-bottom: 6px !important; border-bottom: 1px solid #2e5252 !important; margin-bottom: 4px; }
+  .c0 { display: flex !important; max-width: none !important; overflow: visible !important; font-size: 16px; font-weight: 700; color: #4db8b8; padding-bottom: 6px !important; border-bottom: 1px solid #2e5252 !important; margin-bottom: 4px; }
 
   /* Save bar */
   .save-bar { background: #0c1414; border-radius: 6px; padding: 6px 10px; }
@@ -219,11 +219,20 @@ select:focus, input:focus { outline:1.5px solid #4db8b8; border-radius:2px; back
 
 
 @media print {
-  body { background:#fff; padding:0; font-size:8.5px; }
+  body { background:#fff; padding:0; font-size:8.5px; color:#000; }
   .page { box-shadow:none; padding:6px; max-width:100%; }
   .no-print { display:none !important; }
   .kpi-bar, .sev-bar { display:flex !important; }
   .kpi-card { border:1px solid #999 !important; }
+  /* ── Reset mobile card layout para print ── */
+  table { display:table !important; width:100% !important; font-size:8.5px; border-collapse:collapse; }
+  thead { display:table-header-group !important; }
+  #tBody { display:table-row-group !important; }
+  #tBody tr { display:table-row !important; background:transparent !important; border:none !important; border-radius:0 !important; padding:0 !important; margin:0 !important; }
+  #tBody td, td { display:table-cell !important; max-width:none !important; overflow:visible !important; }
+  #tBody td[data-label] { display:table-cell !important; max-width:none !important; overflow:visible !important; width:auto !important; }
+  #tBody td[data-label]::before { display:none !important; }
+  tr:nth-child(even) td { background:#f5f5f5 !important; }
   /* Inputs de texto: mostrar contenido limpio */
   input[type="text"], input[type="number"] {
     pointer-events:none;
@@ -232,6 +241,9 @@ select:focus, input:focus { outline:1.5px solid #4db8b8; border-radius:2px; back
     word-break:break-word;
     overflow:visible;
     width:100%;
+    color:#000 !important;
+    -webkit-text-fill-color:#000 !important;
+    background:transparent !important;
   }
   /* Fechas: reemplazar input con texto formateado */
   input[type="date"] {
@@ -239,15 +251,17 @@ select:focus, input:focus { outline:1.5px solid #4db8b8; border-radius:2px; back
     font-size:8px;
     -webkit-appearance:none;
     appearance:none;
-    /* Ocultar el ícono de calendario del navegador */
     color-scheme:light;
     width:100%;
+    color:#000 !important;
+    -webkit-text-fill-color:#000 !important;
+    background:transparent !important;
   }
   /* Hacer las celdas más compactas en impresión */
-  td { padding:2px 3px; font-size:8.5px; }
-  th { font-size:8px; padding:4px 3px; }
+  td { padding:2px 3px !important; font-size:8.5px !important; color:#000 !important; background:#fff !important; border:1px solid #ccc !important; }
+  th { font-size:8px; padding:4px 3px; background:#2a6a6a !important; color:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   /* Columnas ajustadas para hoja A4 apaisada */
-  .c0 {width:18px}
+  .c0 {width:18px !important; display:table-cell !important;}
   .c1 {width:52px}
   .c2 {width:58px}
   .c3 {width:85px}
@@ -267,7 +281,6 @@ select:focus, input:focus { outline:1.5px solid #4db8b8; border-radius:2px; back
   select { display:none; }
   .badge { font-size:7.5px; padding:1px 4px; }
   .sev-badge { font-size:7.5px; }
-  table { font-size:8.5px; }
   @page { size: A4 landscape; margin: 10mm; }
 }
 </style>
