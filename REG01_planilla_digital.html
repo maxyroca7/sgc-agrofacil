@@ -359,6 +359,18 @@ input, textarea, select, button {
 <div id="app">
   
     <!-- Barra superior: logo | pestañas de lotes | + Lote | ⚙ -->
+    <div id="print-header" style="display:none">
+      <div style="display:flex;align-items:stretch;border:2px solid #333;margin-bottom:8px">
+        <div style="width:140px;display:flex;align-items:center;justify-content:center;border-right:2px solid #333;padding:8px">
+          <span style="font-size:20px;font-weight:700;color:#2a6f3c;letter-spacing:1px">AGROFACIL</span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px">
+          <span style="font-size:13px;font-weight:700;text-transform:uppercase">REG-01 · Control de Calidad</span>
+          <span style="font-size:10px;color:#555">Control de Línea y Producto Final — 8170 PRO-02</span>
+        </div>
+        <div style="width:200px;border-left:2px solid #333;font-size:10px" id="print-meta"></div>
+      </div>
+    </div>
     <div id="topbar">
     <div class="logo">REG-01</div>
     <div id="tabs-wrap"></div>
@@ -498,7 +510,9 @@ let cfg={inductoras:[
   {id:'C',nombre:'ENERCON',ref:1.2,tolMin:1.0,tolMax:1.4,unidad:''},
   {id:'D',nombre:'INDUSMACH',ref:1.2,tolMin:1.0,tolMax:1.4,unidad:''},
   {id:'E',nombre:'LB-6000J',ref:1.2,tolMin:1.0,tolMax:1.4,unidad:''},
-], claveCoord:'1234'};
+], claveCoord:'1234',
+  docCodigo:'SGC-REG01-APP', docVersion:'00',
+  docElab:'Maximiliano Roca', docAprob:'Evelin Alcaraz'};
 function cargarCfg(){try{const s=localStorage.getItem(CFG_KEY);if(s){cfg=JSON.parse(s);if(!cfg.inductoras.find(i=>i.id==='E')){cfg.inductoras.push({id:'E',nombre:'LB-6000J',ref:1.2,tolMin:1.0,tolMax:1.4,unidad:''});localStorage.setItem(CFG_KEY,JSON.stringify(cfg));}}}catch(e){}}
 function guardarCfg(){
   // Guardar nombre del RNC
@@ -507,6 +521,11 @@ function guardarCfg(){
   // Guardar clave coordinadora
   const clave=document.getElementById('ci-clave').value.trim();
   if(clave) cfg.claveCoord=clave;
+  // Guardar codificación del documento
+  cfg.docCodigo  = document.getElementById('ci-codigo').value.trim()  || cfg.docCodigo;
+  cfg.docVersion = document.getElementById('ci-version').value.trim() || cfg.docVersion;
+  cfg.docElab    = document.getElementById('ci-elab').value.trim()    || cfg.docElab;
+  cfg.docAprob   = document.getElementById('ci-aprob').value.trim()   || cfg.docAprob;
   // Guardar inductoras
   cfg.inductoras.forEach((ind,i)=>{
     ind.nombre=(document.getElementById('ci-nom-'+i).value.trim())||ind.nombre;
@@ -551,6 +570,22 @@ function renderCfgPanel(){
             Permite cerrar un lote incompleto por excepción.
           </div>
         </div>
+      </div>
+      <div style="height:1px;background:var(--border);margin:10px 0"></div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">
+        📄 Codificación del documento (aparece en PDF)
+      </div>
+      <div class="ind-cfg-row" style="grid-template-columns:1fr 1fr;border:none;padding:0;margin-bottom:6px">
+        <div><label>Código</label>
+          <input id="ci-codigo" type="text" value="${cfg.docCodigo||'SGC-REG01-APP'}"></div>
+        <div><label>Versión</label>
+          <input id="ci-version" type="text" value="${cfg.docVersion||'00'}"></div>
+      </div>
+      <div class="ind-cfg-row" style="grid-template-columns:1fr 1fr;border:none;padding:0">
+        <div><label>Elaborado por</label>
+          <input id="ci-elab" type="text" value="${cfg.docElab||'Maximiliano Roca'}"></div>
+        <div><label>Aprobado por</label>
+          <input id="ci-aprob" type="text" value="${cfg.docAprob||'Evelin Alcaraz'}"></div>
       </div>
     </div>
   `+cfg.inductoras.map((ind,i)=>`
@@ -1808,6 +1843,24 @@ function archivarLote(){
 
   // 2. Abrir diálogo de impresión para guardar PDF
   setTimeout(()=>{
+    // Rellenar encabezado de impresión con codificación actual
+    const l=getLote();
+    const meta=document.getElementById('print-meta');
+    if(meta){
+      const rows=[
+        ['Código', cfg.docCodigo||'SGC-REG01-APP'],
+        ['Versión', cfg.docVersion||'00'],
+        ['Lote', l?.cab?.lote||''],
+        ['Fecha', l?.cab?.fecha||''],
+        ['Elab.', cfg.docElab||'Maximiliano Roca'],
+        ['Aprob.', cfg.docAprob||'Evelin Alcaraz'],
+      ];
+      meta.innerHTML=rows.map(([k,v])=>`
+        <div style="display:flex;border-bottom:1px solid #ccc">
+          <span style="width:58px;padding:3px 5px;background:#f0f0f0;font-weight:700;border-right:1px solid #ccc">${k}</span>
+          <span style="padding:3px 5px;flex:1">${v}</span>
+        </div>`).join('');
+    }
     mostrarToast('📄 Guardá como PDF en tu carpeta de lotes');
     window.print();
   }, 400);
@@ -1819,6 +1872,7 @@ printStyle.textContent=`
 @media print {
   body { background:#fff !important; color:#000 !important; font-size:9px; }
   #topbar, #bb { display:none !important; }
+  #print-header { display:block !important; }
   .mo { display:none !important; }
   #toast { display:none !important; }
   .lote-view { overflow:visible !important; padding:4px !important; }
