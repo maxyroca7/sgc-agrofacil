@@ -1,0 +1,918 @@
+<!--
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  AGROFACIL S.A. — Sistema de Gestión de Calidad Digital                     ║
+║  Archivo: registro_nc.html                                                  ║
+║  Código:  SGC-RNC-APP                                                       ║
+║  Versión: 6.0                                                               ║
+║  Fecha:   Mayo 2026                                                         ║
+║  Autor:   Área de Aseguramiento de Calidad                                  ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  DESCRIPCIÓN:                                                               ║
+║  Registro mensual de No Conformidades. Recibe datos del REG-01 via          ║
+║  localStorage, calcula KPIs automáticamente y exporta a Excel para          ║
+║  Power BI con las columnas exactas que espera el dashboard.                 ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  TECNOLOGÍAS:                                                               ║
+║  • HTML5 + CSS3 + JavaScript ES6+ (Vanilla)                                ║
+║  • IndexedDB: persistencia principal de las filas NC                        ║
+║  • localStorage: canal de comunicación con REG01_planilla_digital.html      ║
+║  • SheetJS (CDN Cloudflare): exportación .xlsx para Power BI               ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  ARCHIVOS RELACIONADOS:                                                     ║
+║  • REG01_planilla_digital.html — debe estar en la misma carpeta            ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  MANTENIMIENTO MENSUAL:                                                     ║
+║  1. Exportar Excel al cierre del mes (⬇ Exportar .xlsx Power BI)           ║
+║  2. Borrar datos (🗑 Borrar todo) para empezar el mes nuevo                 ║
+║  3. NO es necesario cambiar el nombre del archivo                           ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  PARA AGREGAR UNA COLUMNA NUEVA:                                            ║
+║  1. Agregar campo en newRow() con valor vacío                               ║
+║  2. Agregar encabezado th en el HTML de la tabla                            ║
+║  3. Agregar input/select en render() dentro del map de filas                ║
+║  4. Incrementar versión IndexedDB: indexedDB.open('nombre', N+1)            ║
+║  5. Agregar campo en importarDesdeReg01() si viene del REG-01               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de No Conformidades – Agrofacil</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; font-size: 11px; background: #f4f4f4; padding: 20px; color: #222; }
+.page { background: #fff; max-width: 1100px; margin: 0 auto; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+
+.header { display: flex; align-items: stretch; border: 2px solid #333; margin-bottom: 12px; }
+.logo-area { width: 160px; min-height: 70px; border-right: 2px solid #333; display: flex; align-items: center; justify-content: center; }
+.logo-area span { font-size: 18px; font-weight: 700; color: #2a6f3c; letter-spacing: 1px; }
+.doc-title { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+.doc-title span:first-child { font-size: 14px; font-weight: 700; text-transform: uppercase; }
+.doc-title span:last-child { font-size: 10px; color: #555; }
+.doc-meta { width: 210px; border-left: 2px solid #333; font-size: 10px; }
+.meta-row { display: flex; border-bottom: 1px solid #ccc; }
+.meta-row:last-child { border-bottom: none; }
+.meta-label { width: 80px; padding: 4px 6px; background: #f0f0f0; font-weight: 700; border-right: 1px solid #ccc; }
+.meta-val { padding: 4px 6px; flex: 1; }
+
+.kpi-bar { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.kpi-card { flex: 1; min-width: 130px; border: 1px solid #ccc; border-radius: 6px; padding: 8px 12px; background: #f9f9f9; }
+.kpi-label { font-size: 9px; color: #666; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 2px; }
+.kpi-val { font-size: 22px; font-weight: 700; color: #2a6f3c; }
+.kpi-sub { font-size: 9px; color: #888; margin-top: 1px; }
+.kpi-card.warn .kpi-val { color: #c0392b; }
+.kpi-card.mid  .kpi-val { color: #e67e22; }
+
+.sev-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+.sev-box { flex: 1; border-radius: 5px; padding: 6px 10px; font-size: 10px; font-weight: 700; text-align: center; }
+.sev-box .sev-num { font-size: 20px; display: block; }
+.sev-leve { background: #d4edda; color: #155724; border: 1px solid #5cb85c; }
+.sev-mod  { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
+.sev-crit { background: #f8d7da; color: #721c24; border: 1px solid #e74c3c; }
+
+.save-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 11px; }
+.save-dot { width: 10px; height: 10px; border-radius: 50%; background: #5cb85c; display: inline-block; }
+.save-dot.saving { background: #ffc107; }
+.save-dot.error  { background: #e74c3c; }
+.save-msg { color: #555; }
+
+table { width: 100%; border-collapse: collapse; font-size: 10px; }
+th { background: #2a6f3c; color: #fff; padding: 6px 4px; text-align: center; border: 1px solid #1e5530; font-size: 9px; vertical-align: middle; line-height: 1.3; }
+th .kpi-tag { display: inline-block; background: rgba(255,255,255,.22); border-radius: 8px; font-size: 7.5px; padding: 1px 4px; margin-top: 2px; }
+td { border: 1px solid #bbb; padding: 3px 4px; vertical-align: middle; max-width: 0; overflow: hidden; }
+tr:nth-child(even) td { background: #f7fbf8; }
+
+/* Columnas rediseñadas: fechas angostas, producto/lote/desc más anchos */
+.c0 {width:24px; text-align:center}
+.c1 {width:62px}                        /* Fecha Detección */
+.c2 {width:72px}                        /* N° Lote */
+.c3 {width:100px; word-break:break-word; white-space:normal} /* Producto */
+.c4 {width:110px}                       /* Tipo de Desvío */
+.c5 {width:50px; text-align:center}     /* Gravedad */
+.c5b{width:72px; text-align:center}     /* Detección (Control Línea/Final) */
+.c6 {width:148px; word-break:break-word; white-space:normal} /* Descripción */
+.c7 {width:46px; text-align:right}      /* Litros NC */
+.c8 {width:50px; text-align:right}      /* Litros Tot */
+.c9 {width:118px; word-break:break-word; white-space:normal} /* Acción */
+.c10{width:56px}                        /* Plazo Reproceso */
+.c11{width:66px; text-align:center}     /* Estado */
+.c12{width:56px}                        /* Fecha Cierre */
+.c13{width:44px; text-align:center}     /* Pallets NC */
+.c14{width:74px; word-break:break-word; white-space:normal} /* Responsable — ISO 10.2.2 */
+.c15{width:60px; text-align:center}     /* Verif. Eficacia — ISO 10.2.2 */
+
+.badge { display:inline-block; padding:2px 6px; border-radius:10px; font-size:8.5px; font-weight:700; white-space:nowrap; }
+.b-pend  { background:#fff3cd; color:#856404; border:1px solid #ffc107; }
+.b-proc  { background:#cce5ff; color:#004085; border:1px solid #66b2ff; }
+.b-final { background:#d4edda; color:#155724; border:1px solid #5cb85c; }
+.b-cancel{ background:#f8d7da; color:#721c24; border:1px solid #f5c6cb; }
+.b-efok  { background:#d4edda; color:#155724; border:1px solid #5cb85c; }
+.b-efno  { background:#f8d7da; color:#721c24; border:1px solid #e74c3c; }
+.b-efpend{ background:#e2e3e5; color:#383d41; border:1px solid #adb5bd; }
+
+.sev-badge { display:inline-block; padding:2px 5px; border-radius:8px; font-size:8px; font-weight:700; }
+.sb-leve { background:#d4edda; color:#155724; }
+.sb-mod  { background:#fff3cd; color:#856404; }
+.sb-crit { background:#f8d7da; color:#721c24; }
+
+.legend { margin-top:12px; border:1px solid #ccc; padding:8px 12px; font-size:10px; }
+.legend strong { display:block; margin-bottom:4px; font-size:10.5px; }
+.legend-row { display:flex; flex-wrap:wrap; gap:5px 16px; margin-bottom:6px; }
+
+.sigs { display:flex; gap:24px; margin-top:20px; }
+.sig-box { flex:1; border-top:1.5px solid #333; padding-top:4px; text-align:center; font-size:10px; color:#444; }
+
+.toolbar { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+.btn { padding:6px 14px; border:none; border-radius:4px; cursor:pointer; font-size:11px; font-weight:700; }
+.btn-add   { background:#2a6f3c; color:#fff; }
+.btn-del   { background:#c0392b; color:#fff; }
+.btn-print { background:#2c3e50; color:#fff; }
+.btn-copy  { background:#2980b9; color:#fff; }
+.btn-clear { background:#e74c3c; color:#fff; font-size:10px; padding:4px 10px; margin-left:auto; }
+
+select, input[type="text"], input[type="date"], input[type="number"] {
+  width:100%; border:none; background:transparent; font-size:9.5px;
+  font-family:Arial,sans-serif; padding:1px 2px; color:#222;
+}
+/* Texto largo en inputs: permitir wrap visual */
+input[type="text"] {
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+input[type="number"] { text-align:right; }
+select:focus, input:focus { outline:1.5px solid #2a6f3c; border-radius:2px; background:#fffbe6; }
+/* Span de fecha que aparece solo en impresión */
+.print-date { font-size:8px; display:none; }
+@media print { .print-date { display:inline; } }
+
+.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  background:#2c3e50; color:#fff; padding:10px 22px; border-radius:6px;
+  font-size:12px; font-weight:700; opacity:0; transition:opacity .3s; pointer-events:none; z-index:999; }
+.toast.show { opacity:1; }
+
+@media print {
+  body { background:#fff; padding:0; font-size:8.5px; }
+  .page { box-shadow:none; padding:6px; max-width:100%; }
+  .no-print { display:none !important; }
+  .kpi-bar, .sev-bar { display:flex !important; }
+  .kpi-card { border:1px solid #999 !important; }
+  /* Inputs de texto: mostrar contenido limpio */
+  input[type="text"], input[type="number"] {
+    pointer-events:none;
+    font-size:8.5px;
+    white-space:normal;
+    word-break:break-word;
+    overflow:visible;
+    width:100%;
+  }
+  /* Fechas: reemplazar input con texto formateado */
+  input[type="date"] {
+    pointer-events:none;
+    font-size:8px;
+    -webkit-appearance:none;
+    appearance:none;
+    /* Ocultar el ícono de calendario del navegador */
+    color-scheme:light;
+    width:100%;
+  }
+  /* Hacer las celdas más compactas en impresión */
+  td { padding:2px 3px; font-size:8.5px; }
+  th { font-size:8px; padding:4px 3px; }
+  /* Columnas ajustadas para hoja A4 apaisada */
+  .c0 {width:18px}
+  .c1 {width:52px}
+  .c2 {width:58px}
+  .c3 {width:85px}
+  .c4 {width:90px}
+  .c5 {width:42px}
+  .c5b{width:56px}
+  .c6 {width:130px}
+  .c7 {width:36px}
+  .c8 {width:38px}
+  .c9 {width:105px}
+  .c10{width:46px}
+  .c11{width:56px}
+  .c12{width:46px}
+  .c13{width:34px; text-align:center}
+  .c14{width:58px}
+  .c15{width:46px; text-align:center}
+  select { display:none; }
+  .badge { font-size:7.5px; padding:1px 4px; }
+  .sev-badge { font-size:7.5px; }
+  table { font-size:8.5px; }
+  @page { size: A4 landscape; margin: 10mm; }
+}
+</style>
+  <!-- SheetJS para exportar .xlsx compatible con Power BI -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="page">
+
+  <!-- Banner de importación desde REG-01 -->
+  <div id="import-banner" style="display:none;background:#1e3a1e;border:2px solid #22c55e;border-radius:6px;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <span style="font-size:20px">📥</span>
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:700;color:#22c55e;font-size:13px" id="import-titulo">NC pendientes del REG-01</div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:2px" id="import-detalle"></div>
+    </div>
+    <button onclick="importarDesdeReg01()" style="background:#22c55e;color:#000;border:none;border-radius:4px;padding:8px 16px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap">✔ Importar filas</button>
+    <button onclick="descartarImport()" style="background:transparent;color:#94a3b8;border:1px solid #3a4570;border-radius:4px;padding:8px 12px;font-size:12px;cursor:pointer;white-space:nowrap">✕ Descartar</button>
+  </div>
+
+  <div class="toolbar no-print">
+    <button class="btn btn-add"   onclick="addRow()">+ Agregar fila</button>
+    <button class="btn btn-del"   onclick="delRow()">− Eliminar última</button>
+    <button class="btn btn-print" onclick="window.print()">🖨 Imprimir / PDF</button>
+    <button class="btn btn-copy"  onclick="copyToClipboard()">📋 Copiar para Excel</button>
+    <button class="btn btn-export" onclick="exportarExcel()" style="background:#1d6f42;color:#fff;" title="Genera un .xlsx con las columnas exactas del Excel de Power BI. El campo CLIENTE se incluye en el export aunque no aparezca en la tabla.">⬇ Exportar .xlsx Power BI</button>
+    <button class="btn btn-clear" onclick="clearData()">🗑 Borrar todo</button>
+  </div>
+
+  <div class="save-bar no-print">
+    <span class="save-dot" id="saveDot"></span>
+    <span class="save-msg" id="saveMsg">Cargando datos guardados...</span>
+  </div>
+
+  <div class="header">
+    <div class="logo-area"><span>AGROFACIL</span></div>
+    <div class="doc-title">
+      <span>Registro de No Conformidades</span>
+      <span>Proceso: Control de Línea y Producto Final — 8170 PRO-02</span>
+    </div>
+    <div class="doc-meta">
+      <div class="meta-row"><span class="meta-label">Código</span><span class="meta-val" contenteditable>SGC-RNC-01</span></div>
+      <div class="meta-row"><span class="meta-label">Versión</span><span class="meta-val" contenteditable>00</span></div>
+      <div class="meta-row"><span class="meta-label">Período</span><span class="meta-val" contenteditable>Marzo 2026</span></div>
+      <div class="meta-row"><span class="meta-label">Área</span><span class="meta-val" contenteditable>Aseg. Calidad</span></div>
+    </div>
+  </div>
+
+  <div class="kpi-bar">
+    <div class="kpi-card" id="kpi1-card">
+      <div class="kpi-label">AQ-IND-01 · NC Totales del mes</div>
+      <div class="kpi-val" id="kpi1">0</div>
+      <div class="kpi-sub">eventos registrados</div>
+    </div>
+    <div class="kpi-card" id="kpi2-card">
+      <div class="kpi-label">AQ-IND-02 · Tasa litros NC</div>
+      <div class="kpi-val" id="kpi2">—</div>
+      <div class="kpi-sub">meta: &lt; 5%</div>
+    </div>
+    <div class="kpi-card" id="kpi3-card">
+      <div class="kpi-label">AQ-IND-03 · Desvío más frecuente</div>
+      <div class="kpi-val" style="font-size:13px" id="kpi3">—</div>
+      <div class="kpi-sub" id="kpi3-sub">sin datos</div>
+    </div>
+    <div class="kpi-card" id="kpi4-card">
+      <div class="kpi-label">AQ-IND-04 · Reprocesos en plazo</div>
+      <div class="kpi-val" id="kpi4">—</div>
+      <div class="kpi-sub">meta: &gt; 90%</div>
+    </div>
+    <div class="kpi-card warn" id="kpi5-card">
+      <div class="kpi-label">AQ-IND-05 · Pallets pendientes reproceso</div>
+      <div class="kpi-val" id="kpi5">—</div>
+      <div class="kpi-sub" id="kpi5-sub">pallets sin cerrar</div>
+    </div>
+    <div class="kpi-card mid" id="kpi6-card">
+      <div class="kpi-label">AQ-IND-06 · Carga estimada (HH)</div>
+      <div class="kpi-val" id="kpi6">—</div>
+      <div class="kpi-sub" id="kpi6-sub">horas·hombre pendientes</div>
+    </div>
+  </div>
+
+  <div class="sev-bar">
+    <div class="sev-box sev-leve"><span class="sev-num" id="sev-leve">0</span>🟢 Leve</div>
+    <div class="sev-box sev-mod" ><span class="sev-num" id="sev-mod" >0</span>🟡 Moderado</div>
+    <div class="sev-box sev-crit"><span class="sev-num" id="sev-crit">0</span>🔴 Crítico</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="c0">#</th>
+        <th class="c1">Fecha<br>Detección</th>
+        <th class="c2">N° Lote</th>
+        <th class="c3">Producto</th>
+        <th class="c4">Tipo de Desvío<br><span class="kpi-tag">AQ-IND-03</span></th>
+        <th class="c5">Gravedad</th>
+        <th class="c5b">Detección<br><span class="kpi-tag">EXCEL</span></th>
+        <th class="c6">Descripción de la NC</th>
+        <th class="c7">Litros NC<br><span class="kpi-tag">AQ-IND-02</span></th>
+        <th class="c8">Litros Tot.<br>Lote<br><span class="kpi-tag">AQ-IND-02</span></th>
+        <th class="c9">Acción Correctiva /<br>Disposición</th>
+        <th class="c10">Plazo<br>Reproceso<br><span class="kpi-tag">AQ-IND-04</span></th>
+        <th class="c11">Estado<br><span class="kpi-tag">AQ-IND-01/04</span></th>
+        <th class="c12">Fecha<br>Cierre<br><span class="kpi-tag">AQ-IND-04</span></th>
+        <th class="c13">Pallets<br>NC<br><span class="kpi-tag">AQ-IND-05/06</span></th>
+        <th class="c14">Responsable<br><span class="kpi-tag">ISO 10.2.2</span></th>
+        <th class="c15">Verif.<br>Eficacia<br><span class="kpi-tag">ISO 10.2.2</span></th>
+      </tr>
+    </thead>
+    <tbody id="tBody"></tbody>
+  </table>
+
+  <div class="legend">
+    <strong>Tipos de desvío y gravedad predeterminada:</strong>
+    <div class="legend-row">
+      <span>🟢 Poco film</span>
+      <span>🔴 Falta de enfilmado final</span>
+      <span>🔴 Bidones abollados</span>
+      <span>🔴 Inducción débil</span>
+      <span>🟡 Bidón/es por inducción</span>
+      <span>🔴 Tapas incorrectas</span>
+      <span>🟡 Packaging incorrecto</span>
+      <span>🟡 Paletizado incorrecto</span>
+      <span>🟡 Palét incorrecto</span>
+      <span>🔴 Trazabilidad / QR</span>
+      <span>🟡 Identificación de palét</span>
+      <span>🟢 Peso / Volumen</span>
+      <span>🟡 Palét chocado</span>
+      <span>🔴 Pérdida (bidón/es pinchados)</span>
+    </div>
+    <strong>Campos obligatorios ISO 9001:2015 cláusula 10.2.2:</strong>
+    <div class="legend-row">
+      <span>📋 <strong>Responsable</strong> — persona que ejecuta la acción correctiva</span>
+      <span>✅ <strong>Verif. Eficacia</strong> — confirma que la acción eliminó la causa · <span class="badge b-efok">Eficaz</span> <span class="badge b-efno">No eficaz</span> <span class="badge b-efpend">Pendiente</span></span>
+    </div>
+    <strong>Criterio de registro (una NC por lote · evento · tipo de desvío):</strong>
+    <div class="legend-row">
+      <span>Si en un mismo lote hay dos tipos de desvío distintos → dos filas separadas</span>
+      <span>Si el desvío ocurrió en otro turno o fue detectado en otra fecha → nueva NC</span>
+    </div>
+    <strong>Estimación horas·hombre (AQ-IND-06):</strong>
+    <div class="legend-row">
+      <span>⏱ Inducción débil → <strong>30 min/pallet</strong></span>
+      <span>⏱ Pérdida por inducción → <strong>30 min/pallet</strong></span>
+      <span>⏱ Pérdida (bidón/es pinchados) → <strong>30 min/pallet</strong></span>
+      <span>⏱ Palét chocado → <strong>30 min/pallet</strong></span>
+      <span>⏱ Bidón/es por inducción → <strong>10 min/bidón</strong> (trabajo puntual)</span>
+      <span style="color:#888">Otros tipos → 30 min (genérico)</span>
+    </div>
+    <strong>Estados:</strong>
+    <div class="legend-row">
+      <span><span class="badge b-pend">Pendiente</span> NC abierta</span>
+      <span><span class="badge b-proc">En proceso</span> Reproceso en curso</span>
+      <span><span class="badge b-final">Finalizado</span> NC cerrada y verificada</span>
+      <span><span class="badge b-cancel">Anulado</span> Error de carga</span>
+    </div>
+  </div>
+
+  <div class="sigs">
+    <div class="sig-box">Checker de Calidad<br><br>&nbsp;</div>
+    <div class="sig-box">Coordinadora de Calidad<br><br>&nbsp;</div>
+    <div class="sig-box">Revisión SGC / Gerencia<br><br>&nbsp;</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TIPOS = [
+  {label:'',                              sev:''},
+  {label:'Poco film',                     sev:'Leve'},
+  {label:'Falta de enfilmado final',      sev:'Crítico'},
+  {label:'Bidones abollados',             sev:'Crítico'},
+  {label:'Inducción débil',               sev:'Crítico'},
+  {label:'Bidón/es por inducción',        sev:'Moderado'},
+  {label:'Tapas incorrectas',             sev:'Crítico'},
+  {label:'Packaging incorrecto',          sev:'Moderado'},
+  {label:'Paletizado incorrecto',         sev:'Moderado'},
+  {label:'Palét incorrecto',              sev:'Moderado'},
+  {label:'Trazabilidad / QR',             sev:'Crítico'},
+  {label:'Identificación de palét',       sev:'Moderado'},
+  {label:'Peso / Volumen',                sev:'Leve'},
+  {label:'Palét chocado',                 sev:'Moderado'},
+  {label:'Pérdida (bidón/es pinchados)',  sev:'Crítico'},
+];
+const SEVS    = ['','Leve','Moderado','Crítico'];
+// ════════════════════════════════════════════
+// BLOQUE 1: CONSTANTES
+// ESTADOS: opciones del selector de estado por fila
+// EFICACIA: opciones de verificación de eficacia (ISO 10.2.2)
+// BADGES: clases CSS para cada estado
+// TIPOS: lista de tipos de desvío con severidad sugerida
+// PLAZO_DIAS: días hábiles para calcular el plazo automático
+// ════════════════════════════════════════════
+const ESTADOS = ['Pendiente','En proceso','Finalizado','Anulado'];
+const EFICACIA = ['Pendiente','Eficaz','No eficaz'];
+const BADGES  = {Pendiente:'b-pend','En proceso':'b-proc',Finalizado:'b-final',Anulado:'b-cancel'};
+const EF_BADGES = {Pendiente:'b-efpend',Eficaz:'b-efok','No eficaz':'b-efno'};
+const SEV_CLS = {Leve:'sb-leve',Moderado:'sb-mod','Crítico':'sb-crit'};
+const SEV_ICON= {Leve:'🟢',Moderado:'🟡','Crítico':'🔴'};
+const PLAZO_DIAS = 5;
+const COLS_HDR = ['#','Fecha Detección','N° Lote','Producto','Tipo de Desvío','Gravedad','Detección',
+                  'Descripción NC','Litros NC','Litros Totales Lote','Acción Correctiva',
+                  'Plazo Reproceso','Estado','Fecha Cierre','Pallets NC','Responsable','Verif. Eficacia'];
+
+let rows = [], saveTimer = null, db;
+
+function openDB(cb){
+  if(db){cb(db);return;}
+  const r=indexedDB.open('agrofacil_nc_v6',1);
+  r.onupgradeneeded=e=>e.target.result.createObjectStore('data');
+  r.onsuccess=e=>{db=e.target.result;cb(db);};
+  r.onerror=()=>setSave('error');
+}
+function idbSet(key,val,cb){
+  openDB(db=>{const tx=db.transaction('data','readwrite');tx.objectStore('data').put(val,key);tx.oncomplete=()=>{if(cb)cb();};});
+}
+function idbGet(key,cb){
+  openDB(db=>{const tx=db.transaction('data','readonly');const r=tx.objectStore('data').get(key);r.onsuccess=e=>cb(e.target.result||null);r.onerror=()=>cb(null);});
+}
+
+function setSave(state){
+  const dot=document.getElementById('saveDot');
+  const msg=document.getElementById('saveMsg');
+  dot.className='save-dot'+(state==='saving'?' saving':state==='error'?' error':'');
+  if(state==='ok')     msg.textContent='✅ Guardado — '+new Date().toLocaleTimeString('es-AR');
+  if(state==='saving') msg.textContent='Guardando...';
+  if(state==='error')  msg.textContent='⚠ Error al guardar. Usá Copiar datos como respaldo.';
+}
+function scheduleSave(){
+  setSave('saving');
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>idbSet('rows',JSON.stringify(rows),()=>setSave('ok')),800);
+}
+
+// ════════════════════════════════════════════
+// BLOQUE 2: MODELO DE DATOS
+// newRow(): crea una fila vacía con todos los campos del registro.
+// IMPORTANTE: cada vez que se agrega un campo nuevo aquí,
+// hay que incrementar la versión de IndexedDB.
+// Campos exportados a Power BI: fecha, prod, cliente, litTot,
+// lote, tipo, litNC, pallets, detec, horas calculadas, est
+// ════════════════════════════════════════════
+function newRow(){
+  return {fecha:'',lote:'',cliente:'',prod:'',tipo:'',sev:'',detec:'',desc:'',litNC:'',litTot:'',ac:'',plazo:'',est:'Pendiente',cierre:'',pallets:'',resp:'',eficacia:'Pendiente'};
+}
+function addRow()  { rows.push(newRow()); render(); scheduleSave(); }
+function delRow()  { if(rows.length>0){ rows.pop(); render(); scheduleSave(); } }
+
+function clearData(){
+  if(!confirm('¿Borrar todos los datos? Esta acción no se puede deshacer.')) return;
+  openDB(db=>{
+    const tx=db.transaction('data','readwrite');
+    tx.objectStore('data').delete('rows');
+    tx.oncomplete=()=>{
+      rows=[]; for(let i=0;i<3;i++) rows.push(newRow());
+      render(); document.getElementById('saveMsg').textContent='Datos borrados.';
+    };
+  });
+}
+
+// ════════════════════════════════════════════
+// BLOQUE 3: RENDER DE LA TABLA
+// render(): reconstruye toda la tabla desde el array rows[].
+// Patrón: borrar tbody → map de rows → appendChild.
+// Cada celda tiene un event handler que llama updRow(i, campo, val)
+// que a su vez llama scheduleSave() para guardar en IndexedDB.
+// ════════════════════════════════════════════
+function render(){
+  const tb=document.getElementById('tBody');
+  tb.innerHTML='';
+  rows.forEach((r,i)=>{
+    const tr=document.createElement('tr');
+    mkTd(tr,'c0',String(i+1),true);
+    mkInp(tr,'c1','date',r.fecha,   v=>{rows[i].fecha=v;  autoCalcPlazo(i);scheduleSave();updateKPIs();});
+    mkInp(tr,'c2','text',r.lote,    v=>{rows[i].lote=v;   scheduleSave();});
+    mkInp(tr,'c3','text',r.prod,    v=>{rows[i].prod=v;   scheduleSave();});
+
+    const tdT=mkTdEl(tr,'c4');
+    const sT=mkSelect(TIPOS.map(t=>({v:t.label,l:t.label||'—'})),r.tipo,e=>{
+      rows[i].tipo=e.target.value;
+      const f=TIPOS.find(t=>t.label===e.target.value);
+      if(f&&f.sev) rows[i].sev=f.sev;
+      render(); scheduleSave(); updateKPIs();
+    });
+    tdT.appendChild(sT);
+
+    const tdG=mkTdEl(tr,'c5');
+    const sG=mkSelect(SEVS.map(s=>({v:s,l:s||'—'})),r.sev,e=>{
+      rows[i].sev=e.target.value; renderSevBadge(tdG,rows[i].sev); scheduleSave(); updateKPIs();
+    });
+    tdG.appendChild(sG);
+    tdG.appendChild(document.createElement('span'));
+    renderSevBadge(tdG,r.sev);
+
+    // DETECCION — alineado con columna DETECCION del Excel de Power BI
+    const DETEC_OPTS = ['','CONTROL LÍNEA','CONTROL FINAL','CONTROL INGRESO'];
+    const tdD=mkTdEl(tr,'c5b');
+    const sD=mkSelect(DETEC_OPTS.map(s=>({v:s,l:s||'—'})),r.detec,e=>{
+      rows[i].detec=e.target.value; scheduleSave();
+    });
+    tdD.appendChild(sD);
+
+    mkInp(tr,'c6','text', r.desc,   v=>{rows[i].desc=v;   scheduleSave();});
+    mkInp(tr,'c7','number',r.litNC, v=>{rows[i].litNC=v;  scheduleSave();updateKPIs();});
+    mkInp(tr,'c8','number',r.litTot,v=>{rows[i].litTot=v; scheduleSave();updateKPIs();});
+    mkInp(tr,'c9','text', r.ac,     v=>{rows[i].ac=v;     scheduleSave();});
+    mkInp(tr,'c10','date',r.plazo,  v=>{rows[i].plazo=v;  scheduleSave();updateKPIs();});
+
+    const tdE=mkTdEl(tr,'c11');
+    const sE=mkSelect(ESTADOS.map(s=>({v:s,l:s})),r.est,e=>{
+      rows[i].est=e.target.value; renderEstBadge(tdE,rows[i].est); scheduleSave(); updateKPIs();
+    });
+    tdE.appendChild(sE);
+    tdE.appendChild(document.createElement('span'));
+    renderEstBadge(tdE,r.est);
+
+    mkInp(tr,'c12','date',r.cierre, v=>{rows[i].cierre=v; scheduleSave();updateKPIs();});
+    mkInp(tr,'c13','number',r.pallets,v=>{rows[i].pallets=v; scheduleSave();updateKPIs();});
+    mkInp(tr,'c14','text',r.resp,    v=>{rows[i].resp=v;    scheduleSave();});
+
+    const tdEf=mkTdEl(tr,'c15');
+    const sEf=mkSelect(EFICACIA.map(s=>({v:s,l:s})),r.eficacia,e=>{
+      rows[i].eficacia=e.target.value; renderEfBadge(tdEf,rows[i].eficacia); scheduleSave();
+    });
+    tdEf.appendChild(sEf);
+    tdEf.appendChild(document.createElement('span'));
+    renderEfBadge(tdEf,r.eficacia);
+
+    tb.appendChild(tr);
+  });
+  updateKPIs();
+}
+
+function mkTdEl(tr,cls){ const el=document.createElement('td');el.className=cls;tr.appendChild(el);return el; }
+function mkTd(tr,cls,text,center){ const el=mkTdEl(tr,cls);el.textContent=text;if(center)el.style.textAlign='center';return el; }
+function mkInp(tr,cls,type,val,cb){
+  const el=mkTdEl(tr,cls);
+  const inp=document.createElement('input');inp.type=type;inp.value=val||'';
+  if(type==='number'){inp.min=0;inp.step='any';}
+  inp.oninput=e=>cb(e.target.value);
+  el.appendChild(inp);
+}
+function mkSelect(opts,val,cb){
+  const s=document.createElement('select');
+  opts.forEach(o=>{const op=document.createElement('option');op.value=o.v;op.textContent=o.l;if(val===o.v)op.selected=true;s.appendChild(op);});
+  s.onchange=cb; return s;
+}
+function renderEfBadge(td,val){
+  let b=td.querySelector('.badge');
+  if(!b){b=document.createElement('span');td.appendChild(b);}
+  b.className='badge '+(EF_BADGES[val]||'b-efpend');
+  b.textContent=val||'Pendiente';
+}
+function renderEstBadge(td,val){
+  let b=td.querySelector('.badge');
+  if(!b){b=document.createElement('span');td.appendChild(b);}
+  b.className='badge '+(BADGES[val]||'b-pend');b.textContent=val||'Pendiente';
+}
+function renderSevBadge(td,val){
+  let b=td.querySelector('.sev-badge');
+  if(!b){b=document.createElement('span');td.appendChild(b);}
+  if(val){b.className='sev-badge '+(SEV_CLS[val]||'');b.textContent=(SEV_ICON[val]||'')+' '+val;}
+  else{b.className='';b.textContent='';}
+}
+function autoCalcPlazo(i){
+  if(!rows[i].fecha) return;
+  const d=new Date(rows[i].fecha);let added=0;
+  while(added<PLAZO_DIAS){d.setDate(d.getDate()+1);if(d.getDay()!==0&&d.getDay()!==6)added++;}
+  rows[i].plazo=d.toISOString().split('T')[0];
+}
+
+// ════════════════════════════════════════════
+// BLOQUE 4: CÁLCULO DE KPIs
+// updateKPIs(): recalcula los 6 indicadores desde el array rows[].
+// AQ-IND-01: count de filas activas
+// AQ-IND-02: suma(litNC) / suma(litTot) × 100
+// AQ-IND-03: tipo con más ocurrencias (mode)
+// AQ-IND-04: % finalizados dentro del plazo
+// AQ-IND-05: suma pallets en estado Pendiente/En proceso
+// AQ-IND-06: suma(pallets × MINS[tipo]) / 60
+// Reglas HH: Bidón/es por inducción=10min | resto=30min
+// ════════════════════════════════════════════
+function updateKPIs(){
+  const a=rows.filter(r=>r.est!=='Anulado');
+  document.getElementById('kpi1').textContent=a.length;
+  const sNC=a.reduce((x,r)=>x+(parseFloat(r.litNC)||0),0);
+  const sT =a.reduce((x,r)=>x+(parseFloat(r.litTot)||0),0);
+  const k2=document.getElementById('kpi2'),k2c=document.getElementById('kpi2-card');
+  if(sT>0){const t=(sNC/sT*100).toFixed(1);k2.textContent=t+'%';k2c.className='kpi-card'+(t>5?' warn':'');}
+  else{k2.textContent='—';k2c.className='kpi-card';}
+  const freq={};a.forEach(r=>{if(r.tipo)freq[r.tipo]=(freq[r.tipo]||0)+1;});
+  const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]);
+  const k3=document.getElementById('kpi3'),k3s=document.getElementById('kpi3-sub');
+  if(sorted.length>0&&a.length>0){
+    const p=(sorted[0][1]/a.length*100).toFixed(0);
+    k3.textContent=sorted[0][0];k3s.textContent=p+'% ('+sorted[0][1]+' eventos)';
+    document.getElementById('kpi3-card').className='kpi-card'+(p>=40?' warn':'');
+  } else{k3.textContent='—';k3s.textContent='sin datos';}
+  const cP=a.filter(r=>r.plazo);
+  const eP=cP.filter(r=>r.est==='Finalizado'&&r.cierre&&r.cierre<=r.plazo);
+  const k4=document.getElementById('kpi4'),k4c=document.getElementById('kpi4-card');
+  if(cP.length>0){const t4=(eP.length/cP.length*100).toFixed(0);k4.textContent=t4+'%';k4c.className='kpi-card'+(t4<90?(t4<70?' warn':' mid'):'');}
+  else{k4.textContent='—';k4c.className='kpi-card';}
+  document.getElementById('sev-leve').textContent=a.filter(r=>r.sev==='Leve').length;
+  document.getElementById('sev-mod').textContent =a.filter(r=>r.sev==='Moderado').length;
+  document.getElementById('sev-crit').textContent=a.filter(r=>r.sev==='Crítico').length;
+
+  // KPI5 — Pallets pendientes de reproceso
+  // KPI6 — Horas·hombre estimadas
+  // Reglas: Pérdida por inducción → 30 min/pallet | Inducción débil → 10 min/pallet
+  // Solo filas con estado Pendiente o En proceso y con pallets > 0
+  // Reglas HH corregidas:
+  // Bidón/es por inducción = trabajo puntual por bidón → 10 min
+  // Todo lo demás (inducción débil, pérdida, pallet chocado, pinchado) → 30 min por pallet
+  const MINS = {
+    'Bidón/es por inducción':       10,
+    'Pérdida por inducción':        30,
+    'Inducción débil':              30,
+    'Pérdida (bidón/es pinchados)': 30,
+    'Palét chocado':                30,
+  };
+  const pendientes = a.filter(r => r.est === 'Pendiente' || r.est === 'En proceso');
+  let totalPallets = 0, totalMins = 0;
+  pendientes.forEach(r => {
+    const p = parseInt(r.pallets) || 0;
+    if(p > 0){
+      totalPallets += p;
+      const mins = MINS[r.tipo] !== undefined ? MINS[r.tipo] : 30; // default 30 min si tipo no mapeado
+      totalMins += p * mins;
+    }
+  });
+  const k5 = document.getElementById('kpi5');
+  const k5s = document.getElementById('kpi5-sub');
+  const k5c = document.getElementById('kpi5-card');
+  if(totalPallets > 0){
+    k5.textContent = totalPallets;
+    k5s.textContent = pendientes.filter(r=>(parseInt(r.pallets)||0)>0).length + ' NC con pallets cargados';
+    k5c.className = 'kpi-card' + (totalPallets >= 10 ? ' warn' : ' mid');
+  } else {
+    k5.textContent = '—';
+    k5s.textContent = 'sin pallets cargados';
+    k5c.className = 'kpi-card';
+  }
+  const k6 = document.getElementById('kpi6');
+  const k6s = document.getElementById('kpi6-sub');
+  const k6c = document.getElementById('kpi6-card');
+  if(totalMins > 0){
+    const hh = (totalMins / 60).toFixed(1);
+    k6.textContent = hh + ' h';
+    k6s.textContent = totalMins + ' min · 30min: ind.débil/pérdida/chocado · 10min: bidón/es';
+    k6c.className = 'kpi-card' + (totalMins >= 120 ? ' warn' : ' mid');
+  } else {
+    k6.textContent = '—';
+    k6s.textContent = '30 min: ind.débil / pérdida / chocado  ·  10 min: bidón/es por inducción';
+    k6c.className = 'kpi-card';
+  }
+}
+
+function copyToClipboard(){
+  const lines=[COLS_HDR.join('\t')];
+  rows.forEach((r,i)=>{
+    const vals=[i+1,r.fecha,r.lote,r.prod,r.tipo,r.sev,r.detec,r.desc,r.litNC,r.litTot,r.ac,r.plazo,r.est,r.cierre,r.pallets,r.resp,r.eficacia];
+    lines.push(vals.map(v=>v||'').join('\t'));
+  });
+  navigator.clipboard.writeText(lines.join('\n'))
+    .then(()=>showToast('✅ Datos copiados — pegá con Ctrl+V en Excel'))
+    .catch(()=>showToast('⚠ No se pudo copiar. Intentá de nuevo.'));
+}
+
+/* ── Exportar .xlsx compatible con el Excel de Power BI de la empresa ──
+   Columnas exactas: FECHA | PRODUCTO | CLIENTE | LITROS | LOTE | MOTIVO | LT REPROCESADOS | MINUTOS | DETECCION | HORAS | Estado
+   Solo se exportan las filas que tienen MOTIVO (tipo de desvío) — las líneas sin NC no se incluyen.
+*/
+// ════════════════════════════════════════════
+// BLOQUE 5: EXPORTACIÓN A EXCEL (Power BI)
+// exportarExcel(): genera un .xlsx con las columnas exactas
+// del Excel de la coordinadora que alimenta Power BI:
+// FECHA|PRODUCTO|CLIENTE|LITROS|LOTE|MOTIVO|
+// LT REPROCESADOS|MINUTOS|DETECCION|HORAS|Estado
+// Solo exporta filas con MOTIVO (tipo de desvío) cargado.
+// Las fechas se convierten a número serial Excel.
+// ════════════════════════════════════════════
+function exportarExcel(){
+  if(typeof XLSX === 'undefined'){
+    showToast('⚠ SheetJS no cargó. Verificá conexión a internet.');
+    return;
+  }
+  // Filas con NC (tienen tipo de desvío cargado)
+  const ncRows = rows.filter(r => r.tipo && r.tipo.trim() !== '');
+  if(ncRows.length === 0){
+    showToast('⚠ No hay filas con tipo de desvío para exportar.');
+    return;
+  }
+
+  // Convertir fecha ISO a número serial Excel (días desde 1900-01-01)
+  function isoToExcelDate(iso){
+    if(!iso) return '';
+    const d = new Date(iso + 'T00:00:00');
+    // Excel serial: days since Dec 30, 1899
+    return Math.floor((d - new Date('1899-12-30T00:00:00')) / 86400000);
+  }
+
+  const wsData = [
+    // Encabezado exacto del Excel de la coordinadora
+    ['FECHA','PRODUCTO','CLIENTE','LITROS','LOTE ','MOTIVO','LT REPROCESADOS','MINUTOS','DETECCION','HORAS','Estado']
+  ];
+
+  ncRows.forEach(r => {
+    const litNC  = parseFloat(r.litNC)  || 0;
+    const litTot = parseFloat(r.litTot) || 0;
+    // MINUTOS: calcular desde litNC y tipo (mismas reglas que AQ-IND-06)
+    const MINS_POR_PALLET = {'Bidón/es por inducción':10,'Pérdida por inducción':30,'Inducción débil':30,'Pérdida (bidón/es pinchados)':30,'Palét chocado':30};
+    const pallets = parseInt(r.pallets) || 0;
+    const minsBase = MINS_POR_PALLET[r.tipo] !== undefined ? MINS_POR_PALLET[r.tipo] : 30;
+    const minutos = pallets > 0 ? pallets * minsBase : null;
+    const horas   = minutos ? +(minutos / 60).toFixed(4) : null;
+
+    wsData.push([
+      isoToExcelDate(r.fecha),   // FECHA — número serial para que Excel la reconozca
+      r.prod  || '',             // PRODUCTO
+      r.cliente || '',           // CLIENTE
+      litTot || '',              // LITROS (litros totales del lote)
+      r.lote  || '',             // LOTE
+      r.tipo  || '',             // MOTIVO
+      litNC   || '',             // LT REPROCESADOS
+      minutos || '',             // MINUTOS
+      r.detec || '',             // DETECCION
+      horas   || '',             // HORAS
+      r.est   || '',             // Estado
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Formato de fecha para columna A (col 0)
+  const fmtFecha = 'DD/MM/YYYY';
+  for(let i = 1; i < wsData.length; i++){
+    const cellAddr = XLSX.utils.encode_cell({r:i, c:0});
+    if(ws[cellAddr]) ws[cellAddr].t = 'n', ws[cellAddr].z = fmtFecha;
+  }
+
+  // Anchos de columna
+  ws['!cols'] = [
+    {wch:12},{wch:28},{wch:14},{wch:10},{wch:16},
+    {wch:26},{wch:16},{wch:10},{wch:16},{wch:8},{wch:12}
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'REGISTRO');
+
+  // Nombre del archivo con mes/año del primer registro
+  const primerFecha = ncRows[0].fecha ? ncRows[0].fecha.substring(0,7).replace('-','_') : 'export';
+  XLSX.writeFile(wb, `Registro_NC_${primerFecha}.xlsx`);
+  showToast(`✅ Exportado: ${ncRows.length} NCs → Registro_NC_${primerFecha}.xlsx`);
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+/* ── Conversión de fechas para impresión ── */
+function fmtDate(iso){
+  if(!iso) return '';
+  const [y,m,d]=iso.split('-');
+  return d+'/'+m+'/'+y;
+}
+window.addEventListener('beforeprint',()=>{
+  document.querySelectorAll('input[type="date"]').forEach(inp=>{
+    const span=document.createElement('span');
+    span.className='print-date';
+    span.textContent=fmtDate(inp.value);
+    inp.style.display='none';
+    inp.parentNode.insertBefore(span,inp.nextSibling);
+  });
+});
+window.addEventListener('afterprint',()=>{
+  document.querySelectorAll('.print-date').forEach(s=>s.remove());
+  document.querySelectorAll('input[type="date"]').forEach(inp=>{
+    inp.style.display='';
+  });
+});
+
+const DATOS_MARZO = [
+  {fecha:'2026-03-05',lote:'MS02-26',  cliente:'AGROFACIL', prod:'LEYCOSATO',         tipo:'Inducción débil',          sev:'Crítico',  detec:'CONTROL FINAL',   desc:'Pallets 11-14 con inducción débil (NC Aduana Nueva)',                              litNC:'1920', litTot:'12480', ac:'Reproceso pallets 11-14',                            plazo:'2026-03-12', est:'Finalizado', cierre:'2026-03-13', pallets:'4',  resp:'', eficacia:'Pendiente'},
+  {fecha:'2026-03-05',lote:'MS02-26',  cliente:'AGROFACIL', prod:'LEYCOSATO',         tipo:'Pérdida por inducción',    sev:'Moderado', detec:'CONTROL FINAL',   desc:'Pallets 1, 5, 7 y 8 con bidón con falla en inducción (NC Aduana Nueva)',         litNC:'1920', litTot:'12480', ac:'Reproceso pallets 1, 5, 7 y 8',                         plazo:'2026-03-12', est:'Finalizado', cierre:'2026-03-13', pallets:'4',  resp:'', eficacia:'Pendiente'},
+  {fecha:'2026-03-07',lote:'AF03-26',  cliente:'AGROFACIL', prod:'CONTROL 2,4D',      tipo:'Tapas incorrectas',        sev:'Crítico',  detec:'CONTROL LÍNEA',   desc:'25 bidones inducidos con tapas amarillas de Sigma (tapa incorrecta)',              litNC:'500',  litTot:'500',   ac:'Reacondicionamiento de lote completo',               plazo:'2026-03-14', est:'Pendiente',  cierre:'',           pallets:'',   resp:'', eficacia:'Pendiente'},
+  {fecha:'2026-03-09',lote:'AF19-26',  cliente:'AGROFACIL', prod:'RINDER',            tipo:'Pérdida por inducción',    sev:'Leve',     detec:'CONTROL LÍNEA',   desc:'Pallet 1 con bidón con falla en inducción. Error en fecha de envasado.',         litNC:'960',  litTot:'12480', ac:'Reemplazo de bidón. Corrección de identificaciones', plazo:'2026-03-18', est:'Finalizado', cierre:'2026-03-13', pallets:'1',  resp:'', eficacia:'Pendiente'},
+  {fecha:'2026-03-09',lote:'AF32-26',  cliente:'AGROFACIL', prod:'2,4D CONTROLER EH', tipo:'Pérdida por inducción',    sev:'Leve',     detec:'CONTROL LÍNEA',   desc:'Bidón con falla en inducción en pallet afectado',                                  litNC:'960',  litTot:'10560', ac:'Reproceso del bidón afectado',                       plazo:'2026-03-18', est:'Pendiente',  cierre:'',           pallets:'1',  resp:'', eficacia:'Pendiente'},
+  {fecha:'2026-03-09',lote:'AF33-26',  cliente:'AGROFACIL', prod:'2,4D CONTROLER EH', tipo:'Inducción débil',          sev:'Crítico',  detec:'CONTROL LÍNEA',   desc:'Pallet 10 con inducción débil',                                                    litNC:'960',  litTot:'10560', ac:'Reproceso de pallet 10',                              plazo:'2026-03-18', est:'Pendiente',  cierre:'',           pallets:'1',  resp:'', eficacia:'Pendiente'},
+  {fecha:'2026-03-09',lote:'INS04-26', cliente:'INSUAGRO',  prod:'BIFENTRIN 10 BAC',  tipo:'Mal estado del packaging', sev:'Leve',     detec:'CONTROL FINAL',   desc:'Pallet 1 sin esquineros, cajas abolladas',                                         litNC:'720',  litTot:'4320',  ac:'Reemplazo de packaging dañado',                      plazo:'2026-03-18', est:'Pendiente',  cierre:'',           pallets:'1',  resp:'', eficacia:'Pendiente'},
+  {fecha:'2026-03-10',lote:'AF20-26',  cliente:'AGROFACIL', prod:'RINDER POTASICO',   tipo:'Trazabilidad errónea',     sev:'Crítico',  detec:'CONTROL INGRESO', desc:'Fecha de identificación incorrecta en 13 pallets rackeados en MP',                 litNC:'20480',litTot:'20480', ac:'Corrección de identificaciones de los 13 pallets',   plazo:'2026-03-19', est:'Finalizado', cierre:'2026-03-12', pallets:'13', resp:'', eficacia:'Pendiente'},
+  {fecha:'2026-03-11',lote:'AF13-26',  cliente:'AGROFACIL', prod:'CONTROL QUAT',      tipo:'Pérdida por inducción',    sev:'Leve',     detec:'CONTROL LÍNEA',   desc:'Pallets 14 y 15 con fallas en inducción',                                         litNC:'960',  litTot:'19920', ac:'Reproceso pallets 14 y 15',                           plazo:'2026-03-20', est:'Finalizado', cierre:'2026-03-13', pallets:'2',  resp:'', eficacia:'Pendiente'},
+  {fecha:'2026-03-11',lote:'AF34-26',  cliente:'AGROFACIL', prod:'2,4D CONTROLER EH', tipo:'Pérdida por inducción',    sev:'Moderado', detec:'CONTROL LÍNEA',   desc:'Pallets 4 y 5 con falla en inducción',                                            litNC:'1920', litTot:'9600',  ac:'Reproceso pallets 4 y 5',                                plazo:'2026-03-20', est:'Finalizado', cierre:'2026-03-13', pallets:'2',  resp:'', eficacia:'Pendiente'},
+  {fecha:'2026-03-12',lote:'AF38-26',  cliente:'AGROFACIL', prod:'2,4D CONTROLER EH', tipo:'Pérdida por inducción',    sev:'Leve',     detec:'CONTROL LÍNEA',   desc:'Pallet 4 con falla en inducción',                                                  litNC:'960',  litTot:'10560', ac:'Reproceso pallet 4',                                  plazo:'2026-03-21', est:'Pendiente',  cierre:'',           pallets:'1',  resp:'', eficacia:'Pendiente'},
+  {fecha:'2026-03-18',lote:'AF-60028', cliente:'ATANOR',    prod:'HERBIFEN ADVANCE',  tipo:'Pérdida por inducción',    sev:'Leve',     detec:'CONTROL LÍNEA',   desc:'Pallet N°37 con falla en inducción',                                               litNC:'960',  litTot:'54720', ac:'Reproceso pallet 37',                                 plazo:'2026-03-27', est:'Pendiente',  cierre:'',           pallets:'1',  resp:'', eficacia:'Pendiente'},
+  {fecha:'2026-03-26',lote:'CAS10-26', cliente:'TRAPALCO',  prod:'CASTER LV',         tipo:'Mal estado del packaging', sev:'Leve',     detec:'CONTROL FINAL',   desc:'Pallet N°4 con bidones abollados',                                                 litNC:'960',  litTot:'11520', ac:'Reemplazo de bidones dañados',                       plazo:'2026-04-04', est:'Pendiente',  cierre:'',           pallets:'1',  resp:'', eficacia:'Pendiente'},
+  {fecha:'2026-03-27',lote:'AF-60034', cliente:'ATANOR',    prod:'HERBIFEN ADVANCE',  tipo:'Pérdida por inducción',    sev:'Moderado', detec:'CONTROL LÍNEA',   desc:'Pallets 9, 10, 11, 22 y 25 con fallas en inducción',                              litNC:'2880', litTot:'21120', ac:'Reproceso de pallets afectados',                      plazo:'2026-04-05', est:'Finalizado', cierre:'2026-03-30', pallets:'5',  resp:'', eficacia:'Pendiente'},
+  {fecha:'2026-03-30',lote:'AF60086',  cliente:'ATANOR',    prod:'HERBIFEN ADVANCE',  tipo:'Pérdida por inducción',    sev:'Leve',     detec:'CONTROL LÍNEA',   desc:'Pallet 4 con falla en inducción',                                                  litNC:'960',  litTot:'8640',  ac:'Reproceso pallet 4',                                 plazo:'2026-04-08', est:'Pendiente',  cierre:'',           pallets:'1',  resp:'', eficacia:'Pendiente'},
+  {fecha:'2026-03-31',lote:'AF60091',  cliente:'ATANOR',    prod:'HERBIFEN ADVANCE',  tipo:'Pérdida por inducción',    sev:'Leve',     detec:'CONTROL LÍNEA',   desc:'Pallet N°10 con fallas en inducción',                                              litNC:'960',  litTot:'11520', ac:'Reproceso pallet 10',                                 plazo:'2026-04-09', est:'Pendiente',  cierre:'',           pallets:'1',  resp:'', eficacia:'Pendiente'},
+  {fecha:'2026-03-31',lote:'AF60092',  cliente:'ATANOR',    prod:'HERBIFEN ADVANCE',  tipo:'Pérdida por inducción',    sev:'Leve',     detec:'CONTROL LÍNEA',   desc:'Pallet N°5 con fallas en inducción',                                               litNC:'960',  litTot:'9600',  ac:'Reproceso pallet 5',                                 plazo:'2026-04-09', est:'Pendiente',  cierre:'',           pallets:'1',  resp:'', eficacia:'Pendiente'},
+];
+
+idbGet('rows',saved=>{
+  if(saved){
+    try{
+      rows=JSON.parse(saved);
+      document.getElementById('saveMsg').textContent='✅ Datos restaurados — '+rows.length+' registro/s';
+    }catch(e){
+      rows=DATOS_MARZO.map(r=>Object.assign(newRow(),r));
+      document.getElementById('saveMsg').textContent='✅ Datos de Marzo 2026 cargados — '+rows.length+' registros';
+    }
+  } else {
+    rows=DATOS_MARZO.map(r=>Object.assign(newRow(),r));
+    document.getElementById('saveMsg').textContent='✅ Datos de Marzo 2026 cargados — '+rows.length+' registros';
+  }
+  render();
+  scheduleSave();
+  // Verificar si hay NC pendientes del REG-01
+  verificarImportPendiente();
+});
+
+// ════════════════════════════════════════════
+// BLOQUE 6: BRIDGE DE COMUNICACIÓN CON REG-01
+// Canal: localStorage clave 'reg01_nc_pendientes'
+// Flujo:
+//   REG-01 guarda payload JSON en localStorage
+//   REG-01 abre esta pestaña
+//   verificarImportPendiente() detecta los datos al cargar
+//   Muestra banner verde con desglose abiertos/corregidos
+//   importarDesdeReg01() agrega las filas y limpia el canal
+// ════════════════════════════════════════════
+// ══ BRIDGE REG-01 → RNC ══
+function verificarImportPendiente(){
+  try{
+    const raw=localStorage.getItem('reg01_nc_pendientes');
+    if(!raw)return;
+    const payload=JSON.parse(raw);
+    if(!payload||!payload.filas||!payload.filas.length)return;
+    const banner=document.getElementById('import-banner');
+    banner.style.display='flex';
+    document.getElementById('import-titulo').textContent=
+      `📥 Desvíos desde REG-01 — ${payload.origen}`;
+    const ab = payload.resumen?.abiertas ?? payload.filas.filter(f=>f.est==='Pendiente').length;
+    const co = payload.resumen?.correccionesLinea ?? payload.filas.filter(f=>f.est==='Finalizado').length;
+    const ts = payload.timestamp?new Date(payload.timestamp).toLocaleString('es-AR'):'';
+    const partes=[];
+    if(ab) partes.push(`⚠ ${ab} NC abierta(s) → estado Pendiente`);
+    if(co) partes.push(`✔ ${co} corrección(es) en línea → estado Finalizado`);
+    document.getElementById('import-detalle').textContent=
+      partes.join('  ·  ')+(ts?'  ·  Generado: '+ts:'');
+  }catch(e){}
+}
+
+function importarDesdeReg01(){
+  try{
+    const raw=localStorage.getItem('reg01_nc_pendientes');
+    if(!raw)return;
+    const payload=JSON.parse(raw);
+    const nuevas=payload.filas.map(f=>{
+      const r=newRow();
+      // Mapear campos del REG-01 al modelo del RNC
+      r.fecha   = f.fecha   || '';
+      r.lote    = f.lote    || '';
+      r.cliente = f.cliente || '';
+      r.prod    = f.prod    || '';
+      r.tipo    = f.tipo    || '';
+      r.sev     = f.sev     || '';
+      r.detec   = f.detec   || '';
+      r.desc    = f.desc    || '';
+      r.litNC   = f.litNC   || '';
+      r.litTot  = f.litTot  || '';
+      r.ac      = f.ac      || '';
+      r.est     = f.est     || 'Pendiente';
+      r.pallets = f.pallets || '';
+      r.resp    = f.resp    || '';
+      r.eficacia= f.eficacia|| 'Pendiente';
+      // Calcular plazo automático (5 días desde fecha detección)
+      // La fecha viene en dd/mm/aaaa — convertir para sumar días
+      if(f.fecha){
+        try{
+          const parts=f.fecha.split('/');
+          if(parts.length===3){
+            const d=new Date(parts[2],parts[1]-1,parseInt(parts[0])+5);
+            r.plazo=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+          }
+        }catch(e){}
+      }
+      return r;
+    });
+    // Agregar al final del registro
+    rows=rows.concat(nuevas);
+    render();
+    scheduleSave();
+    // Limpiar localStorage para que no aparezca de nuevo
+    localStorage.removeItem('reg01_nc_pendientes');
+    document.getElementById('import-banner').style.display='none';
+    showToast(`✅ ${nuevas.length} fila(s) importadas del REG-01`);
+  }catch(e){
+    showToast('⚠ Error al importar. Intentá de nuevo.');
+  }
+}
+
+function descartarImport(){
+  localStorage.removeItem('reg01_nc_pendientes');
+  document.getElementById('import-banner').style.display='none';
+  showToast('Importación descartada');
+}
+</script>
+</body>
+</html>

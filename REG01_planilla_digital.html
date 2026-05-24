@@ -1,0 +1,1970 @@
+<!DOCTYPE html>
+<!--
+╔══════════════════════════════════════════════════════════════════════╗
+║  AGROFACIL S.A. — Sistema de Gestión de Calidad Digital              ║
+║  Archivo : REG01_planilla_digital.html                               ║
+║  Código  : SGC-REG01-APP v4.0                                        ║
+║  Fecha   : Mayo 2026                                                 ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  ESTRUCTURA DEL ARCHIVO (3 bloques en orden):                        ║
+║  1. <style>   — CSS: variables de diseño, layout, componentes        ║
+║  2. <body>    — HTML: estructura visible + modales                   ║
+║  3. <script>  — JS: lógica completa de la aplicación                 ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  ARQUITECTURA:                                                        ║
+║  • SPA offline-first (Single Page Application)                       ║
+║  • Sin frameworks — Vanilla JS puro                                  ║
+║  • Datos en localStorage (configuración) + IndexedDB (lotes)         ║
+║  • PWA instalable desde Android/iOS                                  ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  PARA MODIFICAR:                                                      ║
+║  • Agregar campo → ver función nPL() o nPF() en el bloque JS         ║
+║  • Cambiar colores → variables :root en el bloque CSS                ║
+║  • Agregar inductora → cfg.inductoras[] en el bloque JS              ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  DEPENDENCIAS EXTERNAS (CDN — requiere internet la primera vez):     ║
+║  • JetBrains Mono + Barlow Condensed (Google Fonts)                  ║
+║  • SheetJS 0.18.5 (Cloudflare CDN) — exportar .xlsx                  ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  ARCHIVOS RELACIONADOS (misma carpeta):                              ║
+║  • registro_nc.html — Registro de No Conformidades                   ║
+╚══════════════════════════════════════════════════════════════════════╝
+-->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="REG-01">
+<meta name="theme-color" content="#0f1117">
+<!-- iOS: ícono de la app en la pantalla de inicio -->
+<meta name="apple-touch-icon" content="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%230f1117'/><text x='90' y='125' font-size='90' text-anchor='middle'>📋</text></svg>">
+<!-- iOS: ocultar la barra de dirección al abrir desde pantalla de inicio -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>REG-01 · Control de Calidad</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+
+/* ════════════════════════════════════════════════════════
+   BLOQUE CSS — SISTEMA DE DISEÑO
+   Variables globales usadas en todo el archivo.
+   Para cambiar el tema visual, modificar solo aquí.
+   ════════════════════════════════════════════════════════ */
+:root{
+  --bg:#0f1117;--bg2:#181c27;--bg3:#1e2335;
+  --border:#2a3050;--border2:#3a4570;
+  --accent:#3b82f6;--accent2:#1d4ed8;
+  --green:#22c55e;--green-bg:#052e16;
+  --red:#ef4444;--red-bg:#2d0a0a;
+  --yellow:#f59e0b;--orange:#fb923c;--orange-bg:#431407;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Barlow Condensed',sans-serif;
+  --r:6px;--touch:52px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+/* dvh = dynamic viewport height: se recalcula automáticamente cuando
+   el teclado virtual sube o baja. Soportado desde Chrome 108 (2022).
+   Esto elimina la necesidad de position:fixed, visualViewport JS, y hacks. */
+/* ═══════════════════════════════════════════════════
+   ARQUITECTURA DE VIEWPORT — CRÍTICO PARA ANDROID
+   
+   svh (small viewport height) = altura SIN teclado virtual
+   Cuando el teclado sube, svh se reduce → el contenido
+   sube con él en lugar de quedar tapado.
+   
+   overflow:hidden en html/body evita el scroll del documento
+   raíz — el único scroll permitido es dentro de .lote-view
+   ═══════════════════════════════════════════════════ */
+html,body{overflow:hidden !important;
+  height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  
+  -webkit-overflow-scrolling:touch;   /* scroll suave iOS */
+  overscroll-behavior:none;           /* sin rebote */
+}
+/* position:fixed + inset:0 es el método más robusto.
+   Fija el contenedor al viewport visual real,
+   independientemente de cómo el browser maneje dvh/svh.
+   El 100% de altura lo da inset:0, no height. */
+#app{position:fixed;inset:0;
+  display:flex;
+  flex-direction:column;
+  background:var(--bg);
+}
+
+
+/* ════════════════════════════════════════════════════════
+   COMPONENTES DE LAYOUT
+   Estructura principal: topbar → main → bottombar
+   El scroll ocurre SOLO dentro de .lote-view
+   ════════════════════════════════════════════════════════ */
+/* ── TOP BAR ── */
+#topbar{display:flex;align-items:center;background:var(--bg2);border-bottom:2px solid var(--accent);padding:0 8px;min-height:48px;flex-shrink:0;gap:4px}
+.logo{font-family:var(--sans);font-weight:800;font-size:14px;color:var(--accent);letter-spacing:1px;white-space:nowrap;padding-right:12px;border-right:1px solid var(--border2);margin-right:8px}
+#tabs-wrap{display:flex;gap:4px;overflow-x:auto;flex:1;scrollbar-width:none;padding:6px 0;-webkit-overflow-scrolling:touch}
+#tabs-wrap::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:5px 10px;border-radius:var(--r);background:var(--bg3);border:1px solid var(--border);font-family:var(--mono);font-size:10px;color:var(--text2);cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;transition:.15s}
+.tab.active{background:var(--accent2);border-color:var(--accent);color:#fff;font-weight:700}
+.tab .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.tab .tc{font-size:13px;opacity:.4;margin-left:2px}
+#btn-nl{flex-shrink:0;background:var(--green-bg);border:1px solid var(--green);color:var(--green);font-family:var(--sans);font-weight:700;font-size:12px;padding:7px 12px;border-radius:var(--r);cursor:pointer;white-space:nowrap}
+#btn-nl:active{background:var(--green);color:#000}
+#btn-cfg{flex-shrink:0;background:var(--bg3);border:1px solid var(--border2);color:var(--text3);font-size:17px;width:34px;height:34px;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+/* ── MAIN ── */
+#main{flex:1;overflow:hidden;position:relative;min-height:0}
+
+/* ── EMPTY ── */
+#empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--text3)}
+#empty-state .big{font-size:56px;opacity:.25}
+#empty-state p{font-family:var(--mono);font-size:12px}
+#empty-state button{padding:14px 28px;background:var(--accent2);border:none;border-radius:var(--r);color:#fff;font-family:var(--sans);font-weight:700;font-size:15px;cursor:pointer}
+
+/* ── LOTE VIEW (scrollable) ── */
+.lote-view{
+  position:absolute;
+  inset:0;
+  overflow-y:scroll;
+  overflow-x:hidden;
+  padding:10px;
+  padding-bottom:16px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+}
+/* Todo elemento dentro del área scrolleable permite scroll vertical */
+/* touch-action correcto: pan-y solo en contenedores scrollables,
+   manipulation en botones para que el tap sea instantáneo */
+.lote-view{touch-action:pan-y}
+.dbtn, .btn-ap, .ba, #btn-nl, #btn-cfg{touch-action:manipulation}
+input, textarea, select{touch-action:manipulation}
+
+
+
+
+/* ── Resumen litros CF ── */
+.lts-summary{padding:8px 4px 4px}
+.lts-row-cf{display:flex;align-items:center;gap:10px;flex-wrap:nowrap}
+.lts-calc{display:flex;gap:8px;flex:1;justify-content:flex-end;flex-wrap:wrap}
+.lts-item{display:flex;flex-direction:column;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;min-width:80px}
+.lts-item b{font-family:var(--mono);font-size:13px;color:var(--text)}
+.lts-item span{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;margin-top:2px}
+.lts-item.ok{border-color:var(--green)}
+.lts-item.nok{border-color:var(--red)}
+/* ── Navegación paginada Control en Línea ── */
+.cl-nav{display:flex;align-items:center;justify-content:space-between;padding:10px 4px 6px;gap:8px}
+.cl-nav-btn{background:var(--bg3);border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:13px;font-weight:700;padding:10px 18px;border-radius:var(--r);cursor:pointer;min-height:44px;flex-shrink:0;touch-action:manipulation}
+.cl-nav-btn:disabled{opacity:.3;border-color:var(--border);color:var(--text3);cursor:default}
+.cl-nav-btn:active{background:var(--accent2);color:#fff}
+.cl-nav-info{font-family:var(--mono);font-size:12px;color:var(--text2);text-align:center;flex:1}
+/* ── Tarjetas plegables (Cabecera / Control en Línea / Final) ── */
+/* ── CARD ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:clip}
+.ch{display:flex;align-items:center;justify-content:space-between;padding:0 14px;height:56px;background:var(--bg3);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;-webkit-user-select:none;overflow:hidden}
+.ch-title{font-family:var(--sans);font-weight:700;font-size:13px;letter-spacing:.4px;text-transform:uppercase;color:var(--text2);display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow:hidden;min-width:0}
+.ch-badge{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:20px;background:var(--border);color:var(--text2)}
+.ch-tog{font-size:16px;color:var(--text3);transition:.2s;flex-shrink:0}
+.ch.collapsed .ch-tog{transform:rotate(-90deg)}
+.cb{padding:12px}.cb.collapsed{display:none}
+
+
+/* ── Campos de formulario: labels + inputs + selects ── */
+/* ── FIELDS ── */
+.cab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fg label{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.fg input,.fg select{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:14px;padding:10px 10px;height:var(--touch);width:100%;outline:none;-webkit-appearance:none;transition:.15s}
+.fg input:focus,.fg select:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(59,130,246,.2)}
+.fg select option{background:var(--bg2)}
+
+/* ── TABLA LÍNEA (desktop/landscape) ── */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x;overscroll-behavior-x:contain}
+.lt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px;min-width:1020px}
+.lt th{background:var(--bg3);color:var(--text3);font-size:8.5px;letter-spacing:.5px;text-transform:uppercase;padding:7px 5px;text-align:center;border-bottom:1px solid var(--border2);white-space:nowrap}
+.lt th.gh{color:var(--accent);border-bottom:none;padding-bottom:2px}
+.lt td{border-bottom:1px solid var(--border);padding:3px;vertical-align:middle}
+.lt td.n{color:var(--text3);font-size:10px;text-align:center;width:24px;font-weight:700;padding:0 4px}
+.lt input{background:transparent;border:none;border-radius:3px;color:var(--text);font-family:var(--mono);font-size:11px;padding:5px 4px;width:100%;outline:none;text-align:center;transition:.1s;min-height:32px;touch-action:pan-y}
+.lt input:focus{background:var(--bg3);border:1px solid var(--accent)}
+.lt input.npal{width:44px}.lt input.dinp{width:86px}.lt input.tinp{width:58px}.lt input.ninp{width:62px}
+
+/* ── CARDS MÓVIL (portrait) ── */
+.pallet-cards{display:flex;flex-direction:column;gap:8px}
+.pcard{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:8px;touch-action:manipulation}
+.pcard.nok-card{border-color:var(--red);background:var(--red-bg)}
+.pcard.repro-card{border-color:var(--orange);background:var(--orange-bg)}
+.pcard-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pcard-num{font-family:var(--mono);font-weight:700;font-size:18px;color:var(--accent);width:28px;flex-shrink:0}
+.pcard-npal{font-family:var(--mono);font-size:11px;color:var(--text3)}
+.pcard-row{display:grid;gap:6px}
+.pcard-row.r2{grid-template-columns:1fr 1fr}
+.pcard-row.r4{grid-template-columns:1fr 1fr 1fr 1fr}
+.pf{display:flex;flex-direction:column;gap:3px}
+.pf label{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase}
+.pf input{background:var(--bg2);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-family:var(--mono);font-size:13px;padding:8px 8px;width:100%;outline:none;min-height:40px;text-align:center;-webkit-appearance:none}
+.pf input:focus{border-color:var(--accent)}
+
+
+/* ── Botones de estado OK/NOK/REPRO ── */
+/* ── OK/NOK ── */
+.on{display:flex;gap:3px;justify-content:center;align-items:center}
+.on button{min-width:40px;height:34px;border-radius:4px;border:1px solid var(--border2);font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;background:var(--bg3);color:var(--text3);transition:.1s;flex-shrink:0;padding:0 6px;touch-action:manipulation}
+/* ── Clase helper para touch-action en todos los elementos táctiles ──
+   Reemplaza los 20 estilos inline touch-action:manipulation
+   Se aplica automáticamente a botones y inputs via selector global */
+.on button, .ba, .dbtn, .btn-ap, #btn-nl, #btn-cfg,
+input, textarea, select, button {
+  touch-action:manipulation; /* tap inmediato sin delay 300ms */
+}
+/* Excepciones: elementos que necesitan scroll horizontal */
+.tw { touch-action:pan-x pan-y; }
+.lote-view { touch-action:pan-y; }
+.on button.ok.active{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+.on button.nk.active{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.on button.rp.active{background:var(--orange-bg);border-color:var(--orange);color:var(--orange)}
+.on button:active{opacity:.7}
+
+
+/* ── Indicador visual de tolerancia de inducción ── */
+/* ── SEMÁFORO ── */
+.ind-cell{display:flex;align-items:center;gap:4px}
+.sem{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--border2);transition:.2s}
+.sem.ok{background:var(--green);box-shadow:0 0 5px var(--green)}
+.sem.warn{background:var(--yellow);box-shadow:0 0 5px var(--yellow)}
+.sem.nok{background:var(--red);box-shadow:0 0 5px var(--red)}
+
+/* ── REPRO BADGE ── */
+.repro-badge{display:inline-block;font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--orange-bg);border:1px solid var(--orange);color:var(--orange);letter-spacing:.5px}
+
+/* ── AGREGAR PALLET ── */
+.btn-ap{width:100%;margin-top:6px;padding:11px;background:transparent;border:1px dashed var(--border2);border-radius:var(--r);color:var(--text3);font-family:var(--sans);font-weight:600;font-size:13px;cursor:pointer}
+.btn-ap:active{border-color:var(--accent);color:var(--accent)}
+
+/* ── TABLA FINAL ── */
+.ft{border-collapse:collapse;font-family:var(--mono);font-size:11px;width:100%;min-width:520px}
+.ft th{background:var(--bg3);color:var(--text3);font-size:8.5px;letter-spacing:.5px;text-transform:uppercase;padding:7px 5px;text-align:center;border:1px solid var(--border2)}
+.ft th.gh{color:var(--yellow);border-bottom:none;padding-bottom:2px}
+.ft td{border:1px solid var(--border);padding:3px 5px;text-align:center;vertical-align:middle}
+.ft td.n{color:var(--text3);font-size:10px;width:26px;font-weight:700}
+.ft textarea{background:transparent;border:none;color:var(--text);font-family:var(--mono);font-size:10px;padding:3px;width:100%;resize:none;outline:none;min-height:28px;touch-action:pan-y}
+.ft textarea:focus{background:var(--bg3);border:1px solid var(--yellow);border-radius:2px}
+
+/* ── DICTAMEN ── */
+.drow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border2)}
+.dbtn{padding:14px 8px;border-radius:var(--r);border:2px solid var(--border2);background:var(--bg3);cursor:pointer;font-family:var(--sans);font-weight:800;font-size:16px;letter-spacing:.5px;color:var(--text3);transition:.15s;display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center}
+.dbtn span{font-size:9px;font-weight:400;opacity:.6;letter-spacing:.4px}
+.dbtn.ap.active{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+.dbtn.ret.active{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.dbtn.mail.active{background:rgba(59,130,246,.1);border-color:var(--accent);color:var(--accent)}
+.lts-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px}
+
+
+/* ── Barra de acciones inferior: ISIS / NC / Turno / Guardar / Cerrar ── */
+/* ── BOTTOM BAR ── */
+#bb{background:var(--bg2);border-top:1px solid var(--border2);padding:7px 10px;display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap}
+.ba{padding:9px 10px;border-radius:var(--r);border:none;font-family:var(--sans);font-weight:700;font-size:12px;cursor:pointer;letter-spacing:.4px;white-space:nowrap;transition:.15s;flex:1;text-align:center}
+.ba:active{opacity:.7}
+.ba-isis{background:var(--accent2);color:#fff}
+.ba-nc{background:#7c2d12;border:1px solid #ea580c;color:#fdba74}
+.ba-rep{background:#1e1b4b;border:1px solid #6366f1;color:#a5b4fc}
+.ba-sav{background:var(--bg3);border:1px solid var(--border2);color:var(--text2)}
+.ba-cer{background:#374151;border:1px solid #6b7280;color:#d1d5db;margin-left:auto}
+#sbar{flex:none!important;font-family:var(--mono);font-size:9px;color:var(--text3);display:flex;align-items:center;gap:5px;white-space:nowrap}
+#sdot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── CONFIG INDUCTORAS ── */
+.ind-cfg-row{display:grid;grid-template-columns:1fr 70px 70px 70px 50px;gap:6px;align-items:end;padding:10px 0;border-bottom:1px solid var(--border)}
+.ind-cfg-row:last-child{border-bottom:none}
+.ind-cfg-row label{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px}
+.ind-cfg-row input{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 8px;width:100%;outline:none;height:38px}
+.ind-cfg-row input:focus{border-color:var(--accent)}
+
+
+/* ── Modales: Nuevo lote y Configuración de inductoras ── */
+/* ── MODAL ── */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:flex-end;justify-content:center;z-index:100;padding:0}
+.mo.show{display:flex}
+@media(min-width:600px){.mo{align-items:center;padding:16px}}
+.md{background:var(--bg2);border:1px solid var(--border2);border-radius:12px 12px 0 0;width:100%;max-width:600px;padding:20px;display:flex;flex-direction:column;gap:14px;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+@media(min-width:600px){.md{border-radius:10px;max-height:88vh}}
+.md h2{font-family:var(--sans);font-weight:800;font-size:19px;color:var(--accent);letter-spacing:.5px}
+.mf{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mf .full{grid-column:1/-1}
+.ma{display:flex;gap:8px;justify-content:flex-end;margin-top:4px;padding-bottom:env(safe-area-inset-bottom)}
+.ma button{padding:12px 22px;border-radius:var(--r);border:none;font-family:var(--sans);font-weight:700;font-size:14px;cursor:pointer}
+.btn-ok2{background:var(--accent2);color:#fff}
+.btn-cancel{background:var(--bg3);border:1px solid var(--border2)!important;color:var(--text2)}
+.cfg-help{font-family:var(--mono);font-size:10px;color:var(--text3);line-height:1.7;padding:9px 11px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border)}
+
+
+/* ── Notificación flotante temporal ── */
+/* ── TOAST ── */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:9px 18px;font-family:var(--mono);font-size:11px;color:var(--text);opacity:0;transition:.3s;pointer-events:none;z-index:200;white-space:nowrap;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+
+
+/* ════════════════════════════════════════════════════════
+   RESPONSIVE / BREAKPOINTS
+   ≤900px portrait → tarjetas (celular/tablet vertical)
+   >900px o landscape → tabla (tablet horizontal/desktop)
+   ════════════════════════════════════════════════════════ */
+/* ── RESPONSIVE ── */
+/* Tabla en landscape/desktop, tarjetas en portrait/móvil */
+.show-table{display:block}.show-cards{display:none}
+@media(max-width:900px) and (orientation:portrait){
+  .show-table{display:none!important}
+  .show-cards{display:block!important}
+  .drow,.lts-row{grid-template-columns:1fr}
+  .mf{grid-template-columns:1fr}
+  .ind-cfg-row{grid-template-columns:1fr 60px 60px 60px}
+  #bb{padding:6px 8px}
+  .ba{padding:8px 10px;font-size:11px}
+}
+@media(max-width:500px){
+  .drow,.lts-row{grid-template-columns:1fr}
+  .mf{grid-template-columns:1fr}
+}
+/* ── OVERLAY ROTAR DISPOSITIVO ── */
+#rotate-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);
+  z-index:500;flex-direction:column;align-items:center;justify-content:center;
+  gap:20px;padding:32px;text-align:center
+}
+#rotate-overlay .ri{font-size:60px;animation:rotAnim 2.5s ease-in-out infinite}
+@keyframes rotAnim{0%,100%{transform:rotate(0deg)}40%,60%{transform:rotate(90deg)}}
+#rotate-overlay p{font-family:var(--sans);font-size:18px;color:var(--text);line-height:1.6;max-width:280px}
+#rotate-overlay p strong{color:var(--accent)}
+#rotate-overlay .btn-cont{padding:13px 30px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text2);font-family:var(--sans);font-weight:700;font-size:14px;cursor:pointer;margin-top:6px}
+/* Overlay de rotación desactivado — no bloquear scroll en portrait */
+/* @media(max-width:900px) and (orientation:portrait){#rotate-overlay{display:flex}} */
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+<!-- ════ APP CONTAINER — todo el layout vive aquí ════ -->
+<div id="app">
+  
+    <!-- Barra superior: logo | pestañas de lotes | + Lote | ⚙ -->
+    <div id="topbar">
+    <div class="logo">REG-01</div>
+    <div id="tabs-wrap"></div>
+    <button id="btn-nl" onclick="abrirModalLote()">+ Lote</button>
+    <button id="btn-inst" onclick="instalarPWA()" title="Instalar app" style="display:none;flex-shrink:0;background:#1e3a2e;border:1px solid #22c55e;color:#22c55e;font-size:17px;width:34px;height:34px;border-radius:var(--r);cursor:pointer;align-items:center;justify-content:center">📲</button>
+    <button id="btn-srch" onclick="abrirBusqueda()" title="Buscar lote" style="flex-shrink:0;background:var(--bg3);border:1px solid var(--border2);color:var(--text3);font-size:16px;width:34px;height:34px;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center">🔍</button>
+    <button id="btn-cfg" onclick="abrirCfg()" title="Configurar inductoras">⚙</button>
+  </div>
+  
+  <!-- Área principal: vacío o lote activo se renderiza aquí via JS -->
+  <div id="main"><div id="empty-state">
+    <div class="big">📋</div><p>No hay lotes activos</p>
+    <button onclick="abrirModalLote()">+ Nuevo lote</button>
+  </div></div>
+  
+  <!-- Barra inferior de acciones (oculta cuando no hay lotes) -->
+  <div id="bb" style="display:none">
+    <button class="ba ba-isis" onclick="abrirDictamen()">📋 DICTAMINAR</button>
+    <button class="ba ba-nc"   onclick="acNC()">⚠ Generar NC</button>
+    <button class="ba ba-sav"  onclick="guardarManual()">💾 Guardar</button>
+    <button class="ba" style="background:#1e3a2e;border:1px solid #22c55e;color:#22c55e" onclick="archivarLote()" title="Exportar PDF + JSON para carpeta de lotes cerrados">📁 Archivar</button>
+    <button class="ba ba-cer" id="btn-cerrar" onclick="cerrar()">✕ Cerrar</button>
+    <div id="sbar"><div id="sdot"></div><span id="stxt">OK</span></div>
+  </div>
+</div>
+
+
+<!-- ════ MODALES ════ -->
+<!-- MODAL NUEVO LOTE --><!-- MODAL NUEVO LOTE -->
+<div class="mo" id="mo-lote">
+<div class="md">
+  <h2>Nuevo lote</h2>
+  <div class="mf">
+    <div class="fg full"><label>Producto</label>
+      <input id="ml-prod" type="text" placeholder="Ej: HERBIFEN ADVANCE" style="height:var(--touch)"></div>
+    <div class="fg"><label>N° de Lote</label>
+      <input id="ml-lote" type="text" placeholder="Ej: AF-60091" style="height:var(--touch)"></div>
+    <div class="fg"><label>Cliente</label>
+      <input id="ml-cliente" type="text" placeholder="Ej: ATANOR" style="height:var(--touch)"></div>
+    <div class="fg"><label>Línea / Envasadora</label>
+      <input id="ml-linea" type="text" placeholder="Ej: Línea 2" style="height:var(--touch)"></div>
+    <div class="fg"><label>Inductora</label>
+      <select id="ml-ind" style="height:var(--touch)"></select></div>
+    <div class="fg"><label>Fecha inicio (dd/mm/aaaa)</label>
+      <input id="ml-fecha" type="text" placeholder="dd/mm/aaaa" maxlength="10" style="height:var(--touch)" oninput="mskF(this)"></div>
+    <div class="fg"><label>Pallets esperados</label>
+      <input id="ml-npal" type="number" value="12" min="1" max="50" style="height:var(--touch)"></div>
+  </div>
+  <div class="ma">
+    <button class="btn-cancel" onclick="cerrarMo('mo-lote')">Cancelar</button>
+    <button class="btn-ok2" onclick="confirmarLote()">Crear →</button>
+  </div>
+</div></div>
+
+
+<!-- MODAL CONFIG INDUCTORAS — incluye clave de coordinadora --><!-- MODAL CONFIG INDUCTORAS -->
+<div class="mo" id="mo-cfg">
+<div class="md">
+  <h2>⚙ Inductoras</h2>
+  <div class="cfg-help">Nombre real en planta · Valor de referencia · Tolerancia mínima y máxima · Unidad<br>
+  El semáforo 🟢🟡🔴 se actualiza al tipear el valor en la tabla.</div>
+  <div id="ind-cfg-rows"></div>
+  <div class="ma">
+    <button class="btn-cancel" onclick="cerrarMo('mo-cfg')">Cancelar</button>
+    <button class="btn-ok2" onclick="guardarCfg()">Guardar</button>
+  </div>
+</div></div>
+
+<!-- MODAL DICTAMINAR -->
+<div class="mo" id="mo-dict">
+<div class="md" style="gap:12px">
+  <h2>📋 Dictamen</h2>
+  <div id="dict-resumen" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px"></div>
+  <div style="font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Dictamen</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+    <button onclick="confirmarDictamen('APROBADO')"
+      style="padding:14px 6px;border-radius:var(--r);border:2px solid var(--border2);background:var(--bg3);cursor:pointer;font-family:var(--sans);font-weight:800;font-size:13px;color:var(--text3);display:flex;flex-direction:column;align-items:center;gap:4px"
+      id="dbtn-ap">✅<span style="font-size:10px;font-weight:400">APROBADO</span></button>
+    <button onclick="confirmarDictamen('APROBADO_PARCIAL')"
+      style="padding:14px 6px;border-radius:var(--r);border:2px solid var(--border2);background:var(--bg3);cursor:pointer;font-family:var(--sans);font-weight:800;font-size:13px;color:var(--text3);display:flex;flex-direction:column;align-items:center;gap:4px"
+      id="dbtn-ap2">⚡<span style="font-size:10px;font-weight:400">AP. PARCIAL</span></button>
+    <button onclick="confirmarDictamen('RETENIDO')"
+      style="padding:14px 6px;border-radius:var(--r);border:2px solid var(--border2);background:var(--bg3);cursor:pointer;font-family:var(--sans);font-weight:800;font-size:13px;color:var(--text3);display:flex;flex-direction:column;align-items:center;gap:4px"
+      id="dbtn-ret">🔴<span style="font-size:10px;font-weight:400">RETENIDO</span></button>
+  </div>
+  <div id="dict-fecha" style="font-family:var(--mono);font-size:10px;color:var(--text3);text-align:right"></div>
+  <div class="ma" style="margin-top:0">
+    <button class="btn-cancel" onclick="cerrarMo('mo-dict')">Cerrar</button>
+  </div>
+</div></div>
+
+<!-- MODAL BUSCADOR DE LOTES -->
+<div class="mo" id="mo-srch">
+<div class="md" style="gap:10px">
+  <h2>🔍 Buscar lote</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+    <button id="tbtn-mañana" onclick="renderBusqueda(document.getElementById('srch-inp').value,'mañana')"
+      style="padding:9px 4px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text2);font-family:var(--mono);font-size:10px;cursor:pointer">🌅 Mañana<br><span style="font-size:9px;color:var(--text3)">06–14 h</span></button>
+    <button id="tbtn-tarde" onclick="renderBusqueda(document.getElementById('srch-inp').value,'tarde')"
+      style="padding:9px 4px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text2);font-family:var(--mono);font-size:10px;cursor:pointer">🌆 Tarde<br><span style="font-size:9px;color:var(--text3)">14–22 h</span></button>
+    <button id="tbtn-noche" onclick="renderBusqueda(document.getElementById('srch-inp').value,'noche')"
+      style="padding:9px 4px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text2);font-family:var(--mono);font-size:10px;cursor:pointer">🌙 Noche<br><span style="font-size:9px;color:var(--text3)">22–06 h</span></button>
+  </div>
+  <input id="srch-inp" type="text" placeholder="N° lote, producto o cliente…"
+    style="height:var(--touch);background:var(--bg3);border:1px solid var(--accent);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:15px;padding:0 14px;width:100%;outline:none"
+    oninput="renderBusqueda(this.value)">
+  <div id="srch-results" style="display:flex;flex-direction:column;gap:6px;max-height:48vh;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
+  <div class="ma" style="margin-top:0">
+    <button class="btn-cancel" onclick="cerrarMo('mo-srch')">Cerrar</button>
+  </div>
+</div></div>
+
+<!-- OVERLAY: ROTAR DISPOSITIVO -->
+<div id="rotate-overlay">
+  <div class="ri">📱</div>
+  <p>Para mejor experiencia<br>girá el celular en <strong>horizontal</strong></p>
+  <button class="btn-cont" onclick="document.getElementById('rotate-overlay').style.display='none'">
+    Continuar en vertical
+  </button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+
+// ════════════════════════════════════════════════════════
+// BLOQUE JS 1 — CONFIGURACIÓN DE INDUCTORAS Y PWA
+// cfg: objeto con inductoras (nombre, ref, tolerancias)
+//      y clave de coordinadora para override de cierre.
+// Se persiste en localStorage bajo CFG_KEY.
+// ════════════════════════════════════════════════════════
+// ══ CONFIG ══
+const CFG_KEY='reg01_cfg_v1', LOTES_KEY='reg01_lotes_v3';
+let cfg={inductoras:[
+  {id:'A',nombre:'DCGY-F200',ref:1.2,tolMin:1.0,tolMax:1.4,unidad:''},
+  {id:'B',nombre:'SKYM',ref:1.2,tolMin:1.0,tolMax:1.4,unidad:''},
+  {id:'C',nombre:'ENERCON',ref:1.2,tolMin:1.0,tolMax:1.4,unidad:''},
+  {id:'D',nombre:'INDUSMACH',ref:1.2,tolMin:1.0,tolMax:1.4,unidad:''},
+  {id:'E',nombre:'LB-6000J',ref:1.2,tolMin:1.0,tolMax:1.4,unidad:''},
+], claveCoord:'1234'};
+function cargarCfg(){try{const s=localStorage.getItem(CFG_KEY);if(s){cfg=JSON.parse(s);if(!cfg.inductoras.find(i=>i.id==='E')){cfg.inductoras.push({id:'E',nombre:'LB-6000J',ref:1.2,tolMin:1.0,tolMax:1.4,unidad:''});localStorage.setItem(CFG_KEY,JSON.stringify(cfg));}}}catch(e){}}
+function guardarCfg(){
+  // Guardar nombre del RNC
+  const nombreRNC=(document.getElementById('ci-rnc').value.trim())||'registro_nc.html';
+  localStorage.setItem('reg01_rnc_nombre', nombreRNC);
+  // Guardar clave coordinadora
+  const clave=document.getElementById('ci-clave').value.trim();
+  if(clave) cfg.claveCoord=clave;
+  // Guardar inductoras
+  cfg.inductoras.forEach((ind,i)=>{
+    ind.nombre=(document.getElementById('ci-nom-'+i).value.trim())||ind.nombre;
+    ind.ref=parseFloat(document.getElementById('ci-ref-'+i).value)||0;
+    ind.tolMin=parseFloat(document.getElementById('ci-min-'+i).value)||0;
+    ind.tolMax=parseFloat(document.getElementById('ci-max-'+i).value)||0;
+    ind.unidad=document.getElementById('ci-uni-'+i).value.trim();
+  });
+  localStorage.setItem(CFG_KEY,JSON.stringify(cfg));
+  cerrarMo('mo-cfg');poblarSelectInd();mostrarToast('✔ Inductoras guardadas');
+  if(loteActivo)renderLote();
+}
+function renderCfgPanel(){
+  const nombreActual=localStorage.getItem('reg01_rnc_nombre')||'registro_nc.html';
+  document.getElementById('ind-cfg-rows').innerHTML=`
+    <div style="padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:4px">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">
+        Archivo del Registro de NC (misma carpeta)
+      </div>
+      <div class="ind-cfg-row" style="grid-template-columns:1fr 1fr;border:none;padding:0">
+        <div><label>Nombre del archivo RNC</label>
+          <input id="ci-rnc" type="text" value="${nombreActual}" placeholder="registro_nc.html"></div>
+        <div style="display:flex;align-items:flex-end">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text3);padding:4px 0;line-height:1.5">
+            El botón ⚠ Generar NC abrirá este archivo.<br>
+            Ambos HTML deben estar en la misma carpeta.
+          </div>
+        </div>
+      </div>
+      <div style="height:1px;background:var(--border);margin:10px 0"></div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">
+        Clave de cierre forzado (coordinadora)
+      </div>
+      <div class="ind-cfg-row" style="grid-template-columns:1fr 1fr;border:none;padding:0">
+        <div><label>Clave numérica</label>
+          <input id="ci-clave" type="password" value="${cfg.claveCoord||'1234'}"
+            placeholder="Clave de 4 dígitos"
+            style="letter-spacing:4px;font-size:18px"></div>
+        <div style="display:flex;align-items:flex-end">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text3);padding:4px 0;line-height:1.6">
+            Solo la coordinadora conoce esta clave.<br>
+            Permite cerrar un lote incompleto por excepción.
+          </div>
+        </div>
+      </div>
+    </div>
+  `+cfg.inductoras.map((ind,i)=>`
+    <div class="ind-cfg-row">
+      <div><label>Nombre</label><input id="ci-nom-${i}" type="text" value="${ind.nombre}"></div>
+      <div><label>Ref.</label><input id="ci-ref-${i}" type="number" step="0.01" value="${ind.ref}"></div>
+      <div><label>Tol.mín</label><input id="ci-min-${i}" type="number" step="0.01" value="${ind.tolMin}"></div>
+      <div><label>Tol.máx</label><input id="ci-max-${i}" type="number" step="0.01" value="${ind.tolMax}"></div>
+      <div><label>Unidad</label><input id="ci-uni-${i}" type="text" value="${ind.unidad}" placeholder="°C"></div>
+    </div>`).join('');
+}
+function poblarSelectInd(){
+  const s=document.getElementById('ml-ind');
+  s.innerHTML=cfg.inductoras.map(i=>`<option value="${i.id}">${i.nombre}</option>`).join('');
+}
+
+
+// ════════════════════════════════════════════════════════
+// BLOQUE JS 2 — SEMÁFORO DE INDUCCIÓN
+// Compara el valor ingresado contra la tolerancia.
+// Retorna: "ok" | "warn" (±30% fuera) | "nok" | ""
+// ════════════════════════════════════════════════════════
+// ══ SEMÁFORO ══
+function semaforo(val,indId){
+  const ind=cfg.inductoras.find(i=>i.id===indId);
+  if(!ind||val===''||val===null)return '';
+  const v=parseFloat(val);if(isNaN(v))return '';
+  if(v>=ind.tolMin&&v<=ind.tolMax)return 'ok';
+  const m=(ind.tolMax-ind.tolMin)*0.3;
+  if(v>=ind.tolMin-m&&v<=ind.tolMax+m)return 'warn';
+  return 'nok';
+}
+
+
+// ════════════════════════════════════════════════════════
+// BLOQUE JS 3 — MÁSCARA DE FECHA
+// Formatea automáticamente input de texto a dd/mm/aaaa.
+// Se usa en todos los campos de fecha del sistema.
+// ════════════════════════════════════════════════════════
+// ══ MÁSCARA FECHA dd/mm/aaaa ══
+function mskF(inp){
+  let v=inp.value.replace(/\D/g,'');
+  if(v.length>2)v=v.slice(0,2)+'/'+v.slice(2);
+  if(v.length>5)v=v.slice(0,5)+'/'+v.slice(5,9);
+  inp.value=v;
+}
+
+// ══ MÁSCARA HORA HH:MM (24h) ══
+function mskT(inp){
+  let v=inp.value.replace(/\D/g,'');
+  // Limitar horas 0-23
+  if(v.length>=2){
+    let h=parseInt(v.slice(0,2));
+    if(h>23)v='23'+v.slice(2);
+  }
+  // Limitar minutos 0-59
+  if(v.length>=4){
+    let m=parseInt(v.slice(2,4));
+    if(m>59)v=v.slice(0,2)+'59';
+  }
+  if(v.length>2)v=v.slice(0,2)+':'+v.slice(2,4);
+  inp.value=v;
+}
+
+
+// ════════════════════════════════════════════════════════
+// BLOQUE JS 4 — ESTADO GLOBAL DE LA APLICACIÓN
+// lotes[]: array de objetos lote en memoria RAM.
+// loteActivo: id del lote actualmente visible.
+// pendiente: true cuando hay cambios sin guardar.
+// Persistencia: localStorage (LOTES_KEY).
+// ════════════════════════════════════════════════════════
+// ══ ESTADO ══
+let lotes=[],loteActivo=null,pendiente=false,_resetScroll=false;
+const CL_PAGE_SIZE=3;const clPages={};const CF_PAGE_SIZE=3;const cfPages={};
+function cargarLotes(){try{const s=localStorage.getItem(LOTES_KEY);if(s)lotes=JSON.parse(s);}catch(e){lotes=[];}}
+function guardarLotes(silent=true){
+  try{localStorage.setItem(LOTES_KEY,JSON.stringify(lotes));}catch(e){}
+  pendiente=false;
+  const now=new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('stxt').textContent='Guardado '+now;
+  if(!silent)mostrarToast('💾 Guardado',1400);
+}
+function guardarManual(){guardarLotes(false);}
+function marcarPendiente(){
+  pendiente=true;
+  document.getElementById('stxt').textContent='⚠ Sin guardar';
+  const l=getLote();if(l)l.lastModified=Date.now();
+}
+
+
+// ════════════════════════════════════════════════════════
+// BLOQUE JS 5 — MODELOS DE DATOS
+// nuevoLote(cab, n): crea objeto lote con n pallets vacíos.
+// nPL(num): nuevo pallet de Control en Línea.
+//   Campos: nPal, fecha, hora, p1-p4 (pesos), lote, codProd,
+//           fProd, fVenc, indOK, indVal, repro, obs
+// nPF(): nuevo pallet de Control Final.
+//   Campos: idOK, qrOK, paletOK, indCFOK, indCFVal,
+//           repro, obs
+// IMPORTANTE: al agregar un campo nuevo aquí, también
+// actualizar: render, clipboard, acNC, palletsFaltantes.
+// ════════════════════════════════════════════════════════
+// ══ MODELOS ══
+const EC={activo:'#3b82f6',cerrado:'#6b7280',aprobado:'#22c55e',aprobado_parcial:'#f59e0b',retenido:'#ef4444'};
+function nuevoLote(cab,n){
+  const linea=[],fp=[];
+  linea.push(nPL(1));for(let i=0;i<n;i++){fp.push(nPF());}
+  return{id:Date.now(),estado:'activo',lastModified:Date.now(),cab:{...cab},linea,
+    final:{fecha:'',controlador:'',sector:'',ltsPorPallet:'',pallets:fp,
+           mailEnviado:null,dictamen:null,
+           ltsAprobado:'',ltsRetenido:'',fechaDictamen:'',recepLogistica:''}};
+}
+function nPL(num){return{nPal:String(num),fecha:'',hora:'',p1:'',p2:'',p3:'',p4:'',
+  lote:'',codProd:'',fProd:'',fVenc:'',indOK:null,indVal:'',repro:false,obs:''};}
+function nPF(){return{idOK:null,qrOK:null,paletOK:null,indCFOK:null,indCFVal:'',repro:false,obs:'',litrosParcial:''};}
+function getLote(){return lotes.find(l=>l.id===loteActivo);}
+
+
+// ════════════════════════════════════════════════════════
+// BLOQUE JS 6 — GESTIÓN DE PESTAÑAS
+// Cada lote abierto es una pestaña en la barra superior.
+// renderTabs(): redibuja todas las pestañas.
+// selLote(id): activa un lote y lo muestra.
+// pedirEliminar(id): verifica completitud antes de eliminar.
+//   Si faltan campos en CF → pide clave de coordinadora.
+// ════════════════════════════════════════════════════════
+// ══ TABS ══
+function renderTabs(){
+  const w=document.getElementById('tabs-wrap');w.innerHTML='';
+  lotes.forEach(l=>{
+    const t=document.createElement('div');
+    t.className='tab'+(loteActivo===l.id?' active':'');
+    const falt=palletsFaltantes(l);
+    const lockIcon=l.estado==='activo'&&falt.length>0?'🔒 ':'';
+    t.innerHTML=`<div class="dot" style="background:${EC[l.estado]||'#6b7280'}"></div>
+      <span>${lockIcon}${l.cab.lote||'Sin lote'}</span>
+      <span style="opacity:.5;font-size:9px">${(l.cab.prod||'').slice(0,9)}</span>
+      ${l.estado==='activo'&&falt.length>0
+        ? `<span style="font-size:9px;color:var(--yellow);opacity:.8" title="${falt.length} pallets sin completar en CF">${falt.length}⚠</span>`
+        : ''}
+      <span class="tc" onclick="event.stopPropagation();pedirEliminar(${l.id})">✕</span>`;
+    t.onclick=()=>selLote(l.id);w.appendChild(t);
+  });
+}
+function selLote(id){loteActivo=id;renderTabs();renderLote();document.getElementById('bb').style.display='flex';}
+function pedirEliminar(id){
+  const l=lotes.find(x=>x.id===id);
+  if(!l)return;
+
+  // Si el lote está activo, verificar completitud antes de eliminar
+  if(l.estado==='activo'){
+    const faltantes=palletsFaltantes(l);
+    if(faltantes.length>0){
+      const msg=
+        `⛔ Este lote tiene ${faltantes.length} pallet(s) sin completar en Control Final.\n\n`+
+        `No se puede cerrar ni eliminar hasta que estén todos controlados.\n\n`+
+        `¿Sos la coordinadora y querés forzar la eliminación?`;
+      if(!confirm(msg)) return;
+      const claveIngresada=prompt('🔑 Clave de coordinadora:','');
+      if(claveIngresada===null) return;
+      if(claveIngresada.trim() !== String(cfg.claveCoord||'1234')){
+        alert('❌ Clave incorrecta.');return;
+      }
+    } else {
+      if(!confirm('¿Eliminar este lote del registro local?')) return;
+    }
+  } else {
+    if(!confirm('¿Eliminar este lote del registro local?')) return;
+  }
+
+  lotes=lotes.filter(x=>x.id!==id);guardarLotes();
+  loteActivo=lotes.length?lotes[lotes.length-1].id:null;
+  renderTabs();loteActivo?renderLote():mostrarVacio();
+}
+function mostrarVacio(){
+  document.getElementById('main').innerHTML=`<div id="empty-state"><div class="big">📋</div><p>No hay lotes activos</p><button onclick="abrirModalLote()">+ Nuevo lote</button></div>`;
+  document.getElementById('bb').style.display='none';
+}
+
+
+// ════════════════════════════════════════════════════════
+// BLOQUE JS 7 — MODALES
+// abrirModalLote(): abre formulario de nuevo lote.
+// abrirCfg(): abre configuración de inductoras + clave.
+// cerrarMo(id): cierra modal por ID.
+// confirmarLote(): crea el lote desde el formulario.
+// ════════════════════════════════════════════════════════
+// ══ MODALES ══
+function abrirModalLote(){
+  poblarSelectInd();
+  const hoy=new Date();
+  document.getElementById('ml-fecha').value=`${String(hoy.getDate()).padStart(2,'0')}/${String(hoy.getMonth()+1).padStart(2,'0')}/${hoy.getFullYear()}`;
+  ['prod','lote','cliente','linea'].forEach(k=>document.getElementById('ml-'+k).value='');
+  document.getElementById('ml-npal').value=12;
+  document.getElementById('mo-lote').classList.add('show');
+  setTimeout(()=>document.getElementById('ml-prod').focus(),120);
+}
+function abrirCfg(){renderCfgPanel();document.getElementById('mo-cfg').classList.add('show');}
+function cerrarMo(id){document.getElementById(id).classList.remove('show');}
+
+// ── BUSCADOR DE LOTES ──
+function abrirBusqueda(){
+  document.getElementById('mo-srch').classList.add('show');
+  const inp=document.getElementById('srch-inp');
+  inp.value='';
+  renderBusqueda('');
+  setTimeout(()=>inp.focus(),120);
+}
+function _lotesDelTurno(turno){
+  const ahora=new Date();
+  const hoy=new Date(ahora.getFullYear(),ahora.getMonth(),ahora.getDate());
+  let desde,hasta;
+  if(turno==='mañana'){
+    desde=new Date(hoy);desde.setHours(6,0,0,0);
+    hasta=new Date(hoy);hasta.setHours(14,0,0,0);
+  } else if(turno==='tarde'){
+    desde=new Date(hoy);desde.setHours(14,0,0,0);
+    hasta=new Date(hoy);hasta.setHours(22,0,0,0);
+  } else { // noche: 22h de ayer a 6h de hoy
+    desde=new Date(hoy);desde.setDate(desde.getDate()-1);desde.setHours(22,0,0,0);
+    hasta=new Date(hoy);hasta.setHours(6,0,0,0);
+  }
+  return lotes.filter(l=>{
+    const m=l.lastModified||l.id;
+    return m>=desde.getTime()&&m<=hasta.getTime();
+  });
+}
+function renderBusqueda(q,turno){
+  const res=document.getElementById('srch-results');
+  const txt=(q||'').toLowerCase().trim();
+  const EC_LABEL={activo:'Activo',aprobado:'Aprobado',aprobado_parcial:'Ap. Parcial',retenido:'Retenido',cerrado:'Cerrado'};
+  // Actualizar botones turno activo
+  ['mañana','tarde','noche'].forEach(t=>{
+    const b=document.getElementById('tbtn-'+t);
+    if(b)b.style.background=turno===t?'var(--accent2)':'var(--bg3)';
+  });
+  let lista;
+  if(turno){
+    lista=_lotesDelTurno(turno);
+    if(txt)lista=lista.filter(l=>(l.cab.lote||'').toLowerCase().includes(txt)||(l.cab.prod||'').toLowerCase().includes(txt)||(l.cab.cliente||'').toLowerCase().includes(txt));
+  } else if(txt){
+    lista=lotes.filter(l=>(l.cab.lote||'').toLowerCase().includes(txt)||(l.cab.prod||'').toLowerCase().includes(txt)||(l.cab.cliente||'').toLowerCase().includes(txt));
+  } else {
+    lista=lotes.slice().reverse();
+  }
+  if(!lista.length){
+    res.innerHTML='<div style="font-family:var(--mono);font-size:12px;color:var(--text3);text-align:center;padding:20px">Sin resultados</div>';
+    return;
+  }
+  res.innerHTML=lista.map(l=>{
+    const color=EC[l.estado]||'#6b7280';
+    const estadoLbl=EC_LABEL[l.estado]||l.estado;
+    const falt=l.estado==='activo'?palletsFaltantes(l).length:0;
+    const modStr=l.lastModified?new Date(l.lastModified).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}):'';
+    return `<div onclick="selLote(${l.id});cerrarMo('mo-srch')"
+      style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);cursor:pointer">
+      <div style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-family:var(--mono);font-weight:700;font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.cab.lote||'Sin lote'}</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.cab.prod||'—'}${l.cab.cliente?' · '+l.cab.cliente:''}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">
+        <span style="font-family:var(--mono);font-size:10px;color:${color}">${estadoLbl}</span>
+        ${falt>0?`<span style="font-family:var(--mono);font-size:9px;color:var(--yellow)">${falt} CF⚠</span>`:''}
+        ${modStr?`<span style="font-family:var(--mono);font-size:9px;color:var(--text3)">mod. ${modStr}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function confirmarLote(){
+  const prod=document.getElementById('ml-prod').value.trim();
+  const lote=document.getElementById('ml-lote').value.trim();
+  if(!prod||!lote){alert('Producto y N° de lote son obligatorios.');return;}
+  const cab={prod,lote,
+    cliente:document.getElementById('ml-cliente').value.trim(),
+    linea:document.getElementById('ml-linea').value.trim(),
+    indId:document.getElementById('ml-ind').value,
+    checker:'',
+    fecha:document.getElementById('ml-fecha').value};
+  const np=parseInt(document.getElementById('ml-npal').value)||12;
+  const nuevo=nuevoLote(cab,np);
+  _resetScroll=true;lotes.push(nuevo);guardarLotes();cerrarMo('mo-lote');selLote(nuevo.id);
+}
+
+
+// ════════════════════════════════════════════════════════
+// BLOQUE JS 8 — RENDERIZADO DEL LOTE ACTIVO
+// renderLote(): redibuja las 3 cards del lote.
+//   Preserva la posición de scroll antes de redibujar.
+// mkCabecera(l): card con datos del lote.
+// mkLinea(l): card con control en línea.
+//   En portrait (≤900px) → tarjetas .pcard apiladas.
+//   En landscape (>900px) → tabla .lt con scroll horizontal.
+// mkFinal(l): card con control final.
+//   Siempre usa tarjetas .pcard (más táctil que tabla).
+// PATRÓN: evento oninput → updX() → marcarPendiente()
+//         eventos que cambian UI → renderLote() completo
+// ════════════════════════════════════════════════════════
+// ══ RENDER LOTE ══
+function renderLote(){
+  const l=getLote();if(!l)return;
+  // Guardar posición de scroll antes de reconstruir el DOM
+  const oldView=document.querySelector('.lote-view');
+  const savedScroll=(_resetScroll||!oldView)?0:oldView.scrollTop;_resetScroll=false;
+
+  if(document.activeElement&&document.activeElement!==document.body)document.activeElement.blur();
+  const main=document.getElementById('main');main.innerHTML='';
+  const view=document.createElement('div');view.className='lote-view';
+  view.appendChild(mkCabecera(l));
+  view.appendChild(mkLinea(l));
+  view.appendChild(mkFinal(l));
+  main.appendChild(view);
+
+  // ── Scroll manual Android: intercepta touchmove y mueve scrollTop directo ──
+  let _ty=0,_ty0=0,_scrolling=false;
+  view.addEventListener('touchstart',e=>{_ty=_ty0=e.touches[0].clientY;_scrolling=true;},{passive:true});
+  view.addEventListener('touchmove',e=>{
+    if(!_scrolling)return;
+    if(Math.abs(e.touches[0].clientY-_ty0)<4)return;
+    const delta=_ty-e.touches[0].clientY;_ty=e.touches[0].clientY;
+    view.scrollBy(0,delta);
+  },{passive:true});
+  view.addEventListener('touchend',()=>{_scrolling=false;},{passive:true});
+
+  // Restaurar posición de scroll — triple rAF + setTimeout por si el browser hace scroll tardío
+  const _rs=()=>{ if(view.isConnected)view.scrollTop=savedScroll; };
+  requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(_rs)));
+  setTimeout(_rs,80);
+  requestAnimationFrame(()=>actualizarISISBtn());
+  // Actualizar botón cerrar con estado de completitud
+  const btnCer=document.getElementById('btn-cerrar');
+  if(btnCer&&l.estado==='activo'){
+    const falt=palletsFaltantes(l);
+    if(falt.length>0){
+      btnCer.textContent=`🔒 Cerrar (${falt.length} CF)`;
+      btnCer.title=`${falt.length} pallet(s) sin completar en Control Final`;
+      btnCer.style.opacity='0.6';
+    } else {
+      btnCer.textContent='✕ Cerrar';
+      btnCer.title='';
+      btnCer.style.opacity='1';
+    }
+  }
+}
+
+// ── Cabecera ──
+function mkCabecera(l){
+  const ind=cfg.inductoras.find(i=>i.id===l.cab.indId)||{};
+  const rango=ind.tolMin!=null?`${ind.tolMin}–${ind.tolMax}${ind.unidad?' '+ind.unidad:''}  ref:${ind.ref}`:'Configurar en ⚙';
+  const c=document.createElement('div');c.className='card';
+  c.innerHTML=`<div class="ch" onclick="toggleCard(this)">
+    <div class="ch-title">📦 Producto
+      <span class="ch-badge">${l.cab.lote}</span>
+      <span class="ch-badge" style="background:${EC[l.estado]}22;color:${EC[l.estado]}">${l.estado.toUpperCase()}</span>
+    </div><span class="ch-tog">▾</span></div>
+  <div class="cb"><div class="cab-grid">
+    ${fgH('Producto','cab-prod',l.cab.prod,'text')}
+    ${fgH('N° de Lote','cab-lote',l.cab.lote,'text')}
+    ${fgH('Cliente','cab-cliente',l.cab.cliente,'text')}
+    ${fgH('Línea','cab-linea',l.cab.linea,'text')}
+    ${fgH('Fecha (dd/mm/aaaa)','cab-fecha',l.cab.fecha,'text','mskF(this)')}
+    <div class="fg"><label>Inductora</label>
+      <select id="cab-indId" style="height:var(--touch)" onchange="updCab('indId',this.value);renderLote()">
+        ${cfg.inductoras.map(i=>`<option value="${i.id}" ${l.cab.indId===i.id?'selected':''}>${i.nombre}</option>`).join('')}
+      </select></div>
+    <div class="fg"><label>Rango aceptable</label>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--yellow);padding:0 10px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);height:var(--touch);display:flex;align-items:center">${rango}</div>
+    </div>
+  </div></div>`;
+  setTimeout(()=>{
+    ['prod','lote','cliente','linea','fecha'].forEach(k=>{
+      const el=document.getElementById('cab-'+k);
+      if(el)el.oninput=()=>updCab(k,el.value);
+    });
+  },0);
+  return c;
+}
+function fgH(label,id,val,type,extra=''){
+  return `<div class="fg"><label>${label}</label>
+    <input id="${id}" type="${type}" value="${val||''}" style="height:var(--touch)"
+    ${extra?'oninput="'+extra+'"':''} oninput="updCab('${id.replace('cab-','')}',this.value);${extra}"></div>`;
+}
+function updCab(k,v){const l=getLote();if(!l)return;l.cab[k]=v;renderTabs();marcarPendiente();}
+
+// ── Control en Línea — detectar portrait vs landscape ──
+function esMobPortrait(){return window.innerWidth<=900&&window.innerHeight>window.innerWidth;}
+
+function getClPage(loteId){
+  const l=lotes.find(x=>x.id===loteId);if(!l)return 0;
+  const pages=Math.ceil(l.linea.length/CL_PAGE_SIZE);
+  return Math.min(clPages[loteId]||0,Math.max(0,pages-1));
+}
+function setClPage(loteId,page){
+  loteId=Number(loteId);
+  const l=lotes.find(x=>x.id===loteId);if(!l)return;
+  const pages=Math.ceil(l.linea.length/CL_PAGE_SIZE);
+  clPages[loteId]=Math.max(0,Math.min(page,pages-1));
+  const lv=document.querySelector('.lote-view');
+  const clCard=[...document.querySelectorAll('.lote-view > .card')][1]; // CL es la segunda card
+  const clTop=clCard&&lv?clCard.getBoundingClientRect().top-lv.getBoundingClientRect().top+lv.scrollTop+56:0;
+  if(document.activeElement)document.activeElement.blur();
+  renderLote();
+  const _go=()=>{const v=document.querySelector('.lote-view');if(v)v.scrollTop=clTop;};
+  requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(_go)));
+  setTimeout(_go,80);
+}
+function mkLinea(l){
+  const ind=cfg.inductoras.find(i=>i.id===l.cab.indId)||{nombre:'Inductora',unidad:''};
+  const indLbl=`${ind.nombre}${ind.unidad?' ('+ind.unidad+')':''}`;
+  const c=document.createElement('div');c.className='card';
+
+  const nokCount=l.linea.filter(p=>p.indOK===false).length;
+  const reproCount=l.linea.filter(p=>p.repro).length;
+
+  // ── Paginación (compartida por tabla y tarjetas) ──
+  const _page=getClPage(l.id);
+  const _total=l.linea.length;
+  const _totalPages=Math.ceil(_total/CL_PAGE_SIZE);
+  const _start=_page*CL_PAGE_SIZE;
+  const _end=Math.min(_start+CL_PAGE_SIZE,_total);
+
+  // ── Tabla (landscape/desktop) — misma página que tarjetas ──
+  const rows=l.linea.slice(_start,_end).map((p,ri)=>{
+    const i=_start+ri;
+    const s=semaforo(p.indVal,l.cab.indId);
+    const rowStyle=p.indOK===false&&!p.repro?'background:rgba(239,68,68,.06)':p.repro?'background:rgba(251,146,60,.06)':'';
+    const vacio=!p.fecha&&!p.hora&&!p.lote&&p.indOK===null?'pal-vacio':'';
+    return `<tr class="${vacio}" style="${rowStyle}">
+      <td class="n">${i+1}</td>
+      <td><input class="npal" type="text" value="${p.nPal||''}" placeholder="${i+1}" oninput="updL(${i},'nPal',this.value)" style="width:40px"></td>
+      <td><input class="dinp" type="text" value="${p.fecha||''}" placeholder="dd/mm/aa" maxlength="10" oninput="mskF(this);updL(${i},'fecha',this.value)" style="width:84px"></td>
+      <td><input class="tinp" type="text" value="${p.hora||''}" placeholder="HH:MM" maxlength="5" oninput="mskT(this);updL(${i},'hora',this.value)" style="width:58px;text-align:center"></td>
+      <td><input class="ninp" type="number" step="0.01" value="${p.p1||''}" placeholder="—" oninput="updL(${i},'p1',this.value)"></td>
+      <td><input class="ninp" type="number" step="0.01" value="${p.p2||''}" placeholder="—" oninput="updL(${i},'p2',this.value)"></td>
+      <td><input class="ninp" type="number" step="0.01" value="${p.p3||''}" placeholder="—" oninput="updL(${i},'p3',this.value)"></td>
+      <td><input class="ninp" type="number" step="0.01" value="${p.p4||''}" placeholder="—" oninput="updL(${i},'p4',this.value)"></td>
+      <td><input type="text" value="${p.lote||''}" placeholder="—" oninput="updL(${i},'lote',this.value)" style="min-width:80px"></td>
+      <td><input type="text" value="${p.codProd||''}" placeholder="—" oninput="updL(${i},'codProd',this.value)" style="min-width:60px"></td>
+      <td><input class="dinp" type="text" value="${p.fProd||''}" placeholder="dd/mm/aa" maxlength="10" oninput="mskF(this);updL(${i},'fProd',this.value)" style="width:84px"></td>
+      <td><input class="dinp" type="text" value="${p.fVenc||''}" placeholder="dd/mm/aa" maxlength="10" oninput="mskF(this);updL(${i},'fVenc',this.value)" style="width:84px"></td>
+      <td><div class="on">
+        <button class="ok ${p.indOK===true?'active':''}"  onclick="setIO(${i},true)">OK</button>
+        <button class="nk ${p.indOK===false?'active':''}" onclick="setIO(${i},false)">NOK</button>
+        ${p.indOK===false?`<button class="rp ${p.repro?'active':''}" onclick="setRepro(${i})" title="Reprocesado">REPRO</button>`:''}
+      </div></td>
+      <td><div class="ind-cell">
+        <input type="number" step="0.01" value="${p.indVal||''}" placeholder="—" style="width:62px!important"
+          oninput="updLSem(${i},'indVal',this.value,this)">
+        <div class="sem ${s}" id="sem-${i}"></div>
+      </div></td>
+      <td><input type="text" value="${p.obs||''}" placeholder="Observaciones…" oninput="updL(${i},'obs',this.value)" style="min-width:120px"></td>
+    </tr>`;
+  }).join('');
+
+  // ── Tarjetas paginadas (portrait móvil) ──
+  const cards=l.linea.slice(_start,_end).map((p,ri)=>{
+  const i=_start+ri;
+    const s=semaforo(p.indVal,l.cab.indId);
+    const cardCls=p.indOK===false&&!p.repro?'pcard nok-card':p.repro?'pcard repro-card':'pcard';
+    return `<div class="${cardCls}" id="cl-pallet-${i}">
+      <div class="pcard-header">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="pcard-num">#${i+1}</span>
+          <div class="pf" style="min-width:0">
+            <label>Pallet N°</label>
+            <input type="text" value="${p.nPal||''}" placeholder="${i+1}"
+              style="width:60px;min-height:36px;font-size:16px;font-weight:700;color:var(--accent)"
+              oninput="updL(${i},'nPal',this.value)">
+          </div>
+        </div>
+        <div class="on">
+          <button class="ok ${p.indOK===true?'active':''}"  onclick="setIO(${i},true)">OK</button>
+          <button class="nk ${p.indOK===false?'active':''}" onclick="setIO(${i},false)">NOK</button>
+          ${p.indOK===false?`<button class="rp ${p.repro?'active':''}" onclick="setRepro(${i})">REPRO</button>`:''}
+        </div>
+      </div>
+      ${p.repro?'<span class="repro-badge">✓ REPROCESADO</span>':''}
+      <div class="pcard-row r2">
+        <div class="pf"><label>Fecha</label>
+          <input type="text" value="${p.fecha||''}" placeholder="dd/mm/aaaa" maxlength="10"
+            oninput="mskF(this);updL(${i},'fecha',this.value)"></div>
+        <div class="pf"><label>Hora</label>
+          <input type="text" value="${p.hora||''}" placeholder="HH:MM" maxlength="5"
+            oninput="mskT(this);updL(${i},'hora',this.value)"
+            style="text-align:center"></div>
+      </div>
+      <div class="pcard-row r4">
+        <div class="pf"><label>Pico 1</label><input type="number" step="0.01" value="${p.p1||''}" placeholder="—" oninput="updL(${i},'p1',this.value)"></div>
+        <div class="pf"><label>Pico 2</label><input type="number" step="0.01" value="${p.p2||''}" placeholder="—" oninput="updL(${i},'p2',this.value)"></div>
+        <div class="pf"><label>Pico 3</label><input type="number" step="0.01" value="${p.p3||''}" placeholder="—" oninput="updL(${i},'p3',this.value)"></div>
+        <div class="pf"><label>Pico 4</label><input type="number" step="0.01" value="${p.p4||''}" placeholder="—" oninput="updL(${i},'p4',this.value)"></div>
+      </div>
+      <div class="pcard-row r2">
+        <div class="pf"><label>N° Lote</label><input type="text" value="${p.lote||''}" placeholder="—" oninput="updL(${i},'lote',this.value)"></div>
+        <div class="pf"><label>Cód Prod</label><input type="text" value="${p.codProd||''}" placeholder="—" oninput="updL(${i},'codProd',this.value)"></div>
+      </div>
+      <div class="pcard-row r2">
+        <div class="pf"><label>F. Producción</label><input type="text" value="${p.fProd||''}" placeholder="dd/mm/aaaa" maxlength="10" oninput="mskF(this);updL(${i},'fProd',this.value)"></div>
+        <div class="pf"><label>F. Vencimiento</label><input type="text" value="${p.fVenc||''}" placeholder="dd/mm/aaaa" maxlength="10" oninput="mskF(this);updL(${i},'fVenc',this.value)"></div>
+      </div>
+      <div class="pf"><label>${indLbl} <span class="sem ${s}" style="display:inline-block;margin-left:6px"></span></label>
+        <input type="number" step="0.01" value="${p.indVal||''}" placeholder="Valor inducción"
+          oninput="updLSem(${i},'indVal',this.value,this)"></div>
+      <div class="pf"><label>Observaciones</label>
+        <input type="text" value="${p.obs||''}" placeholder="…" oninput="updL(${i},'obs',this.value)"></div>
+    </div>`;
+  }).join('');
+
+  // ── Nav paginación ──
+  const clNav=_totalPages>1?`
+  <div class="cl-nav">
+    <button class="cl-nav-btn" onclick="setClPage(${l.id},${_page-1})" ${_page===0?'disabled':''}>← Ant</button>
+    <span class="cl-nav-info">Pallets ${_start+1}–${_end} de ${_total}</span>
+    <button class="cl-nav-btn" onclick="setClPage(${l.id},${_page+1})" ${_page===_totalPages-1?'disabled':''}>Sig →</button>
+  </div>`:'';
+
+  c.innerHTML=`<div class="ch" onclick="toggleCard(this)">
+    <div class="ch-title">🔬 Control en Línea
+      <span class="ch-badge">${l.linea.length} pallets</span>
+      ${nokCount?`<span class="ch-badge" style="background:var(--red-bg);color:var(--red)">${nokCount} NOK</span>`:''}
+      ${reproCount?`<span class="ch-badge" style="background:var(--orange-bg);color:var(--orange)">${reproCount} REPRO</span>`:''}
+      <span class="ch-badge" style="color:var(--yellow)">${ind.nombre}</span>
+    </div><span class="ch-tog">▾</span></div>
+  <div class="cb">
+    <div class="show-table"><div class="tw">
+      <table class="lt"><thead>
+        <tr>
+          <th rowspan="2" style="width:24px">#</th>
+          <th rowspan="2" style="width:44px">N°<br>Pallet</th>
+          <th rowspan="2" style="width:88px">Fecha</th>
+          <th rowspan="2" style="width:60px">Hora</th>
+          <th colspan="4" class="gh">PESO POR PICO (kg)</th>
+          <th colspan="4" class="gh">IDENTIFICACIÓN Y TRAZABILIDAD</th>
+          <th colspan="2" class="gh">INDUCCIÓN</th>
+          <th rowspan="2">Observaciones</th>
+        </tr>
+        <tr>
+          <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
+          <th>N° Lote</th><th>Cód Prod</th><th>F.Prod.</th><th>F.Venc.</th>
+          <th>OK/NOK/REPRO</th><th>${indLbl}</th>
+        </tr>
+      </thead><tbody>${rows}</tbody></table>
+    </div></div>
+    ${clNav}
+    <div class="show-cards pallet-cards">${cards}</div>
+    <button class="btn-ap" onclick="addPallet()">+ Agregar pallet</button>
+  </div>`;
+  return c;
+}
+
+function updL(i,k,v){const l=getLote();if(!l)return;l.linea[i][k]=v;marcarPendiente();}
+function updLSem(i,k,v,inp){
+  const l=getLote();if(!l)return;l.linea[i][k]=v;marcarPendiente();
+  // Actualizar semáforo de tabla
+  const s=document.getElementById('sem-'+i);
+  if(s)s.className='sem '+semaforo(v,l.cab.indId);
+}
+// ── patchCLCard: actualiza una tarjeta CL individual sin llamar renderLote() ──
+function patchCLCard(i){
+  const l=getLote();if(!l)return;
+  const p=l.linea[i];
+  const card=document.getElementById('cl-pallet-'+i);
+  if(!card){renderLote();return;}
+  const tieneNOK=p.indOK===false;
+  // Clase del card
+  card.className=tieneNOK&&!p.repro?'pcard nok-card':p.repro?'pcard repro-card':'pcard';
+  card.id='cl-pallet-'+i; // preservar id
+  // Botones OK/NOK
+  const okBtn=card.querySelector('.ok');
+  const nokBtn=card.querySelector('.nk');
+  if(okBtn)okBtn.classList.toggle('active',p.indOK===true);
+  if(nokBtn)nokBtn.classList.toggle('active',p.indOK===false);
+  // REPRO button
+  const onDiv=card.querySelector('.on');
+  if(onDiv){
+    const existingRepro=onDiv.querySelector('.rp');
+    if(existingRepro)existingRepro.remove();
+    if(p.indOK===false){
+      const rp=document.createElement('button');
+      rp.className='rp'+(p.repro?' active':'');
+      rp.setAttribute('onclick','setRepro('+i+')');
+      rp.title='Reprocesado';
+      rp.textContent='REPRO';
+      onDiv.appendChild(rp);
+    }
+  }
+  // Repro badge
+  let badge=card.querySelector('.repro-badge');
+  if(p.repro&&!badge){
+    badge=document.createElement('span');
+    badge.className='repro-badge';
+    badge.textContent='✓ REPROCESADO';
+    const header=card.querySelector('.pcard-header');
+    if(header)header.insertAdjacentElement('afterend',badge);
+  } else if(!p.repro&&badge){
+    badge.remove();
+  }
+}
+function setIO(i,v){
+  const l=getLote();if(!l)return;
+  l.linea[i].indOK=l.linea[i].indOK===v?null:v;
+  if(v===true)l.linea[i].repro=false;
+  marcarPendiente();
+  patchCLCard(i);
+}
+function setRepro(i){
+  const l=getLote();if(!l)return;
+  l.linea[i].repro=!l.linea[i].repro;
+  marcarPendiente();
+  patchCLCard(i);
+}
+function addPallet(){
+  const l=getLote();if(!l)return;
+  l.linea.push(nPL(l.linea.length+1));
+  if(l.linea.length>l.final.pallets.length)l.final.pallets.push(nPF());
+  marcarPendiente();
+  clPages[l.id]=Math.ceil(l.linea.length/CL_PAGE_SIZE)-1;
+  renderLote();
+  // Scroll al pallet nuevo después del render
+  setTimeout(()=>{
+    const newCard=document.getElementById('cl-pallet-'+(l.linea.length-1));
+    if(newCard)newCard.scrollIntoView({behavior:'smooth',block:'nearest'});
+  },150);
+}
+function addPalletCF(){
+  const l=getLote();if(!l)return;
+  l.final.pallets.push(nPF());
+  marcarPendiente();
+  cfPages[l.id]=Math.ceil(l.final.pallets.length/CF_PAGE_SIZE)-1;
+  // Actualizar DOM parcial sin renderLote
+  const cardsDiv=document.getElementById('cf-cards-div');
+  const navDiv=document.getElementById('cf-nav-div');
+  if(!cardsDiv){renderLote();return;}
+  cardsDiv.innerHTML=buildCFCardsHTML(l);
+  if(navDiv)navDiv.innerHTML=buildCFNavHTML(l);
+  actualizarLitrosCF();
+  // Scroll al nuevo pallet
+  setTimeout(()=>{
+    const newCard=document.getElementById('cf-pallet-'+(l.final.pallets.length-1));
+    if(newCard)newCard.scrollIntoView({behavior:'smooth',block:'nearest'});
+  },50);
+}
+function deletePalletCF(i){
+  const l=getLote();if(!l)return;
+  if(!confirm('¿Eliminar pallet CF #'+(i+1)+'?'))return;
+  l.final.pallets.splice(i,1);
+  marcarPendiente();
+  // Ajustar página si quedó vacía
+  const totalPages=Math.max(1,Math.ceil(l.final.pallets.length/CF_PAGE_SIZE));
+  cfPages[l.id]=Math.min(cfPages[l.id]||0,totalPages-1);
+  // Actualizar DOM parcial
+  const cardsDiv=document.getElementById('cf-cards-div');
+  const navDiv=document.getElementById('cf-nav-div');
+  if(!cardsDiv){renderLote();return;}
+  cardsDiv.innerHTML=buildCFCardsHTML(l);
+  if(navDiv)navDiv.innerHTML=buildCFNavHTML(l);
+  actualizarLitrosCF();
+}
+
+
+// ── Cálculo litros CF ──
+function calcLitrosCF(l){
+  const lpp=parseFloat(l.final.ltsPorPallet)||0;
+  let ltsAp=0,ltsRet=0,aprobados=0,retenidos=0,pendientes=0;
+  const anyLts=lpp>0||l.final.pallets.some(p=>parseFloat(p.litrosParcial)>0);
+  l.final.pallets.forEach(p=>{
+    const ok=p.idOK===true&&p.qrOK===true&&p.paletOK===true&&p.indCFOK===true;
+    const nok=p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false;
+    const lts=parseFloat(p.litrosParcial)||lpp; // parcial si existe, si no ltsPorPallet
+    if(ok||(nok&&p.repro)){aprobados++;ltsAp+=lts;}
+    else if(nok&&!p.repro){retenidos++;ltsRet+=lts;}
+    else pendientes++;
+  });
+  return {aprobados,retenidos,pendientes,
+    ltsAp:anyLts?ltsAp:null,
+    ltsRet:anyLts?ltsRet:null};
+}
+
+// ── Generadores HTML para paginación CF (usados en mkFinal y setCFPage) ──
+function buildCFCardsHTML(l){
+  const f=l.final;
+  const _cfPage=getCFPage(l.id);
+  const _cfTotal=f.pallets.length;
+  const _cfStart=_cfPage*CF_PAGE_SIZE;
+  const _cfEnd=Math.min(_cfStart+CF_PAGE_SIZE,_cfTotal);
+  return f.pallets.slice(_cfStart,_cfEnd).map(function(p,ri){
+    const i=_cfStart+ri;
+    const tieneNOK=p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false;
+    const vacio=p.idOK===null&&p.qrOK===null&&p.paletOK===null&&p.indCFOK===null?'pal-vacio':'';
+    const cardCls=(tieneNOK&&!p.repro?'pcard nok-card':p.repro?'pcard repro-card':'pcard')+' '+vacio;
+    const semCF=semaforo(p.indCFVal||'',l.cab.indId);
+    function btn(fk,isOk){
+      const cls=(isOk?'ok':'nk')+(p[fk]===(isOk?true:false)?' active':'');
+      const ev="setFF("+i+",'"+fk+"',"+(isOk?'true':'false')+")";
+      const lbl=isOk?'&#10004; OK':'&#10008; NOK';
+      return '<button class="'+cls+'" onclick="'+ev+'" style="flex:1;height:48px;font-size:13px">'+lbl+'</button>';
+    }
+    const reproBtn=tieneNOK
+      ?'<button class="on rp '+(p.repro?'active':'')+'" onclick="setFFRepro('+i+')" style="height:36px;padding:0 10px;border-radius:4px;border:1px solid var(--border2);font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;background:var(--bg3);color:var(--text3)">REPRO</button>'
+      :'';
+    const reproBadge=p.repro?'<span class="repro-badge">&#10003;</span>':'';
+    const row=function(label,fk,extra){
+      return '<div>'
+        +'<div style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">'+(label)+(extra||'')+'</div>'
+        +'<div class="on" style="gap:8px">'+btn(fk,true)+btn(fk,false)+'</div>'
+        +'</div>';
+    };
+    return '<div class="'+cardCls+'" id="cf-pallet-'+i+'">'
+      +'<div class="pcard-header">'
+        +'<span class="pcard-num">#'+(i+1)+'</span>'
+        +'<span style="font-family:var(--mono);font-size:11px;color:var(--text3)">Pallet '+(p.nPal||i+1)+'</span>'
+        +'<div style="display:flex;gap:6px;align-items:center;margin-left:auto">'+reproBtn+reproBadge
+        +'<button onclick="deletePalletCF('+i+')" title="Eliminar pallet" '
+          +'style="background:transparent;border:1px solid var(--border2);border-radius:4px;color:var(--text3);font-size:13px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>'
+        +'</div>'
+      +'</div>'
+      +'<div style="display:grid;gap:10px">'
+        +row('ID Pallet','idOK')
+        +row('Trazabilidad y QR','qrOK')
+        +row('Estado del pallet','paletOK')
+        +row('Inducci&#243;n CF','indCFOK','<span class="sem '+semCF+'" style="display:inline-block;margin-left:6px;vertical-align:middle"></span>')
+        +'<div class="pf"><label>Lt parcial <span style="font-family:var(--mono);font-size:9px;color:var(--text3);font-weight:400">(vacío = pallet completo)</span></label>'
+          +'<input type="number" step="1" min="1" value="'+(p.litrosParcial||'')+'" placeholder="dejar vacío si completo" '
+          +'oninput="updFP('+i+",'litrosParcial',this.value);actualizarLitrosCF()\"></div>"
+        +'<div class="pf"><label>Observaciones</label>'
+          +'<input type="text" value="'+p.obs.replace(/"/g,'&quot;')+'" placeholder="&#8230;" oninput="updFP('+i+",'obs',this.value)\"></div>"
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+
+function buildCFNavHTML(l){
+  const _cfPage=getCFPage(l.id);
+  const _cfTotal=l.final.pallets.length;
+  const _cfTotalPages=Math.ceil(_cfTotal/CF_PAGE_SIZE);
+  const _cfStart=_cfPage*CF_PAGE_SIZE;
+  const _cfEnd=Math.min(_cfStart+CF_PAGE_SIZE,_cfTotal);
+  if(_cfTotalPages<=1)return '';
+  return '<div class="cl-nav" id="cf-nav-inner">'
+    +'<button class="cl-nav-btn" onclick="setCFPage('+l.id+','+(_cfPage-1)+')" '+(_cfPage===0?'disabled':'')+'>\u2190 Ant</button>'
+    +'<span class="cl-nav-info">Pallets '+(_cfStart+1)+'\u2013'+_cfEnd+' de '+_cfTotal+'</span>'
+    +'<button class="cl-nav-btn" onclick="setCFPage('+l.id+','+(_cfPage+1)+')" '+(_cfPage===_cfTotalPages-1?'disabled':'')+'">Sig \u2192</button>'
+    +'</div>';
+}
+
+// ── Control Final ──
+function getCFPage(loteId){
+  const l=lotes.find(x=>x.id===loteId);if(!l)return 0;
+  const pages=Math.ceil(l.final.pallets.length/CF_PAGE_SIZE);
+  return Math.min(cfPages[loteId]||0,Math.max(0,pages-1));
+}
+function setCFPage(loteId,page){
+  loteId=Number(loteId);
+  const l=lotes.find(x=>x.id===loteId);if(!l)return;
+  const pages=Math.ceil(l.final.pallets.length/CF_PAGE_SIZE);
+  cfPages[loteId]=Math.max(0,Math.min(page,pages-1));
+  if(document.activeElement)document.activeElement.blur();
+  // Partial DOM update — sin renderLote
+  const cardsDiv=document.getElementById('cf-cards-div');
+  const navDiv=document.getElementById('cf-nav-div');
+  if(!cardsDiv){renderLote();return;}
+  cardsDiv.innerHTML=buildCFCardsHTML(l);
+  if(navDiv)navDiv.innerHTML=buildCFNavHTML(l);
+}
+function mkFinal(l){
+  const f=l.final;
+  const ind=cfg.inductoras.find(i=>i.id===l.cab.indId)||{nombre:'Inductora',unidad:''};
+  const indLbl=ind.nombre+(ind.unidad?' ('+ind.unidad+')':'');
+
+  // ── CF paginado ──
+  const _cfPage=getCFPage(l.id);
+  const _cfTotal=f.pallets.length;
+  const _cfTotalPages=Math.ceil(_cfTotal/CF_PAGE_SIZE);
+  const _cfStart=_cfPage*CF_PAGE_SIZE;
+  const _cfEnd=Math.min(_cfStart+CF_PAGE_SIZE,_cfTotal);
+  const cfCards=buildCFCardsHTML(l);
+  const cfNav=buildCFNavHTML(l);
+
+  const nokCount=f.pallets.filter(p=>p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false).length;
+  const reproCount=f.pallets.filter(p=>p.repro).length;
+  const c=document.createElement('div');c.className='card';
+  c.innerHTML=`<div class="ch collapsed" onclick="toggleCard(this)">
+    <div class="ch-title">✅ Control Final
+      <span class="ch-badge">${f.pallets.length} pallets</span>
+      ${nokCount?`<span class="ch-badge" style="background:var(--red-bg);color:var(--red)">${nokCount} NOK</span>`:''}
+      ${reproCount?`<span class="ch-badge" style="background:var(--orange-bg);color:var(--orange)">${reproCount} REPRO</span>`:''}
+      ${f.dictamen?`<span class="ch-badge" style="background:${f.dictamen==='APROBADO'?'var(--green-bg)':'var(--red-bg)'};color:${f.dictamen==='APROBADO'?'var(--green)':'var(--red)'}">${f.dictamen}</span>`:''}
+    </div><span class="ch-tog">▾</span></div>
+  <div class="cb collapsed">
+    <div class="lts-summary" id="cf-lts-summary">
+      <div class="lts-row-cf">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text3);white-space:nowrap">Lt/pal</span>
+        <input type="number" step="1" value="${f.ltsPorPallet||''}" placeholder="960"
+          style="height:40px;width:72px;max-width:72px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:14px;padding:0 8px;flex-shrink:0"
+          oninput="updF('ltsPorPallet',this.value);actualizarLitrosCF()">
+        <div class="lts-calc">
+          ${(()=>{const c=calcLitrosCF(l);
+            const ap=c.ltsAp!=null?c.ltsAp.toFixed(0)+' lt':c.aprobados+' pal';
+            const ret=c.ltsRet!=null?c.ltsRet.toFixed(0)+' lt':c.retenidos+' pal';
+            return `<div class="lts-item ok">✅ <b>${ap}</b><span>Aprob.</span></div>
+                    <div class="lts-item nok">🔴 <b>${ret}</b><span>Reten.</span></div>`;
+          })()}
+        </div>
+      </div>
+    </div>
+    <div class="pallet-cards" id="cf-cards-div">${cfCards}</div>
+    <div id="cf-nav-div">${cfNav}</div>
+    <button class="btn-ap" onclick="addPalletCF()">+ Agregar pallet CF</button>
+  </div>`;
+  // Touch scroll manual para el contenido CF
+  const cfCb=c.querySelector('.cb');
+  if(cfCb){
+    let _cfy=0,_cfy0=0,_cfsc=false;
+    const lv=document.querySelector('.lote-view');
+    cfCb.addEventListener('touchstart',e=>{_cfy=_cfy0=e.touches[0].clientY;_cfsc=true;},{passive:true});
+    cfCb.addEventListener('touchmove',e=>{
+      if(!_cfsc||!lv)return;
+      if(Math.abs(e.touches[0].clientY-_cfy0)<4)return;
+      const d=_cfy-e.touches[0].clientY;_cfy=e.touches[0].clientY;
+      lv.scrollBy(0,d);
+    },{passive:true});
+    cfCb.addEventListener('touchend',()=>{_cfsc=false;},{passive:true});
+  }
+  return c;
+}
+
+function actualizarLitrosCF(){
+  const l=getLote();if(!l)return;
+  const c=calcLitrosCF(l);
+  const el=document.querySelector('.lts-calc');if(!el)return;
+  const ap=c.ltsAp!=null?c.ltsAp.toFixed(0)+' lt':c.aprobados+' pal';
+  const ret=c.ltsRet!=null?c.ltsRet.toFixed(0)+' lt':c.retenidos+' pal';
+  el.innerHTML=`<div class="lts-item ok">✅ <b>${ap}</b><span>Aprobados</span></div>
+                <div class="lts-item nok">🔴 <b>${ret}</b><span>Retenidos</span></div>`;
+}
+function updF(k,v){const l=getLote();if(!l)return;l.final[k]=v;marcarPendiente();}
+function updFP(i,k,v){const l=getLote();if(!l)return;l.final.pallets[i][k]=v;marcarPendiente();}
+function updFPSem(i,v,inp){
+  const l=getLote();if(!l)return;
+  l.final.pallets[i].indCFVal=v;
+  marcarPendiente();
+  // Update semaforo dot in same card
+  try{
+    const card=document.getElementById('cf-pallet-'+i);
+    if(card){
+      const sem=card.querySelector('.sem');
+      if(sem) sem.className='sem '+semaforo(v,l.cab.indId);
+    }
+  }catch(e){}
+}
+// ── patchCFCard: actualiza UNA tarjeta CF sin reconstruir el DOM ──
+function patchCFCard(i){
+  const l=getLote();if(!l)return;
+  const p=l.final.pallets[i];
+  const card=document.getElementById('cf-pallet-'+i);
+  if(!card){renderLote();return;}
+  const tieneNOK=p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false;
+  // Clase del card
+  card.className=tieneNOK&&!p.repro?'pcard nok-card':p.repro?'pcard repro-card':'pcard';
+  // Botones OK/NOK: buscar por onclick
+  ['idOK','qrOK','paletOK','indCFOK'].forEach(fk=>{
+    const ok=card.querySelector(`.ok[onclick*="'${fk}'"],[onclick*='"${fk}"']`)||
+             [...card.querySelectorAll('button.ok')].find(b=>b.getAttribute('onclick')?.includes(fk));
+    const nok=card.querySelector(`.nk[onclick*="'${fk}'"],[onclick*='"${fk}"']`)||
+              [...card.querySelectorAll('button.nk')].find(b=>b.getAttribute('onclick')?.includes(fk));
+    if(ok){ok.classList.toggle('active',p[fk]===true);}
+    if(nok){nok.classList.toggle('active',p[fk]===false);}
+  });
+  // REPRO button + badge en header
+  const flex=card.querySelector('div[style*="margin-left:auto"]');
+  if(flex){
+    flex.innerHTML=(tieneNOK
+      ?`<button class="on rp ${p.repro?'active':''}" onclick="setFFRepro(${i})" style="height:36px;padding:0 10px;border-radius:4px;border:1px solid var(--border2);font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;background:var(--bg3);color:var(--text3)">REPRO</button>`
+      :'')+(p.repro?'<span class="repro-badge">✓</span>':'');
+  }
+  // Actualizar contador NOK en header de CF
+  const nokTotal=l.final.pallets.filter(p=>p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false).length;
+  const cfHeader=document.querySelector('.ch-title span[style*="red"]');
+  if(nokTotal>0&&cfHeader)cfHeader.textContent=nokTotal+' NOK';
+  else if(nokTotal===0&&cfHeader)cfHeader.remove();
+  // Botón Cerrar
+  const btnCer=document.getElementById('btn-cerrar');
+  if(btnCer&&l.estado==='activo'){
+    const falt=palletsFaltantes(l);
+    btnCer.textContent=falt.length>0?`🔒 Cerrar (${falt.length} CF)`:'✓ Cerrar lote';
+  }
+  actualizarLitrosCF();
+  actualizarISISBtn();
+  marcarPendiente();
+}
+function setFF(i,k,v){
+  const l=getLote();if(!l)return;
+  l.final.pallets[i][k]=l.final.pallets[i][k]===v?null:v;
+  const p=l.final.pallets[i];
+  const tieneNOK_sf=p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false;
+  if(tieneNOK_sf&&p.repro)p.repro=false; // nuevo NOK invalida repro anterior
+  if(p.idOK===true&&p.qrOK===true&&p.paletOK===true&&p.indCFOK===true)p.repro=false;
+  patchCFCard(i);
+}
+function setFFRepro(i){
+  const l=getLote();if(!l)return;
+  l.final.pallets[i].repro=!l.final.pallets[i].repro;
+  patchCFCard(i);
+}
+function setDictamen(v){
+  const l=getLote();if(!l)return;
+  l.final.dictamen=l.final.dictamen===v?null:v;
+  l.estado=l.final.dictamen==='APROBADO'?'aprobado':l.final.dictamen==='RETENIDO'?'retenido':'activo';
+  marcarPendiente();renderTabs();renderLote();
+}
+function togMail(){const l=getLote();if(!l)return;l.final.mailEnviado=!l.final.mailEnviado;marcarPendiente();renderLote();}
+function toggleCard(h){
+  h.nextElementSibling.classList.toggle('collapsed');
+  h.classList.toggle('collapsed');
+  // Forzar recálculo del scroll en iOS (bug -webkit-overflow-scrolling)
+  const v=document.querySelector('.lote-view');
+  if(v){const s=v.scrollTop;v.style.overflow='hidden';void v.offsetHeight;v.style.overflow='';v.style.overflowY='scroll';v.scrollTop=s;}
+}
+
+
+// ════════════════════════════════════════════════════════
+// BLOQUE JS 9 — ACCIONES DE LA BARRA INFERIOR
+// acISIS(): copia resumen para ISIS al portapapeles.
+// acNC(): detecta NOK y REPRO, construye filas NC,
+//         guarda en localStorage y abre registro_nc.html.
+//         NOK sin REPRO → Pendiente en el RNC.
+//         NOK con REPRO → Finalizado (corrección en línea).
+// acReporte(): genera resumen de turno y copia al clipboard.
+// cerrar(): verifica completitud del CF antes de cerrar.
+//   Si faltan campos → muestra cuáles y pide clave coord.
+// ════════════════════════════════════════════════════════
+// ══ ACCIONES ══
+function actualizarISISBtn(){
+  const l=getLote();
+  const btn=document.querySelector('.ba-isis');if(!btn)return;
+  const d=l?l.final.dictamen:null;
+  const c2=l?calcLitrosCF(l):{aprobados:0,retenidos:0,ltsAp:null,ltsRet:null};
+  const apStr=c2.ltsAp!=null?c2.ltsAp.toFixed(0)+' lt':c2.aprobados+' pal';
+  const retStr=c2.ltsRet!=null?c2.ltsRet.toFixed(0)+' lt':c2.retenidos+' pal';
+  if(d==='APROBADO'){
+    btn.innerHTML=`✅ APROBADO<br><span style="font-size:9px">${apStr}</span>`;
+    btn.style.cssText='background:var(--green-bg);border:1px solid var(--green);color:var(--green)';
+  } else if(d==='APROBADO_PARCIAL'){
+    btn.innerHTML=`⚡ AP.PARCIAL<br><span style="font-size:9px">✅${apStr} 🔴${retStr}</span>`;
+    btn.style.cssText='background:#451a03;border:1px solid var(--yellow);color:var(--yellow)';
+  } else if(d==='RETENIDO'){
+    btn.innerHTML=`🔴 RETENIDO<br><span style="font-size:9px">${retStr}</span>`;
+    btn.style.cssText='background:var(--red-bg);border:1px solid var(--red);color:var(--red)';
+  } else {
+    btn.innerHTML='📋 DICTAMINAR';btn.style.cssText='';
+  }
+}
+function _sugerirDictamen(l){
+  const c=calcLitrosCF(l);
+  const total=l.final.pallets.length;
+  if(total===0)return null;
+  if(c.pendientes===total)return null; // todo pendiente, sin datos
+  if(c.retenidos===0)return 'APROBADO';
+  if(c.aprobados===0)return 'RETENIDO';
+  return 'APROBADO_PARCIAL';
+}
+function abrirDictamen(){
+  const l=getLote();if(!l)return;
+  const c=calcLitrosCF(l);
+  const lpp=parseFloat(l.final.ltsPorPallet)||0;
+  // Resumen
+  const apStr=c.ltsAp!=null?c.ltsAp.toFixed(0)+' lt':c.aprobados+' pallet(s)';
+  const retStr=c.ltsRet!=null?c.ltsRet.toFixed(0)+' lt':c.retenidos+' pallet(s)';
+  const pend=c.pendientes>0?`<div style="color:var(--yellow)">⚠ ${c.pendientes} pallet(s) sin dictaminar en CF</div>`:'';
+  document.getElementById('dict-resumen').innerHTML=`
+    <div style="font-family:var(--sans);font-weight:700;font-size:14px;color:var(--text)">${l.cab.lote} · ${l.cab.prod||'—'}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+      <div style="background:var(--green-bg);border:1px solid var(--green);border-radius:var(--r);padding:10px;text-align:center">
+        <div style="font-family:var(--mono);font-weight:700;font-size:18px;color:var(--green)">${apStr}</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px">APROBADOS</div>
+      </div>
+      <div style="background:var(--red-bg);border:1px solid var(--red);border-radius:var(--r);padding:10px;text-align:center">
+        <div style="font-family:var(--mono);font-weight:700;font-size:18px;color:var(--red)">${retStr}</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px">RETENIDOS</div>
+      </div>
+    </div>
+    ${pend}`;
+  // Resaltar sugerencia
+  const sug=_sugerirDictamen(l);
+  ['dbtn-ap','dbtn-ap2','dbtn-ret'].forEach(id=>{
+    const b=document.getElementById(id);if(b){b.style.opacity='1';b.style.transform='scale(1)';}
+  });
+  const sugMap={APROBADO:'dbtn-ap',APROBADO_PARCIAL:'dbtn-ap2',RETENIDO:'dbtn-ret'};
+  if(sug&&sugMap[sug]){
+    const b=document.getElementById(sugMap[sug]);
+    if(b){b.style.border='2px solid '+EC[sug.toLowerCase().replace('_parcial','_parcial')];
+      // highlight the suggested button
+      if(sug==='APROBADO')b.style.cssText+='background:var(--green-bg);border-color:var(--green);color:var(--green)';
+      if(sug==='APROBADO_PARCIAL')b.style.cssText+='background:#451a03;border-color:var(--yellow);color:var(--yellow)';
+      if(sug==='RETENIDO')b.style.cssText+='background:var(--red-bg);border-color:var(--red);color:var(--red)';
+    }
+  }
+  // Dictamen previo
+  const prev=l.final.dictamen;
+  const fechaDict=l.final.fechaDictamen;
+  document.getElementById('dict-fecha').textContent=
+    prev?(prev.replace('_',' ')+' · '+fechaDict):'Sin dictamen previo';
+  document.getElementById('mo-dict').classList.add('show');
+}
+function confirmarDictamen(tipo){
+  const l=getLote();if(!l)return;
+  l.final.dictamen=tipo;
+  const estadoMap={APROBADO:'aprobado',APROBADO_PARCIAL:'aprobado_parcial',RETENIDO:'retenido'};
+  l.estado=estadoMap[tipo]||'activo';
+  const ahora=new Date().toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  l.final.fechaDictamen=ahora;
+  marcarPendiente();guardarLotes();renderTabs();actualizarISISBtn();
+  cerrarMo('mo-dict');
+  mostrarToast('✅ Dictamen: '+tipo.replace('_',' '),2000);
+}
+function acISIS(){abrirDictamen();}// compatibilidad
+
+function acNC(){
+  const l=getLote();if(!l)return;
+  const nokInd  = l.linea.filter(p=>p.indOK===false&&!p.repro);
+  const reproInd = l.linea.filter(p=>p.indOK===false&&p.repro);
+  const nokFin  = l.final.pallets.filter(p=>(p.idOK===false||p.qrOK===false||p.paletOK===false)&&!p.repro);
+  const reproFin = l.final.pallets.filter(p=>(p.idOK===false||p.qrOK===false||p.paletOK===false)&&p.repro);
+
+  const totalEventos = nokInd.length + reproInd.length + nokFin.length + reproFin.length;
+  if(!totalEventos){
+    mostrarToast('✔ Sin desvíos detectados en este lote');
+    return;
+  }
+
+  const ind=cfg.inductoras.find(i=>i.id===l.cab.indId)||{nombre:''};
+  const filas=[];
+
+  // ── NC ABIERTAS: inducción NOK sin reprocesar ──
+  nokInd.forEach(p=>{
+    const pn=p.nPal||String(l.linea.indexOf(p)+1);
+    const indObj=cfg.inductoras.find(i=>i.id===l.cab.indId)||{};
+    const v=parseFloat(p.indVal);
+    const tipo=(!isNaN(v)&&v<indObj.tolMin)?'Inducción débil':'Pérdida por inducción';
+    filas.push({
+      fecha:l.cab.fecha, lote:l.cab.lote, cliente:l.cab.cliente||'',
+      prod:l.cab.prod, tipo, sev:'',
+      detec:'CONTROL LÍNEA',
+      desc:`Pallet ${pn} — Inducción NOK · ${ind.nombre} · valor: ${p.indVal||'—'}${p.obs?' · '+p.obs:''}`,
+      litNC:'', litTot:l.final.ltsAprobado||'',
+      ac:`Reproceso pallet ${pn}`,
+      plazo:'', est:'Pendiente',
+      cierre:'', pallets:'1', resp:'', eficacia:'Pendiente',
+      _tipo:'abierta'
+    });
+  });
+
+  // ── CORRECCIONES EN LÍNEA: NOK + REPRO → Finalizado mismo día ──
+  reproInd.forEach(p=>{
+    const pn=p.nPal||String(l.linea.indexOf(p)+1);
+    const indObj=cfg.inductoras.find(i=>i.id===l.cab.indId)||{};
+    const v=parseFloat(p.indVal);
+    const tipo=(!isNaN(v)&&v<indObj.tolMin)?'Inducción débil':'Pérdida por inducción';
+    filas.push({
+      fecha:l.cab.fecha, lote:l.cab.lote, cliente:l.cab.cliente||'',
+      prod:l.cab.prod, tipo, sev:'Leve',
+      detec:'CONTROL LÍNEA',
+      desc:`Pallet ${pn} — Inducción NOK · ${ind.nombre} · valor: ${p.indVal||'—'} · CORREGIDO EN LÍNEA${p.obs?' · '+p.obs:''}`,
+      litNC:'', litTot:l.final.ltsAprobado||'',
+      ac:`Reproceso en línea — pallet ${pn}`,
+      plazo:l.cab.fecha,
+      est:'Finalizado',
+      cierre:l.cab.fecha,  // cerrado el mismo día
+      pallets:'1', resp:'', eficacia:'Eficaz',
+      _tipo:'correccion'
+    });
+  });
+
+  // ── NC ABIERTAS: Control Final NOK ──
+  nokFin.forEach(p=>{
+    const idx=l.final.pallets.indexOf(p)+1;
+    const d=[];
+    if(p.idOK===false)d.push('ID NOK');
+    if(p.qrOK===false)d.push('QR NOK');
+    if(p.paletOK===false)d.push('Estado pallet NOK');
+    filas.push({
+      fecha:l.cab.fecha, lote:l.cab.lote, cliente:l.cab.cliente||'',
+      prod:l.cab.prod, tipo:'Mal estado del packaging', sev:'Leve',
+      detec:'CONTROL FINAL',
+      desc:`Pallet CF${idx} — ${d.join(', ')}${p.obs?' · '+p.obs:''}`,
+      litNC:'', litTot:l.final.ltsAprobado||'',
+      ac:`Corrección pallet CF${idx}`,
+      plazo:'', est:'Pendiente',
+      cierre:'', pallets:'1', resp:'', eficacia:'Pendiente',
+      _tipo:'abierta'
+    });
+  });
+
+  // ── CORRECCIONES EN CONTROL FINAL: NOK + REPRO → Finalizado mismo día ──
+  reproFin.forEach(p=>{
+    const idx=l.final.pallets.indexOf(p)+1;
+    const d=[];
+    if(p.idOK===false)d.push('ID NOK');
+    if(p.qrOK===false)d.push('QR NOK');
+    if(p.paletOK===false)d.push('Estado pallet NOK');
+    filas.push({
+      fecha:l.cab.fecha, lote:l.cab.lote, cliente:l.cab.cliente||'',
+      prod:l.cab.prod, tipo:'Mal estado del packaging', sev:'Leve',
+      detec:'CONTROL FINAL',
+      desc:`Pallet CF${idx} — ${d.join(', ')} · CORREGIDO EN FINAL${p.obs?' · '+p.obs:''}`,
+      litNC:'', litTot:l.final.ltsAprobado||'',
+      ac:`Corrección en final — pallet CF${idx}`,
+      plazo:l.cab.fecha, est:'Finalizado',
+      cierre:l.cab.fecha,
+      pallets:'1', resp:l.final.controlador||'', eficacia:'Eficaz',
+      _tipo:'correccion'
+    });
+  });
+
+  // Guardar en localStorage como canal hacia el RNC
+  const payload={
+    origen:`REG-01 · ${l.cab.lote} · ${l.cab.prod}`,
+    timestamp: new Date().toISOString(),
+    filas,
+    resumen:{
+      abiertas: filas.filter(f=>f._tipo==='abierta').length,
+      correccionesLinea: filas.filter(f=>f._tipo==='correccion').length,
+    },
+    totalFilas: filas.length
+  };
+  try{ localStorage.setItem('reg01_nc_pendientes', JSON.stringify(payload)); }
+  catch(e){ mostrarToast('⚠ No se pudo guardar en localStorage'); return; }
+
+  const nombreRNC = localStorage.getItem('reg01_rnc_nombre')||'registro_nc.html';
+  const ventana=window.open(nombreRNC,'_blank');
+  const msg=[];
+  if(payload.resumen.abiertas)    msg.push(`${payload.resumen.abiertas} NC abierta(s)`);
+  if(payload.resumen.correccionesLinea) msg.push(`${payload.resumen.correccionesLinea} corrección(es) en línea`);
+  if(ventana){
+    mostrarToast(`📤 RNC abierto — ${msg.join(' · ')}`);
+  } else {
+    mostrarToast(`✔ ${msg.join(' · ')} guardadas. Abrí el RNC manualmente.`);
+  }
+}
+
+// acReporte: eliminado
+
+// Verifica qué pallets del Control Final están incompletos
+// Retorna array de números de pallet con campos faltantes
+function palletsFaltantes(l){
+  const faltantes=[];
+  l.final.pallets.forEach((p,i)=>{
+    const campos=[];
+    if(p.idOK===null||p.idOK===undefined)    campos.push('ID');
+    if(p.qrOK===null||p.qrOK===undefined)    campos.push('Trazab./QR');
+    if(p.paletOK===null||p.paletOK===undefined) campos.push('Estado pallet');
+    if(p.indCFOK===null||p.indCFOK===undefined) campos.push('Ind.CF');
+    if(campos.length) faltantes.push({num:i+1, pallet:p.nPal||String(i+1), campos});
+  });
+  return faltantes;
+}
+
+function cerrar(){
+  const l=getLote();if(!l)return;
+
+  // ── Verificar completitud del Control Final ──
+  const faltantes=palletsFaltantes(l);
+  if(faltantes.length>0){
+    // Construir mensaje descriptivo
+    const detalle=faltantes.slice(0,5).map(f=>
+      `  • Pallet ${f.pallet}: falta ${f.campos.join(', ')}`
+    ).join('\n');
+    const resto=faltantes.length>5?`\n  ... y ${faltantes.length-5} más`:'';
+    const msg=
+      `⛔ No se puede cerrar el lote\n\n`+
+      `${faltantes.length} pallet(s) sin completar en Control Final:\n`+
+      detalle+resto+
+      `\n\n¿Sos la coordinadora y querés forzar el cierre?`;
+
+    if(!confirm(msg)) return;
+
+    // ── Override con clave de coordinadora ──
+    const claveIngresada=prompt(
+      '🔑 Ingresá la clave de coordinadora para forzar el cierre:',''
+    );
+    if(claveIngresada===null) return; // canceló
+    if(claveIngresada.trim() !== String(cfg.claveCoord||'1234')){
+      alert('❌ Clave incorrecta. No se puede cerrar el lote.');
+      return;
+    }
+    // Override autorizado — registrar en el lote
+    l.cierreOverride={
+      fecha: new Date().toISOString(),
+      palletsFaltantes: faltantes.length,
+      motivo: 'Override coordinadora'
+    };
+    mostrarToast('🔑 Cierre forzado autorizado por coordinadora');
+  }
+
+  // ── Verificar dictamen ──
+  if(!l.final.dictamen&&!confirm('Sin dictamen ISIS. ¿Cerrar igual?')) return;
+
+  l.estado=l.final.dictamen==='APROBADO'?'aprobado':
+           l.final.dictamen==='RETENIDO'?'retenido':'cerrado';
+  guardarLotes();renderTabs();renderLote();
+  mostrarToast(`✔ Lote ${l.cab.lote} → ${l.estado.toUpperCase()}`);
+}
+
+
+// ════════════════════════════════════════════════════════
+// BLOQUE JS 10 — ARCHIVADO DE LOTES
+// archivarLote(): exporta JSON del lote completo +
+//   abre diálogo de impresión para guardar PDF.
+// Nombre del archivo según estado:
+//   ACTIVO con CF pendientes → _Npal_CF_PENDIENTES.json
+//   ACTIVO con CF completo   → _EN_PROCESO.json
+//   CERRADO                  → _APROBADO/_RETENIDO.json
+// printStyle: CSS de impresión (tema claro, A4 landscape).
+// ════════════════════════════════════════════════════════
+// ══ ARCHIVAR LOTE ══
+// Exporta JSON (respaldo técnico) + abre diálogo de impresión para PDF
+function archivarLote(){
+  const l=getLote();if(!l)return;
+  if(l.estado==='activo'){
+    if(!confirm('Este lote todavía está activo. ¿Archivar igual?'))return;
+  }
+
+  // 1. Exportar JSON con todos los datos del lote
+  // Nombre inteligente según estado:
+  // activo → _EN_PROCESO  (va a carpeta LOTES_ACTIVOS)
+  // cerrado/aprobado/retenido → _APROBADO/_RETENIDO  (va a LOTES_CERRADOS)
+  const estadoNombre = l.estado==='activo'?'EN_PROCESO':l.estado.toUpperCase();
+  const faltantes=palletsFaltantes(l);
+  const sufijo=l.estado==='activo'&&faltantes.length>0
+    ? `EN_PROCESO_${faltantes.length}CF_PENDIENTES`
+    : estadoNombre;
+  const nombreArchivo=`${l.cab.lote}_${l.cab.prod.replace(/[^a-zA-Z0-9]/g,'_')}_${sufijo}`;
+  const json=JSON.stringify({
+    version:'REG01-v3',
+    exportado:new Date().toISOString(),
+    lote:l
+  }, null, 2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=nombreArchivo+'.json'; a.click();
+  URL.revokeObjectURL(url);
+
+  // 2. Abrir diálogo de impresión para guardar PDF
+  setTimeout(()=>{
+    mostrarToast('📄 Guardá como PDF en tu carpeta de lotes');
+    window.print();
+  }, 400);
+}
+
+// Estilos de impresión para el PDF del lote
+const printStyle=document.createElement('style');
+printStyle.textContent=`
+@media print {
+  body { background:#fff !important; color:#000 !important; font-size:9px; }
+  #topbar, #bb { display:none !important; }
+  .mo { display:none !important; }
+  #toast { display:none !important; }
+  .lote-view { overflow:visible !important; padding:4px !important; }
+  .card { border:1px solid #ccc !important; background:#fff !important; page-break-inside:avoid; margin-bottom:8px; }
+  .ch { background:#f0f0f0 !important; color:#000 !important; }
+  .ch-title, .ch-badge { color:#000 !important; background:#e0e0e0 !important; }
+  .cb { display:block !important; }
+  .lt, .ft { min-width:unset !important; font-size:7px; }
+  .lt th, .ft th { background:#2a6f3c !important; color:#fff !important; padding:3px; }
+  .lt td, .ft td { padding:2px 3px; border:1px solid #ccc; }
+  .lt input, .ft input, .ft textarea { color:#000 !important; font-size:7px; }
+  .on button { font-size:7px; padding:1px 3px; height:auto; }
+  .on button.ok.active { background:#d4edda !important; color:#155724 !important; border-color:#5cb85c !important; }
+  .on button.nk.active { background:#f8d7da !important; color:#721c24 !important; border-color:#e74c3c !important; }
+  .on button.rp.active { background:#fff3cd !important; color:#856404 !important; border-color:#f59e0b !important; }
+  .dbtn.ap.active { background:#d4edda !important; color:#155724 !important; border-color:#5cb85c !important; }
+  .dbtn.ret.active { background:#f8d7da !important; color:#721c24 !important; border-color:#e74c3c !important; }
+  .dbtn.mail.active { background:#cce5ff !important; color:#004085 !important; }
+  .fg input, .fg select { color:#000 !important; background:#fff !important; border:1px solid #ccc !important; height:auto !important; padding:2px 4px !important; font-size:8px !important; }
+  .show-cards { display:none !important; }
+  .show-table { display:block !important; }
+  .btn-ap { display:none !important; }
+  .pallet-cards { display:none !important; }
+  .pal-vacio { display:none !important; }
+  .sem { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  @page { size: A4 landscape; margin: 8mm; }
+}`;
+document.head.appendChild(printStyle);
+let tT;
+function mostrarToast(msg,dur=2800){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('show'),dur);
+}
+
+
+// ════════════════════════════════════════════════════════
+// BLOQUE JS 11 — INICIALIZACIÓN Y EVENTOS GLOBALES
+// ════════════════════════════════════════════════════════
+// ══ AUTO-GUARDADO silencioso cada 60s ══
+setInterval(()=>{if(pendiente&&lotes.length){guardarLotes(true);}},60000);
+
+// ═══════════════════════════════════════════════════════════
+// TECLADO VIRTUAL — SOLUCIÓN DEFINITIVA ANDROID
+//
+// PROBLEMA: con position:fixed en #app, cuando el teclado
+// virtual sube en Android, el campo activo puede quedar
+// debajo del teclado y no ser visible.
+//
+// SOLUCIÓN EN DOS CAPAS:
+// Capa 1 — visualViewport API:
+//   Detecta el cambio de altura visible y ajusta el #app
+//   al espacio real encima del teclado.
+//   visualViewport.height = altura visible (sin teclado)
+//   visualViewport.offsetTop = scroll del viewport visual
+//
+// Capa 2 — focusin event:
+//   Cuando un campo recibe foco, hace scroll hacia él.
+//   300ms de delay = tiempo que tarda el teclado en subir.
+//
+// NOTA: en Chrome Android 108+ el browser maneja esto
+// automáticamente con el 'virtual-keyboard' CSS API.
+// Este código es el fallback para versiones anteriores.
+// ═══════════════════════════════════════════════════════════
+(function(){
+  const app = document.getElementById('app');
+
+  // Capa 1: visualViewport
+  if(window.visualViewport){
+    function _ajustarViewport(){
+      const vvp = window.visualViewport;
+      // Fijar el app al área visual disponible (encima del teclado)
+      app.style.height = vvp.height + 'px';
+      app.style.top    = vvp.offsetTop + 'px';
+      // Scroll al campo activo
+      const focused = document.activeElement;
+      if(focused && focused !== document.body){
+        setTimeout(() => focused.scrollIntoView({block:'center', behavior:'smooth'}), 80);
+      }
+    }
+    window.visualViewport.addEventListener('resize', _ajustarViewport);
+    window.visualViewport.addEventListener('scroll', _ajustarViewport);
+  }
+
+  // Capa 2: focusin — scroll al campo al recibir foco
+  document.addEventListener('focusin', function(e){
+    const el = e.target;
+    if(!el || el === document.body) return;
+    if(el.tagName==='INPUT' || el.tagName==='TEXTAREA' || el.tagName==='SELECT'){
+      // 300ms = animación típica del teclado en Android
+      setTimeout(() => el.scrollIntoView({block:'center', behavior:'smooth'}), 300);
+    }
+  });
+})()
+
+// ══ REDIBUJAR SOLO AL ROTAR ══
+// Comparar orientación antes/después para no redibujar por teclado
+let _prevW = window.innerWidth, _prevH = window.innerHeight;
+window.addEventListener('resize', ()=>{
+  const w=window.innerWidth, h=window.innerHeight;
+  // Rotación real: cambia cuál dimensión es mayor
+  const rotó = (w>h) !== (_prevW>_prevH);
+  _prevW=w; _prevH=h;
+  if(rotó && loteActivo) renderLote();
+});
+window.addEventListener('orientationchange',()=>{
+  setTimeout(()=>{ if(loteActivo) renderLote(); _prevW=window.innerWidth; _prevH=window.innerHeight; },300);
+});
+
+
+// ─── Secuencia de inicio: cfg → lotes → tabs → render ───
+// ══ INIT ══
+cargarCfg();cargarLotes();renderTabs();
+if(lotes.length){
+  loteActivo=lotes[lotes.length-1].id;
+  document.getElementById('bb').style.display='flex';
+  renderLote();
+}else{mostrarVacio();}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&document.getElementById('mo-lote').classList.contains('show'))confirmarLote();
+  if(e.key==='Escape'){cerrarMo('mo-lote');cerrarMo('mo-cfg');}
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();guardarManual();}
+});
+
+// ══ INSTALAR PWA ══
+function instalarPWA(){
+  if(window._installPrompt){
+    window._installPrompt.prompt();
+    window._installPrompt.userChoice.then(r=>{
+      if(r.outcome==='accepted') mostrarToast('✅ App instalada correctamente');
+      window._installPrompt=null;
+      document.getElementById('btn-inst').style.display='none';
+    });
+  } else {
+    mostrarToast('📲 Menú ⋮ → "Agregar a pantalla de inicio"', 4000);
+  }
+}
+
+// ══ SERVICE WORKER (PWA) ══
+// Se registra desde un blob para funcionar sin servidor HTTPS.
+// Esto permite instalar la app en la pantalla de inicio y que
+// Chrome la ejecute en contexto seguro (standalone), resolviendo
+// los problemas de scroll con content:// y file://.
+// Service Worker registrado desde archivo externo sw.js
+// Funciona con https:// y localhost (GitHub Pages / Termux)
+// No funciona con file:// — eso es una limitación del browser
+if('serviceWorker' in navigator && location.protocol !== 'file:'){
+  navigator.serviceWorker.register('sw.js')
+    .then(reg => {
+      console.log('SW registrado:', reg.scope);
+      // Mostrar botón de instalación PWA si existe
+      const btn = document.getElementById('btn-inst');
+      if(btn) btn.style.display = 'flex';
+    })
+    .catch(err => console.log('SW no disponible:', err));
+}
+</script>
+</body>
+</html>
