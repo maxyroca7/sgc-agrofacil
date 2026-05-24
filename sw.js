@@ -4,11 +4,12 @@
 // network-first para recursos externos (fuentes, libs)
 // ════════════════════════════════════════════════════
 
-const CACHE = 'reg01-v13';
+const CACHE = 'reg01-v14';
 const ARCHIVOS = [
   './REG01_planilla_digital.html',
   './registro_nc.html',
   './manifest.json',
+  './favicon.svg',
   './favicon.ico',
   './favicon-16x16.png',
   './favicon-32x32.png',
