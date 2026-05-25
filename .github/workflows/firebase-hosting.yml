@@ -1,4 +1,4 @@
-name: Deploy SGC Agrofacil → Firebase Hosting
+name: Deploy SGC Agrofacil to Firebase Hosting
 
 on:
   push:
@@ -15,8 +15,7 @@ jobs:
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          repoToken:              ${{ secrets.GITHUB_TOKEN }}
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SGC_AGROFACIL }}
-          channelId:              live
-          projectId:              sgc-agrofac
-          il
+          channelId: live
+          projectId: sgc-agrofacil
