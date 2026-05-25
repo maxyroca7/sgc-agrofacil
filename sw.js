@@ -1,14 +1,15 @@
 // ════════════════════════════════════════════
 // SERVICE WORKER — SGC Digital Agrofacil
-// Versión: v16
+// Versión: v17
 // Estrategia: cache-first local · network-first externos
 // ════════════════════════════════════════════
-
-const CACHE = 'reg01-v16';
+const CACHE = 'reg01-v17';
 const ARCHIVOS = [
+  './login.html',
+  './home.html',
   './REG01_planilla_digital.html',
   './registro_nc.html',
-  './login.html',
+  './historial.html',
   './firebase-init.js',
   './sync.js',
   './manifest.json',
@@ -20,7 +21,6 @@ const ARCHIVOS = [
   './icon-192x192.png',
   './icon-512x512.png',
 ];
-
 // Instalar: pre-cachear todos los archivos
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -28,7 +28,6 @@ self.addEventListener('install', e => {
   );
   self.skipWaiting();
 });
-
 // Activar: eliminar cachés viejos
 self.addEventListener('activate', e => {
   e.waitUntil(
@@ -40,14 +39,12 @@ self.addEventListener('activate', e => {
   );
   self.clients.claim();
 });
-
 // Fetch: cache-first para archivos locales, network-first para externos
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   // Ignorar extensiones de Chrome y peticiones no GET
   if (e.request.method !== 'GET') return;
   if (url.protocol === 'chrome-extension:') return;
-
   // Para archivos externos (CDN, fonts, Firebase) → network-first
   if (url.origin !== self.location.origin) {
     e.respondWith(
@@ -55,7 +52,6 @@ self.addEventListener('fetch', e => {
     );
     return;
   }
-
   // Para archivos locales → cache-first (ignorar querystring para el match)
   e.respondWith(
     caches.open(CACHE).then(cache =>
