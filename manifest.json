@@ -1,8 +1,8 @@
 {
-  "name": "REG-01 Control de Calidad",
-  "short_name": "REG-01",
-  "description": "Planilla digital de control de calidad por lote — Agrofacil S.A.",
-  "start_url": "./REG01_planilla_digital.html",
+  "name": "SGC Agrofacil",
+  "short_name": "SGC",
+  "description": "Sistema de Gestión de Calidad Digital — Agrofacil S.A.",
+  "start_url": "./login.html",
   "display": "standalone",
   "background_color": "#0c1414",
   "theme_color": "#0c1414",
@@ -35,6 +35,9 @@
       "src": "favicon-32x32.png",
       "sizes": "32x32",
       "type": "image/png"
+    }
+  ]
+}     "type": "image/png"
     }
   ]
 }
