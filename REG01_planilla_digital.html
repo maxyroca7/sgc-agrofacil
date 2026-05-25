@@ -430,6 +430,10 @@ input, textarea, select, button {
       <input id="ml-fecha" type="text" placeholder="dd/mm/aaaa" maxlength="10" style="height:var(--touch)" oninput="mskF(this)"></div>
     <div class="fg"><label>Pallets esperados</label>
       <input id="ml-npal" type="number" value="12" min="1" max="50" style="height:var(--touch)"></div>
+    <div class="fg"><label>Peso mín. por pico (kg)</label>
+      <input id="ml-pesoMin" type="text" inputmode="numeric" placeholder="Ej: 21.50" style="height:var(--touch)" onfocus="this.select()" oninput="fmtPeso(this)"></div>
+    <div class="fg"><label>Peso máx. por pico (kg)</label>
+      <input id="ml-pesoMax" type="text" inputmode="numeric" placeholder="Ej: 23.50" style="height:var(--touch)" onfocus="this.select()" oninput="fmtPeso(this)"></div>
   </div>
   <div class="ma">
     <button class="btn-cancel" onclick="cerrarMo('mo-lote')">Cancelar</button>
@@ -673,6 +677,16 @@ function mskT(inp){
   inp.value=v;
 }
 
+// ── Formato automático de peso por pico (kg) ──
+// Igual que hora: tipear dígitos, inserta punto tras 2ª cifra
+// Ej: 2 → "2" | 22 → "22" | 223 → "22.3" | 2234 → "22.34" | 22345 → "22.345"
+function fmtPeso(inp){
+  let d=inp.value.replace(/\D/g,'');
+  if(d.length>5)d=d.slice(0,5);
+  inp.value=d.length<=2?d:d.slice(0,2)+'.'+d.slice(2);
+  return inp.value;
+}
+
 
 // ════════════════════════════════════════════════════════
 // BLOQUE JS 4 — ESTADO GLOBAL DE LA APLICACIÓN
@@ -802,7 +816,7 @@ function abrirModalLote(){
   poblarSelectInd();
   const hoy=new Date();
   document.getElementById('ml-fecha').value=`${String(hoy.getDate()).padStart(2,'0')}/${String(hoy.getMonth()+1).padStart(2,'0')}/${hoy.getFullYear()}`;
-  ['prod','lote','cliente','linea'].forEach(k=>document.getElementById('ml-'+k).value='');
+  ['prod','lote','cliente','linea','pesoMin','pesoMax'].forEach(k=>document.getElementById('ml-'+k).value='');
   document.getElementById('ml-npal').value=12;
   document.getElementById('mo-lote').classList.add('show');
   setTimeout(()=>document.getElementById('ml-prod').focus(),120);
@@ -888,7 +902,9 @@ function confirmarLote(){
     linea:document.getElementById('ml-linea').value.trim(),
     indId:document.getElementById('ml-ind').value,
     checker:'',
-    fecha:document.getElementById('ml-fecha').value};
+    fecha:document.getElementById('ml-fecha').value,
+    pesoMin:document.getElementById('ml-pesoMin').value,
+    pesoMax:document.getElementById('ml-pesoMax').value};
   const np=parseInt(document.getElementById('ml-npal').value)||12;
   const nuevo=nuevoLote(cab,np);
   _resetScroll=true;lotes.push(nuevo);guardarLotes();cerrarMo('mo-lote');selLote(nuevo.id);
@@ -975,9 +991,15 @@ function mkCabecera(l){
       <select id="cab-indId" style="height:var(--touch)" onchange="updCab('indId',this.value);renderLote()">
         ${cfg.inductoras.map(i=>`<option value="${i.id}" ${l.cab.indId===i.id?'selected':''}>${i.nombre}</option>`).join('')}
       </select></div>
-    <div class="fg"><label>Rango aceptable</label>
+    <div class="fg"><label>Rango aceptable inducción</label>
       <div style="font-family:var(--mono);font-size:11px;color:var(--yellow);padding:0 10px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);height:var(--touch);display:flex;align-items:center">${rango}</div>
     </div>
+    <div class="fg"><label>Peso mín. pico (kg)</label>
+      <input id="cab-pesoMin" type="text" inputmode="numeric" value="${l.cab.pesoMin||''}" style="height:var(--touch)" placeholder="Ej: 21.50"
+        onfocus="this.select()" oninput="fmtPeso(this);updCab('pesoMin',this.value)"></div>
+    <div class="fg"><label>Peso máx. pico (kg)</label>
+      <input id="cab-pesoMax" type="text" inputmode="numeric" value="${l.cab.pesoMax||''}" style="height:var(--touch)" placeholder="Ej: 23.50"
+        onfocus="this.select()" oninput="fmtPeso(this);updCab('pesoMax',this.value)"></div>
   </div></div>`;
   setTimeout(()=>{
     ['prod','lote','cliente','linea','fecha'].forEach(k=>{
@@ -1042,10 +1064,10 @@ function mkLinea(l){
       <td><input class="npal" type="text" value="${p.nPal||''}" placeholder="${i+1}" oninput="updL(${i},'nPal',this.value)" style="width:40px"></td>
       <td><input class="dinp" type="text" value="${p.fecha||''}" placeholder="dd/mm/aa" maxlength="10" oninput="mskF(this);updL(${i},'fecha',this.value)" style="width:84px"></td>
       <td><input class="tinp" type="text" value="${p.hora||''}" placeholder="HH:MM" maxlength="5" oninput="mskT(this);updL(${i},'hora',this.value)" style="width:58px;text-align:center"></td>
-      <td><input class="ninp" type="number" step="0.01" value="${p.p1||''}" placeholder="—" oninput="updL(${i},'p1',this.value)"></td>
-      <td><input class="ninp" type="number" step="0.01" value="${p.p2||''}" placeholder="—" oninput="updL(${i},'p2',this.value)"></td>
-      <td><input class="ninp" type="number" step="0.01" value="${p.p3||''}" placeholder="—" oninput="updL(${i},'p3',this.value)"></td>
-      <td><input class="ninp" type="number" step="0.01" value="${p.p4||''}" placeholder="—" oninput="updL(${i},'p4',this.value)"></td>
+      <td><input class="ninp" type="text" inputmode="numeric" value="${p.p1||''}" placeholder="—" onfocus="this.select()" oninput="fmtPeso(this);updL(${i},'p1',this.value)"></td>
+      <td><input class="ninp" type="text" inputmode="numeric" value="${p.p2||''}" placeholder="—" onfocus="this.select()" oninput="fmtPeso(this);updL(${i},'p2',this.value)"></td>
+      <td><input class="ninp" type="text" inputmode="numeric" value="${p.p3||''}" placeholder="—" onfocus="this.select()" oninput="fmtPeso(this);updL(${i},'p3',this.value)"></td>
+      <td><input class="ninp" type="text" inputmode="numeric" value="${p.p4||''}" placeholder="—" onfocus="this.select()" oninput="fmtPeso(this);updL(${i},'p4',this.value)"></td>
       <td><input type="text" value="${p.lote||''}" placeholder="—" oninput="updL(${i},'lote',this.value)" style="min-width:80px"></td>
       <td><input type="text" value="${p.codProd||''}" placeholder="—" oninput="updL(${i},'codProd',this.value)" style="min-width:60px"></td>
       <td><input class="dinp" type="text" value="${p.fProd||''}" placeholder="dd/mm/aa" maxlength="10" oninput="mskF(this);updL(${i},'fProd',this.value)" style="width:84px"></td>
@@ -1097,10 +1119,10 @@ function mkLinea(l){
             style="text-align:center"></div>
       </div>
       <div class="pcard-row r4">
-        <div class="pf"><label>Pico 1</label><input type="number" step="0.01" value="${p.p1||''}" placeholder="—" oninput="updL(${i},'p1',this.value)"></div>
-        <div class="pf"><label>Pico 2</label><input type="number" step="0.01" value="${p.p2||''}" placeholder="—" oninput="updL(${i},'p2',this.value)"></div>
-        <div class="pf"><label>Pico 3</label><input type="number" step="0.01" value="${p.p3||''}" placeholder="—" oninput="updL(${i},'p3',this.value)"></div>
-        <div class="pf"><label>Pico 4</label><input type="number" step="0.01" value="${p.p4||''}" placeholder="—" oninput="updL(${i},'p4',this.value)"></div>
+        <div class="pf"><label>Pico 1</label><input type="text" inputmode="numeric" value="${p.p1||''}" placeholder="—" onfocus="this.select()" oninput="fmtPeso(this);updL(${i},'p1',this.value)"></div>
+        <div class="pf"><label>Pico 2</label><input type="text" inputmode="numeric" value="${p.p2||''}" placeholder="—" onfocus="this.select()" oninput="fmtPeso(this);updL(${i},'p2',this.value)"></div>
+        <div class="pf"><label>Pico 3</label><input type="text" inputmode="numeric" value="${p.p3||''}" placeholder="—" onfocus="this.select()" oninput="fmtPeso(this);updL(${i},'p3',this.value)"></div>
+        <div class="pf"><label>Pico 4</label><input type="text" inputmode="numeric" value="${p.p4||''}" placeholder="—" onfocus="this.select()" oninput="fmtPeso(this);updL(${i},'p4',this.value)"></div>
       </div>
       <div class="pcard-row r2">
         <div class="pf"><label>N° Lote</label><input type="text" value="${p.lote||''}" placeholder="—" oninput="updL(${i},'lote',this.value)"></div>
@@ -1132,6 +1154,7 @@ function mkLinea(l){
       ${nokCount?`<span class="ch-badge" style="background:var(--red-bg);color:var(--red)">${nokCount} NOK</span>`:''}
       ${reproCount?`<span class="ch-badge" style="background:var(--orange-bg);color:var(--orange)">${reproCount} REPRO</span>`:''}
       <span class="ch-badge" style="color:var(--yellow)">${ind.nombre}</span>
+      ${l.cab.pesoMin&&l.cab.pesoMax?`<span class="ch-badge" style="color:#8ab83c" title="Rango peso por pico">⚖ ${l.cab.pesoMin}–${l.cab.pesoMax} kg</span>`:''}
     </div><span class="ch-tog">▾</span></div>
   <div class="cb">
     <div class="show-table"><div class="tw">

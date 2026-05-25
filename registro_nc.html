@@ -227,6 +227,10 @@ select:focus, input:focus { outline:1.5px solid #4db8b8; border-radius:2px; back
   .no-print { display:none !important; }
   .kpi-bar, .sev-bar { display:flex !important; }
   .kpi-card { border:1px solid #999 !important; }
+  /* ── Ocultar flechas de inputs numéricos en print ── */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none; appearance:none; margin:0; }
+  input[type="number"] { -moz-appearance:textfield; appearance:textfield; }
   /* ── Reset mobile card layout para print ── */
   table { display:table !important; width:100% !important; font-size:8.5px; border-collapse:collapse; }
   thead { display:table-header-group !important; }
