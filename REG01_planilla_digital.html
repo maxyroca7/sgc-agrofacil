@@ -399,6 +399,7 @@ input, textarea, select, button {
     <button id="btn-inst" onclick="instalarPWA()" title="Instalar app" style="display:none;flex-shrink:0;background:#1a3535;border:1px solid #8ab83c;color:#8ab83c;font-size:17px;width:34px;height:34px;border-radius:var(--r);cursor:pointer;align-items:center;justify-content:center">📲</button>
     <button id="btn-srch" onclick="abrirBusqueda()" title="Buscar lote" style="flex-shrink:0;background:var(--bg3);border:1px solid var(--border2);color:var(--text3);font-size:16px;width:34px;height:34px;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center">🔍</button>
     <button id="btn-cfg" onclick="abrirCfg()" title="Configurar inductoras">⚙</button>
+<button id="btn-logout" onclick="import('./firebase-init.js').then(m=>m.cerrarSesion())" style="flex-shrink:0;background:#1a2a2a;border:1px solid #2e5252;color:#94a3b8;font-size:13px;width:34px;height:34px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Cerrar sesión">🚪</button>
   </div>
   
   <!-- Área principal: vacío o lote activo se renderiza aquí via JS -->
