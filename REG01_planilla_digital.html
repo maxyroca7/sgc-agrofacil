@@ -364,7 +364,16 @@ input, textarea, select, button {
 
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-</style>
+</style></style>
+
+<script type="module">
+  import { authGuard } from './firebase-init.js';
+  import './sync.js';
+  authGuard();
+</script>
+
+</head>
+<body>
 </head>
 <body>
 <!-- ════ APP CONTAINER — todo el layout vive aquí ════ -->
