@@ -293,7 +293,16 @@ select:focus, input:focus { outline:1.5px solid #4db8b8; border-radius:2px; back
 </style>
   <!-- SheetJS para exportar .xlsx compatible con Power BI -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</style>
+
+<script type="module">
+  import { authGuard } from './firebase-init.js';
+  import './sync.js';
+  authGuard();
+</script>
+
 </head>
+<body></head>
 <body>
 <div class="page">
 
