@@ -1,13 +1,16 @@
 // ════════════════════════════════════════════
 // SERVICE WORKER — SGC Digital Agrofacil
-// Versión: v15
+// Versión: v16
 // Estrategia: cache-first local · network-first externos
 // ════════════════════════════════════════════
 
-const CACHE = 'reg01-v15';
+const CACHE = 'reg01-v16';
 const ARCHIVOS = [
   './REG01_planilla_digital.html',
   './registro_nc.html',
+  './login.html',
+  './firebase-init.js',
+  './sync.js',
   './manifest.json',
   './favicon.svg',
   './favicon.ico',
@@ -45,7 +48,7 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   if (url.protocol === 'chrome-extension:') return;
 
-  // Para archivos externos (CDN, fonts) → network-first
+  // Para archivos externos (CDN, fonts, Firebase) → network-first
   if (url.origin !== self.location.origin) {
     e.respondWith(
       fetch(e.request).catch(() => caches.match(e.request))

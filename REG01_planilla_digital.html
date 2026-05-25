@@ -747,7 +747,7 @@ function nuevoLote(cab,n){
            ltsAprobado:'',ltsRetenido:'',fechaDictamen:'',recepLogistica:''}};
 }
 function nPL(num){return{nPal:String(num),fecha:'',hora:'',p1:'',p2:'',p3:'',p4:'',
-  lote:'',codProd:'',fProd:'',fVenc:'',indOK:null,indVal:'',repro:false,obs:''};}
+  lote:'',codProd:'',fProd:'',fVenc:'',indOK:null,indVal:'',repro:false,obs:'',pesoOK:null};}
 function nPF(){return{idOK:null,qrOK:null,paletOK:null,indCFOK:null,indCFVal:'',repro:false,obs:'',litrosParcial:''};}
 function getLote(){return lotes.find(l=>l.id===loteActivo);}
 
@@ -1193,7 +1193,46 @@ function mkLinea(l){
   return c;
 }
 
-function updL(i,k,v){const l=getLote();if(!l)return;l.linea[i][k]=v;marcarPendiente();}
+function updL(i,k,v){
+  const l=getLote();if(!l)return;
+  l.linea[i][k]=v;
+  // ── Verificar peso contra rango del lote ──
+  if(['p1','p2','p3','p4'].includes(k)){
+    const pMin=parseFloat(l.cab.pesoMin);
+    const pMax=parseFloat(l.cab.pesoMax);
+    if(!isNaN(pMin)&&!isNaN(pMax)){
+      const picosConValor=['p1','p2','p3','p4'].filter(pk=>l.linea[i][pk]!=='');
+      const picosFuera=picosConValor.filter(pk=>{
+        const val=parseFloat(l.linea[i][pk]);
+        return !isNaN(val)&&(val<pMin||val>pMax);
+      });
+      l.linea[i].pesoOK=picosConValor.length===0?null:picosFuera.length===0;
+      patchPesoCard(i);
+    }
+  }
+  marcarPendiente();
+}
+// ── patchPesoCard: actualiza badge de peso NOK en tarjeta CL ──
+function patchPesoCard(i){
+  const l=getLote();if(!l)return;
+  const p=l.linea[i];
+  const card=document.getElementById('cl-pallet-'+i);
+  if(!card)return;
+  const tieneNOK=p.indOK===false||p.pesoOK===false;
+  card.className=tieneNOK&&!p.repro?'pcard nok-card':p.repro?'pcard repro-card':'pcard';
+  card.id='cl-pallet-'+i;
+  let pesoBadge=card.querySelector('.peso-nok-badge');
+  if(p.pesoOK===false&&!pesoBadge){
+    pesoBadge=document.createElement('span');
+    pesoBadge.className='peso-nok-badge';
+    pesoBadge.style.cssText='display:inline-block;font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--red-bg);border:1px solid var(--red);color:var(--red);letter-spacing:.5px;margin-top:4px';
+    pesoBadge.textContent='⚖ PESO NOK';
+    const header=card.querySelector('.pcard-header');
+    if(header)header.insertAdjacentElement('afterend',pesoBadge);
+  } else if(p.pesoOK!==false&&pesoBadge){
+    pesoBadge.remove();
+  }
+}
 function updLSem(i,k,v,inp){
   const l=getLote();if(!l)return;l.linea[i][k]=v;marcarPendiente();
   // Actualizar semáforo de tabla
@@ -1206,7 +1245,7 @@ function patchCLCard(i){
   const p=l.linea[i];
   const card=document.getElementById('cl-pallet-'+i);
   if(!card){renderLote();return;}
-  const tieneNOK=p.indOK===false;
+  const tieneNOK=p.indOK===false||p.pesoOK===false;
   // Clase del card
   card.className=tieneNOK&&!p.repro?'pcard nok-card':p.repro?'pcard repro-card':'pcard';
   card.id='cl-pallet-'+i; // preservar id
@@ -1666,8 +1705,10 @@ function acNC(){
   const reproInd = l.linea.filter(p=>p.indOK===false&&p.repro);
   const nokFin  = l.final.pallets.filter(p=>(p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false)&&!p.repro);
   const reproFin = l.final.pallets.filter(p=>(p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false)&&p.repro);
+  // ── Peso fuera de especificación ──
+  const nokPeso = l.linea.filter(p=>p.pesoOK===false&&p.indOK!==false&&!p.repro);
 
-  const totalEventos = nokInd.length + reproInd.length + nokFin.length + reproFin.length;
+  const totalEventos = nokInd.length + reproInd.length + nokFin.length + reproFin.length + nokPeso.length;
   if(!totalEventos){
     mostrarToast('✔ Sin desvíos detectados en este lote');
     return;
@@ -1713,6 +1754,27 @@ function acNC(){
       cierre:l.cab.fecha,  // cerrado el mismo día
       pallets:'1', resp:'', eficacia:'Eficaz',
       _tipo:'correccion'
+    });
+  });
+
+  // ── NC ABIERTAS: Peso fuera de especificación ──
+  nokPeso.forEach(p=>{
+    const pn=p.nPal||String(l.linea.indexOf(p)+1);
+    const pMin=parseFloat(l.cab.pesoMin),pMax=parseFloat(l.cab.pesoMax);
+    const picosNOK=['p1','p2','p3','p4'].filter(pk=>{
+      const val=parseFloat(p[pk]);return !isNaN(val)&&(val<pMin||val>pMax);
+    });
+    const detallePicos=picosNOK.map(pk=>`Pico${pk[1]}:${p[pk]}kg`).join(', ');
+    filas.push({
+      fecha:l.cab.fecha, lote:l.cab.lote, cliente:l.cab.cliente||'',
+      prod:l.cab.prod, tipo:'Peso fuera de especificación', sev:'',
+      detec:'CONTROL LÍNEA',
+      desc:`Pallet ${pn} — Peso NOK · ${detallePicos} · Rango: ${l.cab.pesoMin}–${l.cab.pesoMax} kg${p.obs?' · '+p.obs:''}`,
+      litNC:'', litTot:l.final.ltsAprobado||'',
+      ac:`Reproceso pallet ${pn}`,
+      plazo:'', est:'Pendiente',
+      cierre:'', pallets:'1', resp:'', eficacia:'Pendiente',
+      _tipo:'abierta'
     });
   });
 
