@@ -7,197 +7,37 @@
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:       #0f1923;
-      --surface:  #1a2535;
-      --border:   #2a3a50;
-      --teal:     #4db8b8;
-      --teal-dim: #2e7a7a;
-      --text:     #e2e8f0;
-      --muted:    #7a8fa8;
-      --danger:   #e05c5c;
+      --bg:#0f1923;--surface:#1a2535;--border:#2a3a50;
+      --teal:#4db8b8;--text:#e2e8f0;--muted:#7a8fa8;--danger:#e05c5c;
     }
-
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Segoe UI', system-ui, sans-serif;
-    }
-
-    body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      min-height: 100dvh;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        radial-gradient(circle at 20% 20%, rgba(77,184,184,.07) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(77,184,184,.05) 0%, transparent 50%);
-      pointer-events: none;
-    }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 40px 36px 36px;
-      width: 100%;
-      max-width: 380px;
-      box-shadow: 0 24px 64px rgba(0,0,0,.4);
-      position: relative;
-    }
-
-    .logo-wrap {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 32px;
-    }
-
-    .logo-wrap img {
-      height: 40px;
-      width: auto;
-    }
-
-    .logo-text {
-      display: flex;
-      flex-direction: column;
-      line-height: 1.2;
-    }
-
-    .logo-text strong {
-      font-size: 17px;
-      font-weight: 700;
-      color: var(--teal);
-      letter-spacing: .3px;
-    }
-
-    .logo-text span {
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: .5px;
-      text-transform: uppercase;
-    }
-
-    h2 {
-      font-size: 20px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: var(--text);
-    }
-
-    .subtitle {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 28px;
-    }
-
-    .field {
-      margin-bottom: 16px;
-    }
-
-    label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--muted);
-      letter-spacing: .5px;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-
-    input {
-      width: 100%;
-      background: var(--bg);
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: 15px;
-      padding: 11px 14px;
-      outline: none;
-      transition: border-color .2s;
-      -webkit-text-fill-color: var(--text);
-      color-scheme: dark;
-    }
-
-    input:focus {
-      border-color: var(--teal);
-      box-shadow: 0 0 0 3px rgba(77,184,184,.15);
-    }
-
-    input::placeholder { color: var(--muted); opacity: .6; }
-
-    .btn {
-      width: 100%;
-      background: var(--teal);
-      color: #0f1923;
-      border: none;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 700;
-      padding: 13px;
-      cursor: pointer;
-      margin-top: 8px;
-      transition: background .2s, opacity .2s;
-      letter-spacing: .3px;
-    }
-
-    .btn:hover  { background: #5fd0d0; }
-    .btn:active { opacity: .85; }
-
-    .btn:disabled {
-      opacity: .5;
-      cursor: not-allowed;
-    }
-
-    .error {
-      background: rgba(224,92,92,.12);
-      border: 1px solid rgba(224,92,92,.3);
-      border-radius: 8px;
-      color: #f48a8a;
-      font-size: 13px;
-      padding: 10px 14px;
-      margin-top: 14px;
-      display: none;
-    }
-
-    .error.show { display: block; }
-
-    .spinner {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid rgba(15,25,35,.4);
-      border-top-color: #0f1923;
-      border-radius: 50%;
-      animation: spin .7s linear infinite;
-      vertical-align: middle;
-      margin-right: 6px;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .footer {
-      text-align: center;
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 28px;
-      opacity: .6;
-    }
+    html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;}
+    body{display:flex;align-items:center;justify-content:center;padding:20px;min-height:100dvh;}
+    body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle at 20% 20%,rgba(77,184,184,.07) 0%,transparent 50%),radial-gradient(circle at 80% 80%,rgba(77,184,184,.05) 0%,transparent 50%);pointer-events:none;}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px 36px 36px;width:100%;max-width:380px;box-shadow:0 24px 64px rgba(0,0,0,.4);position:relative;}
+    .logo-wrap{display:flex;align-items:center;gap:12px;margin-bottom:32px;}
+    .logo-wrap img{height:40px;width:auto;}
+    .logo-text{display:flex;flex-direction:column;line-height:1.2;}
+    .logo-text strong{font-size:17px;font-weight:700;color:var(--teal);letter-spacing:.3px;}
+    .logo-text span{font-size:11px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;}
+    h2{font-size:20px;font-weight:600;margin-bottom:6px;color:var(--text);}
+    .subtitle{font-size:13px;color:var(--muted);margin-bottom:28px;}
+    .field{margin-bottom:16px;}
+    label{display:block;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;}
+    input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;padding:11px 14px;outline:none;transition:border-color .2s;-webkit-text-fill-color:var(--text);color-scheme:dark;}
+    input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(77,184,184,.15);}
+    input::placeholder{color:var(--muted);opacity:.6;}
+    .btn{width:100%;background:var(--teal);color:#0f1923;border:none;border-radius:8px;font-size:15px;font-weight:700;padding:13px;cursor:pointer;margin-top:8px;transition:background .2s,opacity .2s;letter-spacing:.3px;}
+    .btn:hover{background:#5fd0d0;}.btn:active{opacity:.85;}.btn:disabled{opacity:.5;cursor:not-allowed;}
+    .error{background:rgba(224,92,92,.12);border:1px solid rgba(224,92,92,.3);border-radius:8px;color:#f48a8a;font-size:13px;padding:10px 14px;margin-top:14px;display:none;}
+    .error.show{display:block;}
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(15,25,35,.4);border-top-color:#0f1923;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .footer{text-align:center;font-size:11px;color:var(--muted);margin-top:28px;opacity:.6;}
   </style>
 </head>
 <body>
-
 <div class="card">
-
   <div class="logo-wrap">
     <img src="./favicon.svg" alt="logo" onerror="this.style.display='none'">
     <div class="logo-text">
@@ -205,34 +45,26 @@
       <span>Sistema de Gestión de Calidad</span>
     </div>
   </div>
-
   <h2>Iniciar sesión</h2>
-  <p class="subtitle">Ingresá con tu cuenta de checker</p>
-
+  <p class="subtitle">Ingresá con tu cuenta de usuario</p>
   <div class="field">
     <label for="email">Correo electrónico</label>
-    <input type="email" id="email" placeholder="checker@agrofacil.com" autocomplete="email">
+    <input type="email" id="email" placeholder="usuario@agrofacil.com" autocomplete="email">
   </div>
-
   <div class="field">
     <label for="pass">Contraseña</label>
     <input type="password" id="pass" placeholder="••••••••" autocomplete="current-password">
   </div>
-
   <button class="btn" id="btnLogin" onclick="login()">Ingresar</button>
-
   <div class="error" id="errorMsg"></div>
-
   <div class="footer">Agrofacil S.A. · Ezeiza · v1.0</div>
-
 </div>
 
 <script type="module">
-  import { auth }        from './firebase-init.js';
+  import { auth } from './firebase-init.js';
   import { signInWithEmailAndPassword, onAuthStateChanged }
-                          from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 
-  // Si ya hay sesión activa → ir directo a la app
   onAuthStateChanged(auth, (user) => {
     if (user) window.location.replace('./home.html');
   });
@@ -242,42 +74,28 @@
     const pass  = document.getElementById('pass').value;
     const btn   = document.getElementById('btnLogin');
     const err   = document.getElementById('errorMsg');
-
     err.classList.remove('show');
-
-    if (!email || !pass) {
-      err.textContent = 'Completá email y contraseña.';
-      err.classList.add('show');
-      return;
-    }
-
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>Ingresando…';
-
+    if (!email || !pass) { err.textContent='Completá email y contraseña.'; err.classList.add('show'); return; }
+    btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Ingresando…';
     try {
       await signInWithEmailAndPassword(auth, email, pass);
       window.location.replace('./home.html');
     } catch (e) {
-      btn.disabled = false;
-      btn.textContent = 'Ingresar';
-
+      btn.disabled=false; btn.textContent='Ingresar';
       const msgs = {
-        'auth/invalid-credential':     'Email o contraseña incorrectos.',
-        'auth/user-not-found':         'No existe una cuenta con ese email.',
-        'auth/wrong-password':         'Contraseña incorrecta.',
-        'auth/too-many-requests':      'Demasiados intentos. Esperá unos minutos.',
-        'auth/network-request-failed': 'Sin conexión. Verificá la red.',
+        'auth/invalid-credential':'Email o contraseña incorrectos.',
+        'auth/user-not-found':'No existe una cuenta con ese email.',
+        'auth/wrong-password':'Contraseña incorrecta.',
+        'auth/too-many-requests':'Demasiados intentos. Esperá unos minutos.',
+        'auth/network-request-failed':'Sin conexión. Verificá la red.',
       };
       err.textContent = msgs[e.code] || 'Error al ingresar. Intentá de nuevo.';
       err.classList.add('show');
     }
   };
-
-  // Login con Enter
   document.getElementById('pass').addEventListener('keydown', e => {
     if (e.key === 'Enter') window.login();
   });
 </script>
-
 </body>
 </html>
