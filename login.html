@@ -34,7 +34,6 @@
       min-height: 100dvh;
     }
 
-    /* Fondo sutil con patrón hexagonal */
     body::before {
       content: '';
       position: fixed;
@@ -235,7 +234,7 @@
 
   // Si ya hay sesión activa → ir directo a la app
   onAuthStateChanged(auth, (user) => {
-    if (user) window.location.replace('./REG01_planilla_digital.html');
+    if (user) window.location.replace('./home.html');
   });
 
   window.login = async function() {
@@ -257,7 +256,7 @@
 
     try {
       await signInWithEmailAndPassword(auth, email, pass);
-      window.location.replace('./REG01_planilla_digital.html');
+      window.location.replace('./home.html');
     } catch (e) {
       btn.disabled = false;
       btn.textContent = 'Ingresar';

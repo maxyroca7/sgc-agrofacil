@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SGC Agrofacil — Inicio</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0c1414;--surface:#111d1d;--surface2:#162020;--border:#1e3030;
+      --accent:#00c896;--accent2:#00a07a;--warn:#f59e0b;--danger:#ef4444;
+      --blue:#3b82f6;--text:#e2ede9;--muted:#7a9e96;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
+    body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,rgba(0,200,150,.05) 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0;}
+
+    /* TOPBAR */
+    .topbar{position:sticky;top:0;z-index:100;background:rgba(17,29,29,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;}
+    .topbar-brand{display:flex;align-items:center;gap:.6rem;}
+    .brand-icon{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;color:#0c1414;}
+    .brand-name{font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:600;color:var(--text);letter-spacing:.06em;}
+    .brand-ver{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--muted);background:var(--surface2);border:1px solid var(--border);padding:.1rem .35rem;border-radius:3px;}
+    .topbar-right{display:flex;align-items:center;gap:.75rem;}
+    .user-chip{display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--muted);}
+    .user-avatar{width:24px;height:24px;background:rgba(0,200,150,.15);border:1px solid rgba(0,200,150,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--accent);font-weight:600;}
+    .btn-salir{background:transparent;border:1px solid rgba(239,68,68,.3);color:var(--danger);border-radius:6px;padding:.3rem .65rem;font-size:.72rem;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all .15s;}
+    .btn-salir:hover{background:rgba(239,68,68,.08);}
+
+    /* MAIN */
+    main{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:2.5rem 1.25rem 4rem;flex:1;}
+
+    /* GREETING */
+    .greeting{margin-bottom:2.25rem;}
+    .greeting-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem;}
+    .greeting-title{font-size:1.55rem;font-weight:300;color:var(--text);line-height:1.2;}
+    .greeting-title strong{font-weight:600;color:var(--accent);}
+    .greeting-sub{font-size:.76rem;color:var(--muted);margin-top:.4rem;font-family:'IBM Plex Mono',monospace;}
+
+    /* STATS */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:2.25rem;}
+    .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.85rem 1rem;transition:border-color .15s;}
+    .stat-card:hover{border-color:rgba(0,200,150,.25);}
+    .stat-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.35rem;}
+    .stat-val{font-family:'IBM Plex Mono',monospace;font-size:1.45rem;font-weight:600;line-height:1;}
+    .stat-sub{font-size:.62rem;color:var(--muted);margin-top:.3rem;}
+    .s-green .stat-val{color:#22c55e;}
+    .s-yellow .stat-val{color:var(--warn);}
+    .s-red .stat-val{color:var(--danger);}
+    .s-blue .stat-val{color:var(--blue);}
+
+    /* MÓDULOS */
+    .section-label{font-family:'IBM Plex Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.9rem;}
+    .modulos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2.25rem;}
+    .modulo-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem 1.25rem;cursor:pointer;text-decoration:none;color:inherit;display:block;transition:all .2s;position:relative;overflow:hidden;}
+    .modulo-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--card-accent);transform:scaleX(0);transform-origin:left;transition:transform .25s;}
+    .modulo-card:hover{border-color:var(--card-accent);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.25);}
+    .modulo-card:hover::before{transform:scaleX(1);}
+    .modulo-card.reg01{--card-accent:#00c896;}
+    .modulo-card.reg-nc{--card-accent:#f59e0b;}
+    .modulo-card.hist{--card-accent:#3b82f6;}
+    .card-icon{font-size:1.8rem;margin-bottom:1rem;display:block;line-height:1;}
+    .card-code{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--card-accent);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.35rem;}
+    .card-title{font-size:1rem;font-weight:600;color:var(--text);margin-bottom:.5rem;line-height:1.2;}
+    .card-desc{font-size:.73rem;color:var(--muted);line-height:1.5;}
+    .card-footer{margin-top:1.25rem;padding-top:.85rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .card-stat{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--muted);}
+    .card-stat span{color:var(--card-accent);font-weight:600;}
+    .card-arrow{font-size:.75rem;color:var(--muted);transition:transform .2s,color .2s;}
+    .modulo-card:hover .card-arrow{transform:translateX(4px);color:var(--card-accent);}
+
+    /* ACTIVIDAD */
+    .actividad-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+    .actividad-header{padding:.85rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .actividad-header-title{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;}
+    .actividad-item{display:flex;align-items:center;gap:.75rem;padding:.65rem 1rem;border-bottom:1px solid rgba(30,48,48,.5);transition:background .1s;cursor:pointer;}
+    .actividad-item:last-child{border-bottom:none;}
+    .actividad-item:hover{background:var(--surface2);}
+    .act-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+    .act-lote{font-family:'IBM Plex Mono',monospace;font-size:.75rem;font-weight:600;color:var(--accent);min-width:90px;}
+    .act-prod{font-size:.75rem;color:var(--text);flex:1;}
+    .act-badge{font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:600;padding:.15rem .4rem;border-radius:3px;text-transform:uppercase;}
+    .ab-APROBADO{background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.25);}
+    .ab-PARCIAL{background:rgba(245,158,11,.12);color:var(--warn);border:1px solid rgba(245,158,11,.25);}
+    .ab-RETENIDO{background:rgba(239,68,68,.12);color:var(--danger);border:1px solid rgba(239,68,68,.25);}
+    .ab-OTRO{background:rgba(122,158,150,.1);color:var(--muted);border:1px solid var(--border);}
+    .act-fecha{font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--muted);min-width:50px;text-align:right;}
+    .actividad-empty{padding:2rem;text-align:center;color:var(--muted);font-size:.78rem;}
+    .spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:.3rem;vertical-align:middle;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    footer{position:relative;z-index:1;text-align:center;padding:1rem;font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--muted);border-top:1px solid var(--border);}
+
+    @media(max-width:700px){.modulos-grid{grid-template-columns:1fr;}.stats-row{grid-template-columns:repeat(2,1fr);}.greeting-title{font-size:1.2rem;}}
+    @media(max-width:480px){.user-label{display:none;}}
+  </style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="topbar-brand">
+    <div class="brand-icon">A</div>
+    <span class="brand-name">AGROFACIL</span>
+    <span class="brand-ver">SGC v8</span>
+  </div>
+  <div class="topbar-right">
+    <div class="user-chip">
+      <div class="user-avatar" id="user-initials">—</div>
+      <span class="user-label" id="user-name">—</span>
+    </div>
+    <button class="btn-salir" id="btn-salir">🚪 Salir</button>
+  </div>
+</nav>
+
+<main>
+  <div class="greeting">
+    <div class="greeting-eyebrow">Sistema de Gestión de Calidad</div>
+    <h1 class="greeting-title" id="greeting-title">Bienvenido</h1>
+    <div class="greeting-sub" id="fecha-hoy">—</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card s-green"><div class="stat-label">Lotes este mes</div><div class="stat-val" id="s-lotes">—</div><div class="stat-sub">registrados</div></div>
+    <div class="stat-card s-yellow"><div class="stat-label">NCs abiertas</div><div class="stat-val" id="s-nc">—</div><div class="stat-sub">pendientes</div></div>
+    <div class="stat-card s-red"><div class="stat-label">Retenidos</div><div class="stat-val" id="s-ret">—</div><div class="stat-sub">en el mes</div></div>
+    <div class="stat-card s-blue"><div class="stat-label">% Aprobados</div><div class="stat-val" id="s-pct">—</div><div class="stat-sub">del mes</div></div>
+  </div>
+
+  <div class="section-label">Módulos del sistema</div>
+  <div class="modulos-grid">
+    <a href="REG01_planilla_digital.html" class="modulo-card reg01">
+      <span class="card-icon">📋</span>
+      <div class="card-code">SGC-REG-01</div>
+      <div class="card-title">Planilla de Control</div>
+      <div class="card-desc">Control en línea y final de pallets. Semáforo de inducción y peso. Dictamen del lote.</div>
+      <div class="card-footer">
+        <div class="card-stat">Último lote: <span id="ultimo-lote">—</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+    <a href="registro_nc.html" class="modulo-card reg-nc">
+      <span class="card-icon">⚠️</span>
+      <div class="card-code">SGC-RNC-01</div>
+      <div class="card-title">Registro de No Conformidades</div>
+      <div class="card-desc">Registro, seguimiento y verificación de eficacia. KPIs AQ-IND-01 a 06. Exporta a Excel.</div>
+      <div class="card-footer">
+        <div class="card-stat">NCs pendientes: <span id="nc-pend">—</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+    <a href="historial.html" class="modulo-card hist">
+      <span class="card-icon">📂</span>
+      <div class="card-code">HISTORIAL</div>
+      <div class="card-title">Historial de Lotes</div>
+      <div class="card-desc">Carpetas por cliente, búsqueda por fecha y producto. Trazabilidad REG-01 ↔ NC. PDF por lote.</div>
+      <div class="card-footer">
+        <div class="card-stat">Clientes: <span id="n-clientes">—</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="section-label">Actividad reciente</div>
+  <div class="actividad-panel">
+    <div class="actividad-header">
+      <span class="actividad-header-title">Últimos lotes registrados</span>
+      <a href="historial.html" style="font-size:.7rem;color:var(--accent);text-decoration:none;">Ver todos →</a>
+    </div>
+    <div id="actividad-list"><div class="actividad-empty"><span class="spinner"></span> Cargando...</div></div>
+  </div>
+</main>
+
+<footer>SGC-AGROFACIL · sgc-agrofacil.web.app · ISO 9001:2015 — Aseg. Calidad</footer>
+
+<script type="module">
+  // ── Importar desde firebase-init.js (misma config, sin duplicar) ──
+  import { auth, db, authGuard, cerrarSesion } from './firebase-init.js';
+  import { collection, query, orderBy, limit, getDocs }
+    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+  // Botón salir
+  document.getElementById('btn-salir').addEventListener('click', cerrarSesion);
+
+  // Auth guard — espera sesión activa
+  const user = await authGuard();
+
+  // Mostrar usuario
+  const nombre = user.email.split('@')[0];
+  document.getElementById('user-initials').textContent = nombre.slice(0,2).toUpperCase();
+  document.getElementById('user-name').textContent     = nombre;
+
+  // Saludo según hora
+  const h = new Date().getHours();
+  const saludo = h < 12 ? 'Buen día' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  document.getElementById('greeting-title').innerHTML = `${saludo}, <strong>${cap(nombre)}</strong>`;
+
+  // Fecha
+  document.getElementById('fecha-hoy').textContent =
+    new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})
+    + ' · Agrofacil S.A., Ezeiza';
+
+  // ── Cargar datos ──────────────────────────────────────────────
+  let lotes = [], ncs = [];
+
+  try {
+    const qL = query(collection(db,'lotes'), orderBy('fechaCreacion','desc'), limit(300));
+    lotes = (await getDocs(qL)).docs.map(d=>({id:d.id,...d.data()}));
+  } catch {
+    try { lotes = JSON.parse(localStorage.getItem('reg01_lotes_v3')||'[]'); } catch {}
+  }
+
+  try {
+    const qN = query(collection(db,'nc_records'), orderBy('fechaDeteccion','desc'), limit(300));
+    ncs = (await getDocs(qN)).docs.map(d=>({id:d.id,...d.data()}));
+  } catch {
+    try { ncs = JSON.parse(localStorage.getItem('nc_records')||'[]'); } catch {}
+  }
+
+  // ── Stats ─────────────────────────────────────────────────────
+  function nd(l){const d=(l.dictamen||'').toUpperCase();if(d.includes('PARCIAL'))return'PARCIAL';if(d.includes('RETENIDO'))return'RETENIDO';if(d.includes('APROBADO'))return'APROBADO';return'OTRO';}
+  function fmtCorta(raw){if(!raw)return'—';try{const d=raw.toDate?raw.toDate():new Date(raw);return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'});}catch{return'—';}}
+
+  const ahora = new Date(), mes = ahora.getMonth(), anio = ahora.getFullYear();
+  const delMes = lotes.filter(l=>{try{const f=l.fechaCreacion?.toDate?l.fechaCreacion.toDate():new Date(l.fechaCreacion);return f.getMonth()===mes&&f.getFullYear()===anio;}catch{return false;}});
+  const total=delMes.length, apr=delMes.filter(l=>nd(l)==='APROBADO').length, ret=delMes.filter(l=>nd(l)==='RETENIDO').length;
+  const pending=ncs.filter(n=>!n.estado||['Pendiente','En proceso'].includes(n.estado)).length;
+
+  document.getElementById('s-lotes').textContent = total;
+  document.getElementById('s-ret').textContent   = ret;
+  document.getElementById('s-pct').textContent   = total?Math.round(apr/total*100)+'%':'—';
+  document.getElementById('s-nc').textContent    = pending;
+  document.getElementById('nc-pend').textContent = pending;
+
+  if(lotes.length) document.getElementById('ultimo-lote').textContent = lotes[0].nLote||'—';
+
+  const clientes = new Set(lotes.map(l=>l.cliente).filter(Boolean));
+  document.getElementById('n-clientes').textContent = clientes.size || '—';
+
+  // ── Actividad reciente ────────────────────────────────────────
+  const colores={APROBADO:'#22c55e',PARCIAL:'var(--warn)',RETENIDO:'var(--danger)',OTRO:'var(--muted)'};
+  const el = document.getElementById('actividad-list');
+  if(!lotes.length){el.innerHTML='<div class="actividad-empty">Sin lotes registrados todavía.</div>';} 
+  else {
+    el.innerHTML = lotes.slice(0,8).map(l=>{
+      const dict=nd(l);
+      return`<div class="actividad-item" onclick="window.location.href='historial.html'">
+        <div class="act-dot" style="background:${colores[dict]}"></div>
+        <div class="act-lote">${l.nLote||'—'}</div>
+        <div class="act-prod">${l.producto||'—'}${l.cliente?' · '+l.cliente:''}</div>
+        <span class="act-badge ab-${dict}">${dict==='APROBADO'?'✓ APR':dict==='RETENIDO'?'✕ RET':'~ PAR'}</span>
+        <div class="act-fecha">${fmtCorta(l.fechaCreacion)}</div>
+      </div>`;
+    }).join('');
+  }
+</script>
+</body>
+</html>
