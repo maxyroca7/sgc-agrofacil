@@ -1,69 +1,92 @@
-// ════════════════════════════════════════════
-// SERVICE WORKER — SGC Digital Agrofacil
-// Versión: v17
-// Estrategia: cache-first local · network-first externos
-// ════════════════════════════════════════════
-const CACHE = 'reg01-v17';
-const ARCHIVOS = [
-  './login.html',
-  './home.html',
-  './REG01_planilla_digital.html',
-  './registro_nc.html',
-  './historial.html',
-  './firebase-init.js',
-  './sync.js',
-  './manifest.json',
-  './favicon.svg',
-  './favicon.ico',
-  './favicon-16x16.png',
-  './favicon-32x32.png',
-  './apple-touch-icon.png',
-  './icon-192x192.png',
-  './icon-512x512.png',
+// ============================================================
+//  sw.js — Agrofacil SGC · v18
+//  Cambio v18: invalida caché v17 para forzar recarga de
+//  home.html, login.html e historial.html (fix logo SVG)
+// ============================================================
+
+const CACHE_NAME = 'agrofacil-v18';
+
+const ASSETS = [
+  '/login.html',
+  '/home.html',
+  '/REG01_planilla_digital.html',
+  '/registro_nc.html',
+  '/historial.html',
+  '/firebase-init.js',
+  '/sync.js',
+  '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
 ];
-// Instalar: pre-cachear todos los archivos
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ARCHIVOS))
+
+// ── INSTALL: precachea todos los assets ──────────────────────
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('[SW v18] Precacheando assets...');
+      return cache.addAll(ASSETS);
+    })
   );
+  // Activa inmediatamente sin esperar que se cierren pestañas viejas
   self.skipWaiting();
 });
-// Activar: eliminar cachés viejos
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
+
+// ── ACTIVATE: elimina cachés anteriores ─────────────────────
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
       Promise.all(
-        keys.filter(k => k !== CACHE).map(k => caches.delete(k))
+        keys
+          .filter((key) => key !== CACHE_NAME)
+          .map((key) => {
+            console.log('[SW v18] Eliminando caché viejo:', key);
+            return caches.delete(key);
+          })
       )
     )
   );
+  // Toma control de todas las pestañas abiertas de inmediato
   self.clients.claim();
 });
-// Fetch: cache-first para archivos locales, network-first para externos
-self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
-  // Ignorar extensiones de Chrome y peticiones no GET
-  if (e.request.method !== 'GET') return;
-  if (url.protocol === 'chrome-extension:') return;
-  // Para archivos externos (CDN, fonts, Firebase) → network-first
-  if (url.origin !== self.location.origin) {
-    e.respondWith(
-      fetch(e.request).catch(() => caches.match(e.request))
+
+// ── FETCH: Network-first para HTML, Cache-first para assets ─
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Solo interceptar requests del mismo origen
+  if (url.origin !== location.origin) return;
+
+  const isHTML = request.destination === 'document' ||
+                 url.pathname.endsWith('.html') ||
+                 url.pathname === '/';
+
+  if (isHTML) {
+    // Network-first para HTML: siempre intenta traer la versión fresca
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          // Actualiza el caché con la versión fresca
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+          return networkResponse;
+        })
+        .catch(() => {
+          // Offline fallback: sirve desde caché
+          return caches.match(request);
+        })
     );
-    return;
-  }
-  // Para archivos locales → cache-first (ignorar querystring para el match)
-  e.respondWith(
-    caches.open(CACHE).then(cache =>
-      cache.match(url.pathname).then(cached => {
-        if (cached) return cached;
-        return fetch(e.request).then(resp => {
-          if (resp && resp.status === 200) {
-            cache.put(url.pathname, resp.clone());
-          }
-          return resp;
+  } else {
+    // Cache-first para JS, CSS, imágenes, manifest
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) return cachedResponse;
+        return fetch(request).then((networkResponse) => {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+          return networkResponse;
         });
       })
-    )
-  );
+    );
+  }
 });
