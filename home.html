@@ -198,18 +198,19 @@
 </script>
 
 <script type="module">
-  import { auth, db, authGuard, cerrarSesion } from './firebase-init.js';
+  import { auth, db, authGuard, cerrarSesion, getRol } from './firebase-init.js';
   import { collection, query, orderBy, limit, getDocs }
     from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
   document.getElementById('btn-salir').addEventListener('click', cerrarSesion);
   const user = await authGuard();
+  const rol  = await getRol(user.uid);
+  localStorage.setItem('userRol', rol);
 
-  // Mostrar rol genérico en topbar
   const email  = user.email || '';
   const nombre = email.split('@')[0];
   document.getElementById('user-initials').textContent = nombre.slice(0,2).toUpperCase();
-  document.getElementById('user-name').textContent     = 'Checker';
+  document.getElementById('user-name').textContent     = rol === 'coordinadora' ? 'Coordinadora' : 'Checker';
 
   // Saludo con nombre del email
   const h = new Date().getHours();

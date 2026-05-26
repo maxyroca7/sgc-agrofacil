@@ -380,12 +380,21 @@ input, textarea, select, button {
 
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── Restricciones coordinadora ── */
+html.coordinadora #btn-nl  { display:none !important; }
+html.coordinadora #btn-cfg { display:none !important; }
+html.coordinadora #main input,
+html.coordinadora #main select { pointer-events:none; opacity:.6; }
 </style></style>
 
 <script type="module">
-  import { authGuard } from './firebase-init.js';
+  import { authGuard, getRol } from './firebase-init.js';
   import './sync.js';
-  authGuard();
+  authGuard().then(u => getRol(u.uid)).then(rol => {
+    localStorage.setItem('userRol', rol);
+    if (rol === 'coordinadora') document.documentElement.classList.add('coordinadora');
+  });
 </script>
 
 </head>

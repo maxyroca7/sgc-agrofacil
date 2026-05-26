@@ -6,7 +6,7 @@
 import { initializeApp }        from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut }
                                  from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-import { initializeFirestore, persistentLocalCache }
+import { initializeFirestore, persistentLocalCache, getDoc, doc }
                                  from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
 // ─── Config ───────────────────────────────
@@ -46,6 +46,16 @@ export function authGuard() {
       }
     });
   });
+}
+
+// ─── Rol ──────────────────────────────────
+export async function getRol(uid) {
+  try {
+    const snap = await getDoc(doc(db, 'usuarios', uid));
+    return snap.exists() ? (snap.data().rol || 'checker') : 'checker';
+  } catch {
+    return 'checker';
+  }
 }
 
 // ─── Logout ───────────────────────────────

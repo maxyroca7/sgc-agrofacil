@@ -311,15 +311,26 @@ select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px
   @page { size: A4 landscape; margin: 10mm; }
   #doc-header-print { display:flex !important; }
 }
+
+/* ── Restricciones coordinadora ── */
+html.coordinadora .btn-add,
+html.coordinadora .btn-del,
+html.coordinadora .btn-clear { display:none !important; }
+html.coordinadora #import-banner { display:none !important; }
+html.coordinadora #tBody input,
+html.coordinadora #tBody select { pointer-events:none; opacity:.6; }
 </style>
   <!-- SheetJS para exportar .xlsx compatible con Power BI -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </style>
 
 <script type="module">
-  import { authGuard } from './firebase-init.js';
+  import { authGuard, getRol } from './firebase-init.js';
   import './sync.js';
-  authGuard();
+  authGuard().then(u => getRol(u.uid)).then(rol => {
+    localStorage.setItem('userRol', rol);
+    if (rol === 'coordinadora') document.documentElement.classList.add('coordinadora');
+  });
 </script>
 
 </head>
