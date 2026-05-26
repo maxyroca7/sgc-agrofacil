@@ -478,7 +478,7 @@
   function aplicarTema(t){document.documentElement.classList.toggle('light',t==='light');const b=document.getElementById('btn-theme');if(b)b.textContent=t==='light'?'🌙':'☀️';}
   function toggleTheme(){const n=document.documentElement.classList.contains('light')?'dark':'light';localStorage.setItem('theme',n);aplicarTema(n);}
   aplicarTema(localStorage.getItem('theme')||'dark');
-</script>
+<\/script>
 </body></html>`);
     w.document.close();
   };
