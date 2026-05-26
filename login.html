@@ -57,6 +57,7 @@
   </div>
   <button class="btn" id="btnLogin" onclick="login()">Ingresar</button>
   <div class="error" id="errorMsg"></div>
+  <button id="btn-inst" onclick="instalarPWA()" style="display:none;width:100%;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;font-size:12px;padding:10px;cursor:pointer;margin-top:8px;transition:border-color .2s,color .2s;">📲 Instalar app</button>
   <div class="footer">Agrofacil S.A. · Ezeiza · v1.0</div>
 </div>
 
@@ -96,6 +97,28 @@
   document.getElementById('pass').addEventListener('keydown', e => {
     if (e.key === 'Enter') window.login();
   });
+</script>
+<script>
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  window._installPrompt=e;
+  const btn=document.getElementById('btn-inst');
+  if(btn)btn.style.display='block';
+});
+function instalarPWA(){
+  if(window._installPrompt){
+    window._installPrompt.prompt();
+    window._installPrompt.userChoice.then(r=>{
+      if(r.outcome==='accepted'){
+        const btn=document.getElementById('btn-inst');
+        if(btn)btn.style.display='none';
+      }
+      window._installPrompt=null;
+    });
+  } else {
+    alert('Menú ⋮ → "Agregar a pantalla de inicio"');
+  }
+}
 </script>
 </body>
 </html>
