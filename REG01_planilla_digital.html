@@ -72,6 +72,16 @@
   --sans:'Barlow Condensed',sans-serif;
   --r:6px;--touch:52px;
 }
+/* ── TEMA LIGHT ── */
+:root.light{
+  --bg:#f0f5f2;--bg2:#ffffff;--bg3:#e8f0ec;
+  --border:#cdddd6;--border2:#b5cfc5;
+  --accent:#2e9090;--accent2:#1d6565;
+  --green:#5d8500;--green-bg:#eef7d8;
+  --red:#dc2626;--red-bg:#fee2e2;
+  --yellow:#b45309;--orange:#c2410c;--orange-bg:#fff7ed;
+  --text:#1a2e28;--text2:#4a7068;--text3:#6b9080;
+}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 /* dvh = dynamic viewport height: se recalcula automáticamente cuando
    el teclado virtual sube o baja. Soportado desde Chrome 108 (2022).
@@ -399,6 +409,7 @@ input, textarea, select, button {
     <button id="btn-inst" onclick="instalarPWA()" title="Instalar app" style="display:none;flex-shrink:0;background:#1a3535;border:1px solid #8ab83c;color:#8ab83c;font-size:17px;width:34px;height:34px;border-radius:var(--r);cursor:pointer;align-items:center;justify-content:center">📲</button>
     <button id="btn-srch" onclick="abrirBusqueda()" title="Buscar lote" style="flex-shrink:0;background:var(--bg3);border:1px solid var(--border2);color:var(--text3);font-size:16px;width:34px;height:34px;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center">🔍</button>
     <button id="btn-cfg" onclick="abrirCfg()" title="Configurar inductoras">⚙</button>
+    <button id="btn-theme" onclick="toggleTheme()" title="Cambiar tema" style="flex-shrink:0;background:transparent;border:1px solid var(--border2);color:var(--text3);font-size:.9rem;width:34px;height:34px;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center">🌙</button>
 <a href="home.html" style="flex-shrink:0;background:#1a2a2a;border:1px solid #2e5252;color:#8ab83c;font-size:13px;width:34px;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;text-decoration:none" title="Ir al Inicio">🏠</a>
 <button id="btn-logout" onclick="import('./firebase-init.js').then(m=>m.cerrarSesion())" style="flex-shrink:0;background:#1a2a2a;border:1px solid #2e5252;color:#94a3b8;font-size:13px;width:34px;height:34px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Cerrar sesión">🚪</button>
   </div>
@@ -2149,6 +2160,10 @@ if('serviceWorker' in navigator && location.protocol !== 'file:'){
     })
     .catch(err => console.log('SW no disponible:', err));
 }
+
+function aplicarTema(t){document.documentElement.classList.toggle('light',t==='light');const b=document.getElementById('btn-theme');if(b)b.textContent=t==='light'?'🌙':'☀️';}
+function toggleTheme(){const n=document.documentElement.classList.contains('light')?'dark':'light';localStorage.setItem('theme',n);aplicarTema(n);}
+aplicarTema(localStorage.getItem('theme')||'dark');
 </script>
 </body>
 </html>
