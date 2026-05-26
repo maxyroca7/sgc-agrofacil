@@ -191,7 +191,7 @@ select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px
 
 /* ══ MOBILE / TABLET — vista de tarjetas ══ */
 @media (max-width: 900px) {
-  body { padding: 8px; font-size: 13px; background: var(--bg); color: var(--text); }
+  body { padding: 60px 8px 8px; font-size: 13px; background: var(--bg); color: var(--text); }
   .page { background: var(--surface); box-shadow: none; padding: 10px; border-radius: 10px; max-width: 100%; }
 
   /* Encabezado compacto */
@@ -330,8 +330,6 @@ select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px
     <span class="topbar-title">Registro de NCs</span>
   </div>
   <div class="topbar-right">
-    <a href="home.html" class="btn-t">🏠 Inicio</a>
-    <a href="REG01_planilla_digital.html" class="btn-t">← REG-01</a>
     <button id="btn-theme" class="btn-t" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
     <button class="btn-t danger" onclick="import('./firebase-init.js').then(m=>m.cerrarSesion())" title="Cerrar sesión">🚪 Salir</button>
   </div>
