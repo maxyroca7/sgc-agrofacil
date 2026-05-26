@@ -361,6 +361,7 @@ input, textarea, select, button {
   #tabs-wrap:empty{display:none}
   .tab{font-size:9px;padding:4px 8px;gap:4px}
   .tb-left{gap:.35rem;margin-right:4px}
+  .tb-brand,.tb-sep,.tb-title{display:none}
 }
 /* ── OVERLAY ROTAR DISPOSITIVO ── */
 #rotate-overlay{
@@ -412,6 +413,7 @@ input, textarea, select, button {
     <button id="btn-nl" onclick="abrirModalLote()">+ Lote</button>
 <button id="btn-srch" onclick="abrirBusqueda()" title="Buscar lote" style="flex-shrink:0;background:var(--bg3);border:1px solid var(--border2);color:var(--text3);font-size:16px;width:34px;height:34px;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center">🔍</button>
     <button id="btn-cfg" onclick="abrirCfg()" title="Configurar inductoras">⚙</button>
+    <a href="home.html" style="flex-shrink:0;background:transparent;border:1px solid var(--border2);color:var(--text2);font-size:.82rem;padding:.28rem .5rem;border-radius:var(--r);transition:all .15s;text-decoration:none;display:inline-flex;align-items:center" title="Inicio">🏠</a>
     <button id="btn-theme" onclick="toggleTheme()" title="Cambiar tema" style="flex-shrink:0;background:transparent;border:1px solid var(--border2);color:var(--text2);font-size:.82rem;padding:.28rem .5rem;border-radius:var(--r);cursor:pointer;transition:all .15s">🌙</button>
     <button id="btn-logout" onclick="import('./firebase-init.js').then(m=>m.cerrarSesion())" style="flex-shrink:0;background:transparent;border:1px solid rgba(239,68,68,.3);color:var(--red);font-size:.72rem;padding:.28rem .6rem;border-radius:var(--r);cursor:pointer;white-space:nowrap;transition:all .15s" title="Cerrar sesión">🚪 Salir</button>
   </div>
