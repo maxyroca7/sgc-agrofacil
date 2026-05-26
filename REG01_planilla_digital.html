@@ -1270,9 +1270,25 @@ function patchPesoCard(i){
 }
 function updLSem(i,k,v,inp){
   const l=getLote();if(!l)return;l.linea[i][k]=v;marcarPendiente();
-  // Actualizar semáforo de tabla
+  const estado=semaforo(v,l.cab.indId);
+  // Auto-set indOK según rango — el checker puede hacer override manual en cualquier momento
+  l.linea[i].indOK=!estado?null:estado==='ok'?true:false;
+  // Actualizar tarjetas (portrait)
+  patchCLCard(i);
+  // Actualizar botones en fila de tabla (landscape)
+  const row=inp?inp.closest('tr'):null;
+  if(row){
+    const okBtn=row.querySelector('.ok');
+    const nokBtn=row.querySelector('.nk');
+    if(okBtn)okBtn.classList.toggle('active',l.linea[i].indOK===true);
+    if(nokBtn)nokBtn.classList.toggle('active',l.linea[i].indOK===false);
+  }
+  // Semáforo tabla
   const s=document.getElementById('sem-'+i);
-  if(s)s.className='sem '+semaforo(v,l.cab.indId);
+  if(s)s.className='sem '+estado;
+  // Semáforo tarjeta
+  const card=document.getElementById('cl-pallet-'+i);
+  if(card){const cs=card.querySelector('label .sem');if(cs)cs.className='sem '+estado;}
 }
 // ── patchCLCard: actualiza una tarjeta CL individual sin llamar renderLote() ──
 function patchCLCard(i){
@@ -1317,7 +1333,7 @@ function patchCLCard(i){
 }
 function setIO(i,v){
   const l=getLote();if(!l)return;
-  l.linea[i].indOK=l.linea[i].indOK===v?null:v;
+  l.linea[i].indOK=v;
   if(v===true)l.linea[i].repro=false;
   marcarPendiente();
   patchCLCard(i);
