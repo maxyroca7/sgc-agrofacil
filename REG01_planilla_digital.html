@@ -394,6 +394,7 @@ html.coordinadora #main select { pointer-events:none; opacity:.6; }
   authGuard().then(u => getRol(u.uid)).then(rol => {
     localStorage.setItem('userRol', rol);
     if (rol === 'coordinadora') document.documentElement.classList.add('coordinadora');
+    console.log('[REG01] rol aplicado:', rol, '| clase html:', document.documentElement.className);
   });
 </script>
 

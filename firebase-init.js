@@ -52,8 +52,11 @@ export function authGuard() {
 export async function getRol(uid) {
   try {
     const snap = await getDoc(doc(db, 'usuarios', uid));
-    return snap.exists() ? (snap.data().rol || 'checker') : 'checker';
-  } catch {
+    const rol = snap.exists() ? (snap.data().rol || 'checker') : 'checker';
+    console.log('[getRol] uid:', uid, '| doc exists:', snap.exists(), '| data:', snap.exists() ? JSON.stringify(snap.data()) : 'N/A', '| rol resuelto:', rol);
+    return rol;
+  } catch (e) {
+    console.error('[getRol] Error leyendo Firestore:', e);
     return 'checker';
   }
 }
