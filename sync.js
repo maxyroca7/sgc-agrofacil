@@ -14,9 +14,7 @@ const COL_LOTES = 'lotes';
 const COL_NC    = 'nc_records';
 
 // ─── Key localStorage de lotes ───────────
-// ⚠️  Verificar que coincida con el valor en cargarLotes() / guardarLotes()
-//     de REG01_planilla_digital.html
-const LS_KEY = 'lotes_reg01_v3';   // ← ajustar si difiere
+const LS_KEY = 'reg01_lotes_v3';   // ← debe coincidir con LOTES_KEY en REG01_planilla_digital.html
 
 // ════════════════════════════════════════
 //  LOTES  (REG-01 ↔ Firestore)
@@ -135,7 +133,6 @@ export function escucharNC(onCambio) {
 //  PARCHES  (interceptores automáticos)
 // ════════════════════════════════════════
 
-// Referencia al setItem original (sin parche)
 const _setRaw = localStorage.setItem.bind(localStorage);
 
 /** Parche localStorage — detecta guardarLotes() automáticamente */
