@@ -390,11 +390,19 @@ html.coordinadora #main select { pointer-events:none; opacity:.6; }
 
 <script type="module">
   import { authGuard, getRol } from './firebase-init.js';
-  import './sync.js';
-  authGuard().then(u => getRol(u.uid)).then(rol => {
+  import { pullLotes, escucharLotes } from './sync.js';
+
+  authGuard().then(async u => {
+    const rol = await getRol(u.uid);
     localStorage.setItem('userRol', rol);
     if (rol === 'coordinadora') document.documentElement.classList.add('coordinadora');
     console.log('[REG01] rol aplicado:', rol, '| clase html:', document.documentElement.className);
+
+    await pullLotes();
+    cargarLotes();
+    renderTabs();
+
+    escucharLotes(() => { cargarLotes(); renderTabs(); });
   });
 </script>
 

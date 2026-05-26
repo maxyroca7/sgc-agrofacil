@@ -16,7 +16,7 @@ const COL_NC    = 'nc_records';
 // ─── Key localStorage de lotes ───────────
 // ⚠️  Verificar que coincida con el valor en cargarLotes() / guardarLotes()
 //     de REG01_planilla_digital.html
-const LS_KEY = 'lotes_reg01';   // ← ajustar si difiere
+const LS_KEY = 'reg01_lotes_v3';
 
 // ════════════════════════════════════════
 //  LOTES  (REG-01 ↔ Firestore)
