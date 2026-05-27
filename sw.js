@@ -1,10 +1,10 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v19
-//  Cambio v19: invalida caché v18 para forzar recarga tras
-//  fix sync.js (LS_KEY) y fix setIO toggle NOK
+//  sw.js — Agrofacil SGC · v20
+//  Cambio v20: invalida caché v19 — checks QR/Pack/Plt, KPIs home,
+//  coordinadora sin agregar pallets, topbar mobile spacing
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v19';
+const CACHE_NAME = 'agrofacil-v20';
 
 const ASSETS = [
   '/login.html',
