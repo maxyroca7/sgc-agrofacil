@@ -51,7 +51,7 @@ export async function pullLotes() {
 
 /** Push: escribe un lote en Firestore */
 export async function pushLote(lote) {
-  if (!lote?.id) return;
+  console.log('[sync] pushLote llamado, id:', lote?.id, lote);   if (!lote?.id) return;
   try {
     await setDoc(doc(db, COL_LOTES, String(lote.id)), {
       ...lote,
