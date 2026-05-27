@@ -1,10 +1,10 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v18
-//  Cambio v18: invalida caché v17 para forzar recarga de
-//  home.html, login.html e historial.html (fix logo SVG)
+//  sw.js — Agrofacil SGC · v19
+//  Cambio v19: invalida caché v18 para forzar recarga tras
+//  fix sync.js (LS_KEY) y fix setIO toggle NOK
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v18';
+const CACHE_NAME = 'agrofacil-v19';
 
 const ASSETS = [
   '/login.html',
