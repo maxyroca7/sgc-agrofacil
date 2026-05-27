@@ -1,10 +1,10 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v20
-//  Cambio v20: invalida caché v19 — checks QR/Pack/Plt, KPIs home,
-//  coordinadora sin agregar pallets, topbar mobile spacing
+//  sw.js — Agrofacil SGC · v21
+//  Cambio v21: invalida caché v20 — KPIs home con onSnapshot,
+//  nombre usuario desde Firestore, checks QR/Pack/Plt visibles
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v20';
+const CACHE_NAME = 'agrofacil-v21';
 
 const ASSETS = [
   '/login.html',

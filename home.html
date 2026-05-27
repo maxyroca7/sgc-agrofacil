@@ -199,7 +199,7 @@
 
 <script type="module">
   import { auth, db, authGuard, cerrarSesion, getRol } from './firebase-init.js';
-  import { collection, query, orderBy, limit, getDocs, getDoc, doc }
+  import { collection, getDoc, doc, onSnapshot }
     from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
   document.getElementById('btn-salir').addEventListener('click', cerrarSesion);
@@ -228,52 +228,63 @@
     new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})
     + ' · Agrofacil S.A., Ezeiza';
 
-  let lotes = [], ncs = [];
-  try {
-    const qL = query(collection(db,'lotes'), orderBy('_ts','desc'), limit(300));
-    lotes = (await getDocs(qL)).docs.map(d=>({id:d.id,...d.data()}));
-  } catch { try { lotes = JSON.parse(localStorage.getItem('reg01_lotes_v3')||'[]'); } catch {} }
-
-  try {
-    const qN = query(collection(db,'nc_records'), orderBy('_ts','desc'), limit(300));
-    ncs = (await getDocs(qN)).docs.map(d=>({id:d.id,...d.data()}));
-  } catch { try { ncs = JSON.parse(localStorage.getItem('nc_records')||'[]'); } catch {} }
-
-  // nd(): usa l.estado ('aprobado','retenido','aprobado_parcial') que setea REG-01
-  function nd(l){const e=l.estado||'';if(e==='aprobado')return'APROBADO';if(e==='retenido')return'RETENIDO';if(e==='aprobado_parcial')return'PARCIAL';return'OTRO';}
-  // fmtC(): usa _ts (Date.now number) o lastModified como fallback
+  function nd(l){const e=l.estado||'';if(e==='aprobado')return'APROBADO';if(e==='retenido'||e==='reproceso')return'RETENIDO';if(e==='aprobado_parcial')return'PARCIAL';return'OTRO';}
   function fmtC(ts){if(!ts)return'—';try{return new Date(ts).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'});}catch{return'—';}}
-
-  const ahora=new Date(),mes=ahora.getMonth(),anio=ahora.getFullYear();
-  const delMes=lotes.filter(l=>{try{const ts=l._ts||l.lastModified;return ts&&new Date(ts).getMonth()===mes&&new Date(ts).getFullYear()===anio;}catch{return false;}});
-  const total=delMes.length,apr=delMes.filter(l=>l.estado==='aprobado').length,ret=delMes.filter(l=>l.estado==='retenido').length;
-  // NC abiertas: field es 'est', pendiente = no Finalizado
-  const pending=ncs.filter(n=>(n.est||'').toLowerCase()!=='finalizado').length;
-
-  document.getElementById('s-lotes').textContent=total;
-  document.getElementById('s-ret').textContent=ret;
-  document.getElementById('s-pct').textContent=total?Math.round(apr/total*100)+'%':'—';
-  document.getElementById('s-nc').textContent=pending;
-  document.getElementById('nc-pend').textContent=pending;
-  if(lotes.length) document.getElementById('ultimo-lote').textContent=lotes[0].cab?.lote||'—';
-  const clientes=new Set(lotes.map(l=>l.cab?.cliente).filter(Boolean));
-  document.getElementById('n-clientes').textContent=clientes.size||'—';
-
   const colores={APROBADO:'#22c55e',PARCIAL:'var(--warn)',RETENIDO:'var(--danger)',OTRO:'var(--muted)'};
-  const el=document.getElementById('actividad-list');
-  if(!lotes.length){el.innerHTML='<div class="actividad-empty">Sin lotes registrados todavía.</div>';}
-  else{
-    el.innerHTML=lotes.slice(0,8).map(l=>{
-      const dict=nd(l);
-      return`<div class="actividad-item" onclick="window.location.href='historial.html'">
-        <div class="act-dot" style="background:${colores[dict]}"></div>
-        <div class="act-lote">${l.cab?.lote||'—'}</div>
-        <div class="act-prod">${l.cab?.prod||'—'}${l.cab?.cliente?' · '+l.cab.cliente:''}</div>
-        <span class="act-badge ab-${dict}">${dict==='APROBADO'?'✓ APR':dict==='RETENIDO'?'✕ RET':dict==='PARCIAL'?'~ PAR':'—'}</span>
-        <div class="act-fecha">${fmtC(l._ts||l.lastModified)}</div>
-      </div>`;
-    }).join('');
+
+  let _lotes=[], _ncs=[];
+
+  function renderKPIs(){
+    const sorted=[..._lotes].sort((a,b)=>(b._ts||b.lastModified||0)-(a._ts||a.lastModified||0));
+    const ahora=new Date(),mes=ahora.getMonth(),anio=ahora.getFullYear();
+    const delMes=sorted.filter(l=>{try{const ts=l._ts||l.lastModified;return ts&&new Date(ts).getMonth()===mes&&new Date(ts).getFullYear()===anio;}catch{return false;}});
+    const total=delMes.length,apr=delMes.filter(l=>l.estado==='aprobado').length,ret=delMes.filter(l=>['retenido','reproceso'].includes(l.estado||'')).length;
+    const pending=_ncs.filter(n=>(n.est||n.estado||'').toLowerCase()!=='finalizado'&&(n.est||n.estado||'').toLowerCase()!=='cerrada').length;
+
+    document.getElementById('s-lotes').textContent=total;
+    document.getElementById('s-ret').textContent=ret;
+    document.getElementById('s-pct').textContent=total?Math.round(apr/total*100)+'%':'—';
+    document.getElementById('s-nc').textContent=pending;
+    document.getElementById('nc-pend').textContent=pending;
+    if(sorted.length) document.getElementById('ultimo-lote').textContent=sorted[0].cab?.lote||'—';
+    const clientes=new Set(sorted.map(l=>l.cab?.cliente).filter(Boolean));
+    document.getElementById('n-clientes').textContent=clientes.size||'—';
+
+    const el=document.getElementById('actividad-list');
+    if(!sorted.length){el.innerHTML='<div class="actividad-empty">Sin lotes registrados todavía.</div>';}
+    else{
+      el.innerHTML=sorted.slice(0,8).map(l=>{
+        const dict=nd(l);
+        return`<div class="actividad-item" onclick="window.location.href='historial.html'">
+          <div class="act-dot" style="background:${colores[dict]}"></div>
+          <div class="act-lote">${l.cab?.lote||'—'}</div>
+          <div class="act-prod">${l.cab?.prod||'—'}${l.cab?.cliente?' · '+l.cab.cliente:''}</div>
+          <span class="act-badge ab-${dict}">${dict==='APROBADO'?'✓ APR':dict==='RETENIDO'?'✕ RET':dict==='PARCIAL'?'~ PAR':'—'}</span>
+          <div class="act-fecha">${fmtC(l._ts||l.lastModified)}</div>
+        </div>`;
+      }).join('');
+    }
   }
+
+  // onSnapshot lotes — sin orderBy para no requerir índice; sort client-side
+  // Si Firestore devuelve vacío, usa localStorage como fallback
+  onSnapshot(collection(db,'lotes'), snap => {
+    _lotes = snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(!_lotes.length) try{_lotes=JSON.parse(localStorage.getItem('reg01_lotes_v3')||'[]');}catch{}
+    renderKPIs();
+  }, () => {
+    try{_lotes=JSON.parse(localStorage.getItem('reg01_lotes_v3')||'[]');}catch{}
+    renderKPIs();
+  });
+
+  onSnapshot(collection(db,'nc_records'), snap => {
+    _ncs = snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(!_ncs.length) try{_ncs=JSON.parse(localStorage.getItem('nc_records')||'[]');}catch{}
+    renderKPIs();
+  }, () => {
+    try{_ncs=JSON.parse(localStorage.getItem('nc_records')||'[]');}catch{}
+    renderKPIs();
+  });
 </script>
 </body>
 </html>
