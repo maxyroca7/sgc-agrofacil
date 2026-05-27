@@ -804,7 +804,9 @@ function nPL(num){return{nPal:String(num),fecha:'',hora:'',p1:'',p2:'',p3:'',p4:
   lote:'',codProd:'',fProd:'',fVenc:'',indOK:null,indVal:'',repro:false,obs:'',pesoOK:null,
   qrLineaOK:null,packOK:null,pltOK:null,
   qrRepro:false,packRepro:false,pltRepro:false,qrCode:''};}
-function nPF(){return{idOK:null,qrOK:null,paletOK:null,indCFOK:null,indCFVal:'',repro:false,obs:'',litrosParcial:'',qrCodeCF:''};}
+function nPF(){return{idOK:null,qrOK:null,paletOK:null,indCFOK:null,indCFVal:'',
+  repro:false,idRepro:false,qrRepro:false,paletRepro:false,indCFRepro:false,
+  obs:'',litrosParcial:'',qrCodeCF:''};}
 function getLote(){return lotes.find(l=>l.id===loteActivo);}
 
 
@@ -1442,15 +1444,62 @@ function calcLitrosCF(l){
   const anyLts=lpp>0||l.final.pallets.some(p=>parseFloat(p.litrosParcial)>0);
   l.final.pallets.forEach(p=>{
     const ok=p.idOK===true&&p.qrOK===true&&p.paletOK===true&&p.indCFOK===true;
-    const nok=p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false;
-    const lts=parseFloat(p.litrosParcial)||lpp; // parcial si existe, si no ltsPorPallet
-    if(ok||(nok&&p.repro)){aprobados++;ltsAp+=lts;}
-    else if(nok&&!p.repro){retenidos++;ltsRet+=lts;}
+    const hasNakedNOK=(p.idOK===false&&!p.idRepro)||(p.qrOK===false&&!p.qrRepro)||(p.paletOK===false&&!p.paletRepro)||(p.indCFOK===false&&!p.indCFRepro);
+    const hasAnyRepro=!!(p.idRepro||p.qrRepro||p.paletRepro||p.indCFRepro);
+    const lts=parseFloat(p.litrosParcial)||lpp;
+    if(ok||(hasAnyRepro&&!hasNakedNOK)){aprobados++;ltsAp+=lts;}
+    else if(hasNakedNOK){retenidos++;ltsRet+=lts;}
     else pendientes++;
   });
   return {aprobados,retenidos,pendientes,
     ltsAp:anyLts?ltsAp:null,
     ltsRet:anyLts?ltsRet:null};
+}
+
+// ── Helpers CF: status badge y filas de checks ─────────────────────────────
+function _cfHasNakedNOK(p){
+  return (p.idOK===false&&!p.idRepro)||(p.qrOK===false&&!p.qrRepro)||(p.paletOK===false&&!p.paletRepro)||(p.indCFOK===false&&!p.indCFRepro);
+}
+function _cfHasAnyRepro(p){
+  return !!(p.idRepro||p.qrRepro||p.paletRepro||p.indCFRepro);
+}
+function _cfStatusBadge(p){
+  const allOK=p.idOK===true&&p.qrOK===true&&p.paletOK===true&&p.indCFOK===true;
+  if(allOK) return '<span class="repro-badge" style="background:var(--green-bg);border-color:var(--green);color:var(--green)">APROBADO</span>';
+  if(_cfHasNakedNOK(p)) return '<span class="repro-badge" style="background:var(--red-bg);border-color:var(--red);color:var(--red)">RETENIDO</span>';
+  if(_cfHasAnyRepro(p)) return '<span class="repro-badge" style="background:var(--orange-bg);border-color:var(--orange);color:var(--orange)">REPROCESO</span>';
+  return '';
+}
+function _cfCardRowsHTML(p,i,semCF){
+  const rfMap={idOK:'idRepro',qrOK:'qrRepro',paletOK:'paletRepro',indCFOK:'indCFRepro'};
+  function btn(fk,isOk){
+    const cls=(isOk?'ok':'nk')+(p[fk]===(isOk?true:false)?' active':'');
+    const ev="setFF("+i+",'"+fk+"',"+(isOk?'true':'false')+")";
+    return '<button class="'+cls+'" onclick="'+ev+'" style="flex:1;height:48px;font-size:13px">'+(isOk?'&#10004; OK':'&#10008; NOK')+'</button>';
+  }
+  function row(label,fk,extra){
+    const rf=rfMap[fk];
+    const isNOK=p[fk]===false, isRepro=rf&&!!p[rf];
+    const scanBtn=(fk==='qrOK'&&_bdSupported)
+      ?'<button class="sc" onclick="scanQRCF('+i+')" title="Escanear QR" style="height:48px;min-width:44px;font-size:16px">&#128247;</button>'
+      :'';
+    const reproBtn=isNOK?'<button class="rp'+(isRepro?' active':'')+'" onclick="setFFRepro('+i+",'"+rf+"')"+'" style="height:48px;padding:0 10px">REPRO</button>':'';
+    return '<div>'
+      +'<div style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">'+label+(extra||'')+'</div>'
+      +'<div class="on" style="gap:8px">'+scanBtn+btn(fk,true)+btn(fk,false)+reproBtn+'</div>'
+      +'</div>';
+  }
+  return '<div id="cf-rows-'+i+'" style="display:grid;gap:10px">'
+    +row('ID Pallet','idOK')
+    +row('Trazabilidad y QR','qrOK')
+    +row('Estado del pallet','paletOK')
+    +row('Inducci&#243;n CF','indCFOK','<span class="sem '+semCF+'" style="display:inline-block;margin-left:6px;vertical-align:middle"></span>')
+    +'<div class="pf"><label>Lt parcial <span style="font-family:var(--mono);font-size:9px;color:var(--text3);font-weight:400">(vac\xedo = pallet completo)</span></label>'
+      +'<input type="number" step="1" min="1" value="'+(p.litrosParcial||'')+'" placeholder="dejar vac\xedo si completo" '
+      +'oninput="updFP('+i+",'litrosParcial',this.value);actualizarLitrosCF()\"></div>"
+    +'<div class="pf"><label>Observaciones</label>'
+      +'<input type="text" value="'+(p.obs||'').replace(/"/g,'&quot;')+'" placeholder="&#8230;" oninput="updFP('+i+",'obs',this.value)\"></div>"
+    +'</div>';
 }
 
 // ── Generadores HTML para paginación CF (usados en mkFinal y setCFPage) ──
@@ -1462,49 +1511,20 @@ function buildCFCardsHTML(l){
   const _cfEnd=Math.min(_cfStart+CF_PAGE_SIZE,_cfTotal);
   return f.pallets.slice(_cfStart,_cfEnd).map(function(p,ri){
     const i=_cfStart+ri;
-    const tieneNOK=p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false;
     const vacio=p.idOK===null&&p.qrOK===null&&p.paletOK===null&&p.indCFOK===null?'pal-vacio':'';
-    const cardCls=(tieneNOK&&!p.repro?'pcard nok-card':p.repro?'pcard repro-card':'pcard')+' '+vacio;
+    const cardCls=(_cfHasNakedNOK(p)?'pcard nok-card':_cfHasAnyRepro(p)?'pcard repro-card':'pcard')+' '+vacio;
     const semCF=semaforo(p.indCFVal||'',l.cab.indId);
-    function btn(fk,isOk){
-      const cls=(isOk?'ok':'nk')+(p[fk]===(isOk?true:false)?' active':'');
-      const ev="setFF("+i+",'"+fk+"',"+(isOk?'true':'false')+")";
-      const lbl=isOk?'&#10004; OK':'&#10008; NOK';
-      return '<button class="'+cls+'" onclick="'+ev+'" style="flex:1;height:48px;font-size:13px">'+lbl+'</button>';
-    }
-    const reproBtn=tieneNOK
-      ?'<button class="on rp '+(p.repro?'active':'')+'" onclick="setFFRepro('+i+')" style="height:36px;padding:0 10px;border-radius:4px;border:1px solid var(--border2);font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;background:var(--bg3);color:var(--text3)">REPRO</button>'
-      :'';
-    const reproBadge=p.repro?'<span class="repro-badge">&#10003;</span>':'';
-    const row=function(label,fk,extra){
-      const scanBtn=(fk==='qrOK'&&_bdSupported)
-        ?'<button class="sc" onclick="scanQRCF('+i+')" title="Escanear QR" style="height:48px;min-width:44px;font-size:16px">📷</button>'
-        :'';
-      return '<div>'
-        +'<div style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">'+(label)+(extra||'')+'</div>'
-        +'<div class="on" style="gap:8px">'+scanBtn+btn(fk,true)+btn(fk,false)+'</div>'
-        +'</div>';
-    };
     return '<div class="'+cardCls+'" id="cf-pallet-'+i+'">'
       +'<div class="pcard-header">'
         +'<span class="pcard-num">#'+(i+1)+'</span>'
         +'<span style="font-family:var(--mono);font-size:11px;color:var(--text3)">Pallet '+(p.nPal||i+1)+'</span>'
-        +'<div style="display:flex;gap:6px;align-items:center;margin-left:auto">'+reproBtn+reproBadge
-        +'<button onclick="deletePalletCF('+i+')" title="Eliminar pallet" '
-          +'style="background:transparent;border:1px solid var(--border2);border-radius:4px;color:var(--text3);font-size:13px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>'
+        +'<div id="cf-hdr-'+i+'" style="display:flex;gap:6px;align-items:center;margin-left:auto">'
+          +_cfStatusBadge(p)
+          +'<button onclick="deletePalletCF('+i+')" title="Eliminar pallet" '
+            +'style="background:transparent;border:1px solid var(--border2);border-radius:4px;color:var(--text3);font-size:13px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">&#10005;</button>'
         +'</div>'
       +'</div>'
-      +'<div style="display:grid;gap:10px">'
-        +row('ID Pallet','idOK')
-        +row('Trazabilidad y QR','qrOK')
-        +row('Estado del pallet','paletOK')
-        +row('Inducci&#243;n CF','indCFOK','<span class="sem '+semCF+'" style="display:inline-block;margin-left:6px;vertical-align:middle"></span>')
-        +'<div class="pf"><label>Lt parcial <span style="font-family:var(--mono);font-size:9px;color:var(--text3);font-weight:400">(vacío = pallet completo)</span></label>'
-          +'<input type="number" step="1" min="1" value="'+(p.litrosParcial||'')+'" placeholder="dejar vacío si completo" '
-          +'oninput="updFP('+i+",'litrosParcial',this.value);actualizarLitrosCF()\"></div>"
-        +'<div class="pf"><label>Observaciones</label>'
-          +'<input type="text" value="'+p.obs.replace(/"/g,'&quot;')+'" placeholder="&#8230;" oninput="updFP('+i+",'obs',this.value)\"></div>"
-      +'</div>'
+      +_cfCardRowsHTML(p,i,semCF)
     +'</div>';
   }).join('');
 }
@@ -1556,8 +1576,8 @@ function mkFinal(l){
   const cfCards=buildCFCardsHTML(l);
   const cfNav=buildCFNavHTML(l);
 
-  const nokCount=f.pallets.filter(p=>p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false).length;
-  const reproCount=f.pallets.filter(p=>p.repro).length;
+  const nokCount=f.pallets.filter(_cfHasNakedNOK).length;
+  const reproCount=f.pallets.filter(_cfHasAnyRepro).length;
   const c=document.createElement('div');c.className='card';
   c.innerHTML=`<div class="ch collapsed" onclick="toggleCard(this)">
     <div class="ch-title">✅ Control Final
@@ -1634,27 +1654,20 @@ function patchCFCard(i){
   const p=l.final.pallets[i];
   const card=document.getElementById('cf-pallet-'+i);
   if(!card){renderLote();return;}
-  const tieneNOK=p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false;
   // Clase del card
-  card.className=tieneNOK&&!p.repro?'pcard nok-card':p.repro?'pcard repro-card':'pcard';
-  // Botones OK/NOK: buscar por onclick
-  ['idOK','qrOK','paletOK','indCFOK'].forEach(fk=>{
-    const ok=card.querySelector(`.ok[onclick*="'${fk}'"],[onclick*='"${fk}"']`)||
-             [...card.querySelectorAll('button.ok')].find(b=>b.getAttribute('onclick')?.includes(fk));
-    const nok=card.querySelector(`.nk[onclick*="'${fk}'"],[onclick*='"${fk}"']`)||
-              [...card.querySelectorAll('button.nk')].find(b=>b.getAttribute('onclick')?.includes(fk));
-    if(ok){ok.classList.toggle('active',p[fk]===true);}
-    if(nok){nok.classList.toggle('active',p[fk]===false);}
-  });
-  // REPRO button + badge en header
-  const flex=card.querySelector('div[style*="margin-left:auto"]');
-  if(flex){
-    flex.innerHTML=(tieneNOK
-      ?`<button class="on rp ${p.repro?'active':''}" onclick="setFFRepro(${i})" style="height:36px;padding:0 10px;border-radius:4px;border:1px solid var(--border2);font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;background:var(--bg3);color:var(--text3)">REPRO</button>`
-      :'')+(p.repro?'<span class="repro-badge">✓</span>':'');
+  card.className=_cfHasNakedNOK(p)?'pcard nok-card':_cfHasAnyRepro(p)?'pcard repro-card':'pcard';
+  // Reconstruir filas de checks (incluye OK/NOK y botones REPRO per-check)
+  const semCF=semaforo(p.indCFVal||'',l.cab.indId);
+  const rowsDiv=document.getElementById('cf-rows-'+i);
+  if(rowsDiv){const tmp=document.createElement('div');tmp.innerHTML=_cfCardRowsHTML(p,i,semCF);rowsDiv.replaceWith(tmp.firstChild);}
+  // Actualizar badge de estado en el header
+  const hdr=document.getElementById('cf-hdr-'+i);
+  if(hdr){
+    const delBtn=hdr.querySelector('button[onclick*="deletePalletCF"]');
+    hdr.innerHTML=_cfStatusBadge(p)+(delBtn?delBtn.outerHTML:'');
   }
-  // Actualizar contador NOK en header de CF
-  const nokTotal=l.final.pallets.filter(p=>p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false).length;
+  // Contador NOK en el título de la sección CF
+  const nokTotal=l.final.pallets.filter(_cfHasNakedNOK).length;
   const cfHeader=document.querySelector('.ch-title span[style*="red"]');
   if(nokTotal>0&&cfHeader)cfHeader.textContent=nokTotal+' NOK';
   else if(nokTotal===0&&cfHeader)cfHeader.remove();
@@ -1672,14 +1685,20 @@ function setFF(i,k,v){
   const l=getLote();if(!l)return;
   l.final.pallets[i][k]=l.final.pallets[i][k]===v?null:v;
   const p=l.final.pallets[i];
-  const tieneNOK_sf=p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false;
-  if(tieneNOK_sf&&p.repro)p.repro=false; // nuevo NOK invalida repro anterior
-  if(p.idOK===true&&p.qrOK===true&&p.paletOK===true&&p.indCFOK===true)p.repro=false;
+  // Pressing OK on a check clears its own repro flag
+  const rfMap={idOK:'idRepro',qrOK:'qrRepro',paletOK:'paletRepro',indCFOK:'indCFRepro'};
+  if(p[k]===true && rfMap[k]) p[rfMap[k]]=false;
+  // All OK → clear every repro
+  if(p.idOK===true&&p.qrOK===true&&p.paletOK===true&&p.indCFOK===true){
+    p.idRepro=false;p.qrRepro=false;p.paletRepro=false;p.indCFRepro=false;
+  }
+  p.repro=_cfHasAnyRepro(p);
   patchCFCard(i);
 }
-function setFFRepro(i){
+function setFFRepro(i,rfk){
   const l=getLote();if(!l)return;
-  l.final.pallets[i].repro=!l.final.pallets[i].repro;
+  l.final.pallets[i][rfk]=!l.final.pallets[i][rfk];
+  l.final.pallets[i].repro=_cfHasAnyRepro(l.final.pallets[i]);
   patchCFCard(i);
 }
 function setDictamen(v){
@@ -1799,8 +1818,8 @@ function acNC(){
   const l=getLote();if(!l)return;
   const nokInd  = l.linea.filter(p=>p.indOK===false&&!p.repro);
   const reproInd = l.linea.filter(p=>p.indOK===false&&p.repro);
-  const nokFin  = l.final.pallets.filter(p=>(p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false)&&!p.repro);
-  const reproFin = l.final.pallets.filter(p=>(p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false)&&p.repro);
+  const nokFin  = l.final.pallets.filter(_cfHasNakedNOK);
+  const reproFin = l.final.pallets.filter(p=>_cfHasAnyRepro(p)&&!_cfHasNakedNOK(p));
   // ── Peso fuera de especificación ──
   const nokPeso = l.linea.filter(p=>p.pesoOK===false&&p.indOK!==false&&!p.repro);
   // ── Checks adicionales de línea (excluir si el check fue reprocesado) ──

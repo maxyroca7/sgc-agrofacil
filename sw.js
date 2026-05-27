@@ -1,9 +1,10 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v26
-//  Cambio v26: botón SCAN QR en Control Final (qrOK), scanQRCF(), qrCodeCF en nPF()
+//  sw.js — Agrofacil SGC · v27
+//  Cambio v27: CF per-check REPRO (idRepro/qrRepro/paletRepro/indCFRepro),
+//  semáforo APROBADO/RETENIDO/REPROCESO por pallet
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v26';
+const CACHE_NAME = 'agrofacil-v27';
 
 const ASSETS = [
   '/login.html',
