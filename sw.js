@@ -1,9 +1,9 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v25
-//  Cambio v25: botón SCAN QR (BarcodeDetector) en TRAZAB./QR, guarda qrCode en pallet
+//  sw.js — Agrofacil SGC · v26
+//  Cambio v26: botón SCAN QR en Control Final (qrOK), scanQRCF(), qrCodeCF en nPF()
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v25';
+const CACHE_NAME = 'agrofacil-v26';
 
 const ASSETS = [
   '/login.html',

@@ -804,7 +804,7 @@ function nPL(num){return{nPal:String(num),fecha:'',hora:'',p1:'',p2:'',p3:'',p4:
   lote:'',codProd:'',fProd:'',fVenc:'',indOK:null,indVal:'',repro:false,obs:'',pesoOK:null,
   qrLineaOK:null,packOK:null,pltOK:null,
   qrRepro:false,packRepro:false,pltRepro:false,qrCode:''};}
-function nPF(){return{idOK:null,qrOK:null,paletOK:null,indCFOK:null,indCFVal:'',repro:false,obs:'',litrosParcial:''};}
+function nPF(){return{idOK:null,qrOK:null,paletOK:null,indCFOK:null,indCFVal:'',repro:false,obs:'',litrosParcial:'',qrCodeCF:''};}
 function getLote(){return lotes.find(l=>l.id===loteActivo);}
 
 
@@ -1477,9 +1477,12 @@ function buildCFCardsHTML(l){
       :'';
     const reproBadge=p.repro?'<span class="repro-badge">&#10003;</span>':'';
     const row=function(label,fk,extra){
+      const scanBtn=(fk==='qrOK'&&_bdSupported)
+        ?'<button class="sc" onclick="scanQRCF('+i+')" title="Escanear QR" style="height:48px;min-width:44px;font-size:16px">📷</button>'
+        :'';
       return '<div>'
         +'<div style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">'+(label)+(extra||'')+'</div>'
-        +'<div class="on" style="gap:8px">'+btn(fk,true)+btn(fk,false)+'</div>'
+        +'<div class="on" style="gap:8px">'+scanBtn+btn(fk,true)+btn(fk,false)+'</div>'
         +'</div>';
     };
     return '<div class="'+cardCls+'" id="cf-pallet-'+i+'">'
@@ -2198,16 +2201,14 @@ if (_bdSupported) {
     });
   } catch(e) { console.warn('[scan] BarcodeDetector init:', e.message); }
 }
-let _scanStream = null, _scanRaf = null, _scanIdx = -1;
+let _scanStream = null, _scanRaf = null;
 
-async function scanQR(palletIdx) {
+async function _openScanner(label, onSuccess) {
   if (!_bdDetector) return;
-  _scanIdx = palletIdx;
-  // Crear overlay
   const ov = document.createElement('div');
   ov.id = 'scan-overlay';
   ov.innerHTML = `<div class="scan-modal">
-    <div class="scan-hdr"><span>📷 Escanear código — Pallet #${palletIdx+1}</span>
+    <div class="scan-hdr"><span>📷 Escanear — ${label}</span>
       <button onclick="cerrarScan()">✕</button></div>
     <video id="scan-video" autoplay playsinline muted></video>
     <div id="scan-status">Apuntá la cámara al código QR o de barras…</div>
@@ -2218,31 +2219,24 @@ async function scanQR(palletIdx) {
     const vid = document.getElementById('scan-video');
     vid.srcObject = _scanStream;
     await vid.play();
-    _scanLoop(palletIdx, vid);
+    _scanLoopCb(vid, onSuccess);
   } catch(e) {
     cerrarScan();
     mostrarToast('⚠ Sin acceso a cámara: ' + e.message);
   }
 }
 
-async function _scanLoop(idx, vid) {
+async function _scanLoopCb(vid, onSuccess) {
   if (!_bdDetector || !document.getElementById('scan-overlay')) return;
   try {
     const codes = await _bdDetector.detect(vid);
     if (codes.length) {
-      const val = codes[0].rawValue;
       cerrarScan();
-      const l = getLote(); if (!l || !l.linea[idx]) return;
-      l.linea[idx].qrCode = val;
-      l.linea[idx].qrLineaOK = true;
-      l.linea[idx].qrRepro = false;
-      marcarPendiente();
-      patchCLCard(idx);
-      mostrarToast('QR: ' + val + ' ✓');
+      onSuccess(codes[0].rawValue);
       return;
     }
   } catch(e) { /* frame no listo */ }
-  _scanRaf = requestAnimationFrame(() => _scanLoop(idx, vid));
+  _scanRaf = requestAnimationFrame(() => _scanLoopCb(vid, onSuccess));
 }
 
 function cerrarScan() {
@@ -2251,6 +2245,29 @@ function cerrarScan() {
   if (_scanStream) { _scanStream.getTracks().forEach(t => t.stop()); _scanStream = null; }
   const ov = document.getElementById('scan-overlay');
   if (ov) ov.remove();
+}
+
+function scanQR(palletIdx) {
+  _openScanner('CL Pallet #' + (palletIdx+1), function(val) {
+    const l = getLote(); if (!l || !l.linea[palletIdx]) return;
+    l.linea[palletIdx].qrCode = val;
+    l.linea[palletIdx].qrLineaOK = true;
+    l.linea[palletIdx].qrRepro = false;
+    marcarPendiente();
+    patchCLCard(palletIdx);
+    mostrarToast('QR: ' + val + ' ✓');
+  });
+}
+
+function scanQRCF(palletIdx) {
+  _openScanner('CF Pallet #' + (palletIdx+1), function(val) {
+    const l = getLote(); if (!l || !l.final.pallets[palletIdx]) return;
+    l.final.pallets[palletIdx].qrCodeCF = val;
+    l.final.pallets[palletIdx].qrOK = true;
+    marcarPendiente();
+    patchCFCard(palletIdx);
+    mostrarToast('QR CF: ' + val + ' ✓');
+  });
 }
 
 
