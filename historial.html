@@ -184,7 +184,7 @@
         <div class="fg"><label>Fecha hasta</label><input type="date" id="f-hasta"/></div>
         <div class="fg"><label>Producto</label><input type="text" id="f-prod" placeholder="ej. 2,4D"/></div>
         <div class="fg"><label>Checker</label><input type="text" id="f-checker" placeholder="nombre"/></div>
-        <div class="fg"><label>Dictamen</label><select id="f-dict"><option value="">Todos</option><option>APROBADO</option><option>APROBADO PARCIAL</option><option>RETENIDO</option></select></div>
+        <div class="fg"><label>Dictamen</label><select id="f-dict"><option value="">Todos</option><option value="APROBADO">Aprobado</option><option value="PARCIAL">Ap. Parcial</option><option value="RETENIDO">Retenido</option></select></div>
         <div class="fg"><label>N° Lote</label><input type="text" id="f-nlote" placeholder="parcial"/></div>
         <button class="btn-apl" onclick="aplicarFiltros()">Aplicar</button>
         <button class="btn-clr" onclick="limpiarFiltros()">✕ Limpiar</button>
@@ -225,51 +225,60 @@
 </div>
 
 <script type="module">
-  // ── Importar desde firebase-init.js (sin reinicializar) ──────
   import { auth, db, authGuard, cerrarSesion } from './firebase-init.js';
-  import { collection, query, orderBy, getDocs, where, limit }
+  import { collection, onSnapshot, getDocs, where, query }
     from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
   document.getElementById('btn-salir').addEventListener('click', cerrarSesion);
-
-  // Auth guard
   await authGuard();
 
-  // ── Estado ───────────────────────────────────────────────────
+  // ── Estado ───────────────────────────────────────────
   let todosLotes=[], lotesFiltrados=[], clienteActivo=null, loteActual=null, pagina=1;
   const POR_PAG=20;
 
-  // ── Cargar lotes ─────────────────────────────────────────────
-  try {
-    const q=query(collection(db,'lotes'),orderBy('fechaCreacion','desc'),limit(500));
-    todosLotes=(await getDocs(q)).docs.map(d=>({id:d.id,...d.data()}));
-  } catch {
-    try{todosLotes=JSON.parse(localStorage.getItem('reg01_lotes_v3')||'[]');}catch{todosLotes=[];}
+  // ── Helpers ──────────────────────────────────────────
+  function loteTs(l){return l._ts||l.lastModified||(typeof l.id==='number'?l.id:parseInt(l.id)||0);}
+  function nd(l){const e=l.estado||'';if(e==='aprobado')return'APROBADO';if(e==='retenido'||e==='reproceso')return'RETENIDO';if(e==='aprobado_parcial')return'PARCIAL';return'OTRO';}
+  function fmtF(raw){if(!raw)return'—';try{const d=typeof raw==='number'?new Date(raw):(raw.toDate?raw.toDate():new Date(raw));return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});}catch{return'—';}}
+  function getBadge(d){if(d==='APROBADO')return'b-APR';if(d==='PARCIAL')return'b-PAR';if(d==='RETENIDO')return'b-RET';return'';}
+  function mergeById(fromFS,lsKey){
+    let fromLS=[];try{fromLS=JSON.parse(localStorage.getItem(lsKey)||'[]');}catch{}
+    const map=new Map();
+    fromLS.forEach(l=>{if(l.id!=null)map.set(String(l.id),l);});
+    fromFS.forEach(l=>{if(l.id!=null)map.set(String(l.id),l);});
+    return[...map.values()];
   }
-  lotesFiltrados=[...todosLotes];
-  actualizarKPIs(todosLotes);
-  renderClientes();
-
-  // Leer hash de cliente en URL
-  const hash=window.location.hash;
-  if(hash.startsWith('#cliente=')){
-    seleccionarCliente(decodeURIComponent(hash.replace('#cliente=','')));
-  }
-
-  // ── Helpers ──────────────────────────────────────────────────
-  function nd(l){const d=(l.dictamen||'').toUpperCase();if(d.includes('PARCIAL'))return'PARCIAL';if(d.includes('RETENIDO'))return'RETENIDO';if(d.includes('APROBADO'))return'APROBADO';return'OTRO';}
-  function fmtF(raw){if(!raw)return'—';try{const d=raw.toDate?raw.toDate():new Date(raw);return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});}catch{return'—';}}
-  function getBadge(d){const s=(d||'').toUpperCase();if(s.includes('PARCIAL'))return'b-PAR';if(s.includes('RETENIDO'))return'b-RET';if(s.includes('APROBADO'))return'b-APR';return'';}
+  function palRes(p){return p.repro===true?'REPRO':p.indOK===true?'OK':p.indOK===false?'NOK':'PEND';}
 
   function actualizarKPIs(l){
-    const t=l.length,apr=l.filter(x=>nd(x)==='APROBADO').length,par=l.filter(x=>nd(x)==='PARCIAL').length,ret=l.filter(x=>nd(x)==='RETENIDO').length,p=n=>t?Math.round(n/t*100)+'%':'—';
+    const t=l.filter(x=>nd(x)!=='OTRO').length;
+    const apr=l.filter(x=>nd(x)==='APROBADO').length,par=l.filter(x=>nd(x)==='PARCIAL').length,ret=l.filter(x=>nd(x)==='RETENIDO').length;
+    const p=n=>t?Math.round(n/t*100)+'%':'—';
     document.getElementById('kpi-total').textContent=t||'0';
     document.getElementById('kpi-apr').textContent=apr;document.getElementById('kpi-apr-p').textContent=p(apr);
     document.getElementById('kpi-par').textContent=par;document.getElementById('kpi-par-p').textContent=p(par);
     document.getElementById('kpi-ret').textContent=ret;document.getElementById('kpi-ret-p').textContent=p(ret);
   }
 
-  // ── Vista tabs ───────────────────────────────────────────────
+  // ── Cargar lotes via onSnapshot ──────────────────────
+  let _hashDone=false;
+  function afterLoad(){
+    todosLotes.sort((a,b)=>loteTs(b)-loteTs(a));
+    if(!clienteActivo)lotesFiltrados=[...todosLotes];
+    actualizarKPIs(clienteActivo?lotesFiltrados:todosLotes);
+    renderClientes();
+    if(document.getElementById('vista-tabla').style.display!=='none')renderTabla();
+    if(!_hashDone){_hashDone=true;const h=window.location.hash;if(h.startsWith('#cliente='))seleccionarCliente(decodeURIComponent(h.replace('#cliente=','')));}
+  }
+  onSnapshot(collection(db,'lotes'), snap=>{
+    todosLotes=mergeById(snap.docs.map(d=>({id:d.id,...d.data()})),'reg01_lotes_v3');
+    afterLoad();
+  }, ()=>{
+    try{todosLotes=JSON.parse(localStorage.getItem('reg01_lotes_v3')||'[]');}catch{todosLotes=[];}
+    afterLoad();
+  });
+
+  // ── Vista tabs ───────────────────────────────────────
   window.cambiarVista=v=>{
     document.getElementById('vista-clientes').style.display=v==='clientes'?'':'none';
     document.getElementById('vista-tabla').style.display=v==='tabla'?'':'none';
@@ -278,10 +287,10 @@
     if(v==='tabla')renderTabla();
   };
 
-  // ── Vista Clientes ────────────────────────────────────────────
+  // ── Vista Clientes ─────────────────────────────────────
   function renderClientes(busqueda=''){
     const mapa={};
-    todosLotes.forEach(l=>{const cli=(l.cliente||'').trim()||'—Sin cliente—';if(!mapa[cli])mapa[cli]=[];mapa[cli].push(l);});
+    todosLotes.forEach(l=>{const cli=(l.cab?.cliente||'').trim()||'—Sin cliente—';if(!mapa[cli])mapa[cli]=[];mapa[cli].push(l);});
     const nombres=Object.keys(mapa).sort((a,b)=>{if(a==='—Sin cliente—')return 1;if(b==='—Sin cliente—')return -1;return a.localeCompare(b,'es');});
     const fil=busqueda?nombres.filter(n=>n.toLowerCase().includes(busqueda.toLowerCase())):nombres;
     const grid=document.getElementById('clientes-grid');
@@ -290,10 +299,10 @@
     grid.innerHTML=fil.map((nombre,i)=>{
       const lotes=mapa[nombre],total=lotes.length;
       const apr=lotes.filter(l=>nd(l)==='APROBADO').length,ret=lotes.filter(l=>nd(l)==='RETENIDO').length;
-      const last=fmtF(lotes[0]?.fechaCreacion);
+      const last=fmtF(loteTs(lotes[0]));
       const icon=nombre==='—Sin cliente—'?'📁':ICONOS[i%ICONOS.length];
       const esSin=nombre==='—Sin cliente—';
-      const prods=[...new Set(lotes.map(l=>l.producto).filter(Boolean))].slice(0,2).join(', ')||'—';
+      const prods=[...new Set(lotes.map(l=>l.cab?.prod).filter(Boolean))].slice(0,2).join(', ')||'—';
       const displayName=esSin?'Sin asignar':nombre;
       const safeNombre=nombre.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
       return`<div class="cliente-card ${esSin?'sin-cliente-card':''}" onclick="seleccionarCliente('${safeNombre}')">
@@ -314,7 +323,7 @@
   window.seleccionarCliente=nombre=>{
     clienteActivo=nombre;
     const esSin=nombre==='—Sin cliente—';
-    lotesFiltrados=todosLotes.filter(l=>esSin?!(l.cliente||'').trim():(l.cliente||'').trim()===nombre);
+    lotesFiltrados=todosLotes.filter(l=>esSin?!(l.cab?.cliente||'').trim():(l.cab?.cliente||'').trim()===nombre);
     actualizarKPIs(lotesFiltrados);
     const displayName=esSin?'Sin asignar':nombre;
     document.getElementById('bc-current').innerHTML=
@@ -337,30 +346,34 @@
     cambiarVista('clientes');
   };
 
-  // ── Vista Tabla ───────────────────────────────────────────────
+  // ── Vista Tabla ─────────────────────────────────────────
   function renderTabla(){
     const ini=(pagina-1)*POR_PAG,pag=lotesFiltrados.slice(ini,ini+POR_PAG);
-    const cnt=document.getElementById('lotes-count');
-    cnt.textContent=lotesFiltrados.length?`${lotesFiltrados.length} lote${lotesFiltrados.length!==1?'s':''}`:'0 lotes';
+    document.getElementById('lotes-count').textContent=lotesFiltrados.length?`${lotesFiltrados.length} lote${lotesFiltrados.length!==1?'s':''}`:'0 lotes';
     const tbody=document.getElementById('tbody-lotes');
     if(!lotesFiltrados.length){
       tbody.innerHTML=`<tr><td colspan="12"><div class="empty-state"><div class="ei">📭</div><p>Sin lotes con los filtros aplicados.</p></div></td></tr>`;
       document.getElementById('paginacion').innerHTML='';return;
     }
     tbody.innerHTML=pag.map((l,i)=>{
-      const num=ini+i+1,ok=(l.pallets||[]).filter(p=>p.resultado==='OK').length,nokr=(l.pallets||[]).filter(p=>['NOK','REPRO'].includes(p.resultado)).length,bc=getBadge(l.dictamen);
+      const num=ini+i+1;
+      const linea=l.linea||[];
+      const ok=linea.filter(p=>p.indOK===true).length;
+      const nokr=linea.filter(p=>p.indOK===false||p.repro===true).length;
+      const dict=nd(l);const bc=getBadge(dict);
+      const dictLabel=dict==='OTRO'?'—':dict;
       return`<tr onclick="abrirModal('${l.id}')">
         <td style="color:var(--muted);font-size:.67rem;">${num}</td>
-        <td class="fecha-c">${fmtF(l.fechaCreacion)}</td>
-        <td class="lote-num">${l.nLote||'—'}</td>
-        <td style="font-size:.73rem;">${l.cliente||'—'}</td>
-        <td>${l.producto||'—'}</td>
-        <td style="font-size:.7rem;color:var(--muted);">${l.turno||'—'}</td>
-        <td>${l.checker||'—'}</td>
-        <td><span class="badge ${bc}">${l.dictamen||'—'}</span></td>
+        <td class="fecha-c">${fmtF(loteTs(l))}</td>
+        <td class="lote-num">${l.cab?.lote||'—'}</td>
+        <td style="font-size:.73rem;">${l.cab?.cliente||'—'}</td>
+        <td>${l.cab?.prod||'—'}</td>
+        <td style="font-size:.7rem;color:var(--muted);">${l.cab?.linea||'—'}</td>
+        <td>${l.cab?.checker||'—'}</td>
+        <td><span class="badge ${bc}">${dictLabel}</span></td>
         <td style="text-align:center;">${ok||'—'}</td>
         <td style="text-align:center;color:${nokr?'var(--warn)':'var(--muted)'};">${nokr||'—'}</td>
-        <td class="nc-link"><a href="registro_nc.html#lote=${encodeURIComponent(l.nLote||'')}" onclick="event.stopPropagation()">NCs</a></td>
+        <td class="nc-link"><a href="registro_nc.html#lote=${encodeURIComponent(l.cab?.lote||'')}" onclick="event.stopPropagation()">NCs</a></td>
         <td><button class="btn-pdf-row" onclick="event.stopPropagation();pdfId('${l.id}')">PDF</button></td>
       </tr>`;
     }).join('');
@@ -380,11 +393,11 @@
   }
   window.irPag=n=>{pagina=n;renderTabla();window.scrollTo(0,0);};
 
-  // ── Filtros ───────────────────────────────────────────────────
+  // ── Filtros ───────────────────────────────────────────
   function baseFiltro(){
     if(!clienteActivo)return[...todosLotes];
     const esSin=clienteActivo==='—Sin cliente—';
-    return todosLotes.filter(l=>esSin?!(l.cliente||'').trim():(l.cliente||'').trim()===clienteActivo);
+    return todosLotes.filter(l=>esSin?!(l.cab?.cliente||'').trim():(l.cab?.cliente||'').trim()===clienteActivo);
   }
 
   window.aplicarFiltros=()=>{
@@ -394,11 +407,11 @@
     const dict=document.getElementById('f-dict').value,nlote=document.getElementById('f-nlote').value.toLowerCase().trim();
     lotesFiltrados=baseFiltro().filter(l=>{
       let ok=true;
-      if(desde||hasta){try{const f=l.fechaCreacion?.toDate?l.fechaCreacion.toDate():new Date(l.fechaCreacion);if(desde&&f<new Date(desde))ok=false;if(hasta&&f>new Date(hasta+'T23:59:59'))ok=false;}catch{ok=false;}}
-      if(prod&&!(l.producto||'').toLowerCase().includes(prod))ok=false;
-      if(checker&&!(l.checker||'').toLowerCase().includes(checker))ok=false;
-      if(dict&&!(l.dictamen||'').toUpperCase().includes(dict.toUpperCase()))ok=false;
-      if(nlote&&!(l.nLote||'').toLowerCase().includes(nlote))ok=false;
+      if(desde||hasta){try{const ts=loteTs(l);const f=new Date(ts);if(desde&&f<new Date(desde))ok=false;if(hasta&&f>new Date(hasta+'T23:59:59'))ok=false;}catch{ok=false;}}
+      if(prod&&!(l.cab?.prod||'').toLowerCase().includes(prod))ok=false;
+      if(checker&&!(l.cab?.checker||'').toLowerCase().includes(checker))ok=false;
+      if(dict&&nd(l)!==dict)ok=false;
+      if(nlote&&!(l.cab?.lote||'').toLowerCase().includes(nlote))ok=false;
       return ok;
     });
     pagina=1;actualizarKPIs(lotesFiltrados);renderTabla();
@@ -410,25 +423,26 @@
     lotesFiltrados=[...baseFiltro()];pagina=1;actualizarKPIs(lotesFiltrados);renderTabla();
   };
 
-  // ── Modal ─────────────────────────────────────────────────────
+  // ── Modal ───────────────────────────────────────────────
   window.abrirModal=id=>{
-    const l=todosLotes.find(x=>x.id===id);if(!l)return;loteActual=l;
-    document.getElementById('m-lote').textContent=`Lote ${l.nLote||'—'}`;
-    document.getElementById('m-sub').textContent=`${fmtF(l.fechaCreacion)} · ${l.producto||'—'} · ${l.cliente||'Sin cliente'}`;
-    const campos=[['Producto',l.producto],['N° Lote',l.nLote],['Cliente',l.cliente||'—'],['Turno',l.turno],['Checker',l.checker],['Dictamen',l.dictamen],['Peso Min',l.pesoMin?l.pesoMin+' kg':'—'],['Peso Max',l.pesoMax?l.pesoMax+' kg':'—']];
+    const l=todosLotes.find(x=>String(x.id)===String(id));if(!l)return;loteActual=l;
+    const dict=nd(l);
+    document.getElementById('m-lote').textContent=`Lote ${l.cab?.lote||'—'}`;
+    document.getElementById('m-sub').textContent=`${fmtF(loteTs(l))} · ${l.cab?.prod||'—'} · ${l.cab?.cliente||'Sin cliente'}`;
+    const campos=[['Producto',l.cab?.prod],['N° Lote',l.cab?.lote],['Cliente',l.cab?.cliente||'—'],['Línea',l.cab?.linea],['Checker',l.cab?.checker],['Dictamen',dict==='OTRO'?'—':dict],['Peso Min',l.cab?.pesoMin?l.cab.pesoMin+' kg':'—'],['Peso Max',l.cab?.pesoMax?l.cab.pesoMax+' kg':'—']];
     document.getElementById('m-campos').innerHTML=campos.map(([k,v])=>`<div class="mf"><label>${k}</label><span>${v||'—'}</span></div>`).join('');
-    const pals=l.pallets||[];
+    const pals=l.linea||[];
     document.getElementById('m-pallets').innerHTML=pals.length
-      ?pals.map(p=>`<div class="pal-card"><div class="pal-id">${p.id||'—'}</div><div class="pal-res ${p.resultado||''}">${p.resultado||'—'}</div>${p.peso?`<div style="font-size:.58rem;color:var(--muted);margin-top:.18rem;">${p.peso}kg</div>`:''}</div>`).join('')
+      ?pals.map(p=>{const r=palRes(p);return`<div class="pal-card"><div class="pal-id">P${p.nPal||'—'}</div><div class="pal-res ${r==='PEND'?'':r}">${r}</div></div>`;}).join('')
       :`<div style="font-size:.72rem;color:var(--muted);">Sin datos de pallets.</div>`;
-    cargarNCs(l.nLote);
+    cargarNCs(l.cab?.lote);
     document.getElementById('modal-overlay').classList.add('open');
   };
 
   async function cargarNCs(nLote){
     const el=document.getElementById('m-nc-list');el.textContent='Buscando...';
     try{
-      const q=query(collection(db,'nc_records'),where('nLote','==',nLote),orderBy('fechaDeteccion','desc'));
+      const q=query(collection(db,'nc_records'),where('nLote','==',nLote));
       const s=await getDocs(q);
       if(s.empty){el.textContent='✓ Sin NCs para este lote.';el.style.color='#22c55e';return;}
       el.style.color='var(--muted)';
@@ -438,43 +452,42 @@
 
   window.cerrarModalClick=e=>{if(e.target===document.getElementById('modal-overlay'))cerrarModal();};
   window.cerrarModal=()=>{document.getElementById('modal-overlay').classList.remove('open');loteActual=null;};
-  window.irANCs=()=>{if(loteActual?.nLote)window.location.href=`registro_nc.html#lote=${encodeURIComponent(loteActual.nLote)}`;};
+  window.irANCs=()=>{if(loteActual?.cab?.lote)window.location.href=`registro_nc.html#lote=${encodeURIComponent(loteActual.cab.lote)}`;};
 
-  // ── Export ────────────────────────────────────────────────────
+  // ── Export ────────────────────────────────────────────
   window.exportarXLSX=()=>{
-    const rows=[['Fecha','N° Lote','Cliente','Producto','Turno','Checker','Dictamen','OK','NOK+REPRO']];
-    lotesFiltrados.forEach(l=>{const p=l.pallets||[];rows.push([fmtF(l.fechaCreacion),l.nLote||'',l.cliente||'',l.producto||'',l.turno||'',l.checker||'',l.dictamen||'',p.filter(x=>x.resultado==='OK').length,p.filter(x=>['NOK','REPRO'].includes(x.resultado)).length]);});
+    const rows=[['Fecha','N° Lote','Cliente','Producto','Línea','Checker','Dictamen','OK','NOK+REPRO']];
+    lotesFiltrados.forEach(l=>{
+      const p=l.linea||[];const dict=nd(l);
+      rows.push([fmtF(loteTs(l)),l.cab?.lote||'',l.cab?.cliente||'',l.cab?.prod||'',l.cab?.linea||'',l.cab?.checker||'',dict==='OTRO'?'':dict,p.filter(x=>x.indOK===true).length,p.filter(x=>x.indOK===false||x.repro===true).length]);
+    });
     const csv=rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
-    const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'})),download:`historial_${Date.now()}.csv`});a.click();
+    const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'})),download:`historial_${Date.now()}.csv`});a.click();
   };
 
   window.pdfId=id=>{
-    const l=todosLotes.find(x=>x.id===id);if(!l)return;
-    const pals=(l.pallets||[]).map(p=>`<tr><td>${p.id||'—'}</td><td>${p.resultado||'—'}</td><td>${p.peso||'—'}</td></tr>`).join('');
-    const bc=(l.dictamen||'').includes('PARCIAL')?'PARCIAL':(l.dictamen||'').includes('RETENIDO')?'RETENIDO':'APROBADO';
+    const l=todosLotes.find(x=>String(x.id)===String(id));if(!l)return;
+    const pals=(l.linea||[]).map(p=>{const r=palRes(p);return`<tr><td>Pallet ${p.nPal||'—'}</td><td>${r}</td><td>—</td></tr>`;}).join('');
+    const dict=nd(l);const bc=dict==='OTRO'?'APROBADO':dict;
     const w=window.open('','_blank');
-    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Lote ${l.nLote}</title>
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Lote ${l.cab?.lote}</title>
     <style>body{font-family:Arial,sans-serif;font-size:11px;padding:20px}h1{font-size:14px;margin-bottom:4px}h2{font-size:11px;margin:14px 0 4px;border-bottom:1px solid #ccc;padding-bottom:3px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:4px 6px;text-align:left}th{background:#f0f0f0;font-size:10px}.row{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:8px}.field label{font-size:9px;color:#666;display:block}.field span{font-weight:600}.badge{padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600}.APROBADO{background:#d1fae5;color:#065f46}.RETENIDO{background:#fee2e2;color:#991b1b}.PARCIAL{background:#fef3c7;color:#92400e}@media print{body{padding:0}}</style>
     </head><body>
     <div style="display:flex;justify-content:space-between;align-items:flex-start">
       <div><div style="font-size:16px;font-weight:700;color:#065f46">AGROFACIL S.A.</div><h1>Control de Calidad — Detalle de Lote</h1>
-      <div style="font-size:9px;color:#666">SGC-REG-01 · Checker: ${l.checker||'—'} · Fecha: ${fmtF(l.fechaCreacion)}</div></div>
-      <span class="badge ${bc}">${l.dictamen||'—'}</span>
+      <div style="font-size:9px;color:#666">SGC-REG-01 · Checker: ${l.cab?.checker||'—'} · Fecha: ${fmtF(loteTs(l))}</div></div>
+      <span class="badge ${bc}">${dict==='OTRO'?'EN PROCESO':dict}</span>
     </div>
     <h2>Datos del Lote</h2>
-    <div class="row">${[['N° Lote',l.nLote],['Cliente',l.cliente||'—'],['Producto',l.producto],['Turno',l.turno],['Checker',l.checker],['Peso Min',l.pesoMin?l.pesoMin+'kg':'—'],['Peso Max',l.pesoMax?l.pesoMax+'kg':'—']].map(([k,v])=>`<div class="field"><label>${k}</label><span>${v||'—'}</span></div>`).join('')}</div>
+    <div class="row">${[['N° Lote',l.cab?.lote],['Cliente',l.cab?.cliente||'—'],['Producto',l.cab?.prod],['Línea',l.cab?.linea],['Checker',l.cab?.checker],['Peso Min',l.cab?.pesoMin?l.cab.pesoMin+'kg':'—'],['Peso Max',l.cab?.pesoMax?l.cab.pesoMax+'kg':'—']].map(([k,v])=>`<div class="field"><label>${k}</label><span>${v||'—'}</span></div>`).join('')}</div>
     <h2>Pallets</h2>
-    <table><thead><tr><th>ID Pallet</th><th>Resultado</th><th>Peso</th></tr></thead>
+    <table><thead><tr><th>Pallet</th><th>Resultado</th><th>Observaciones</th></tr></thead>
     <tbody>${pals||'<tr><td colspan="3">Sin datos</td></tr>'}</tbody></table>
     <div style="margin-top:40px;display:flex;gap:60px">
       <div style="border-top:1px solid #333;padding-top:4px;width:160px;text-align:center;font-size:9px">Checker de Calidad</div>
       <div style="border-top:1px solid #333;padding-top:4px;width:160px;text-align:center;font-size:9px">Coordinadora de Calidad</div>
     </div>
-    <script>window.onload=()=>window.print()<\/script><script>
-  function aplicarTema(t){document.documentElement.classList.toggle('light',t==='light');const b=document.getElementById('btn-theme');if(b)b.textContent=t==='light'?'🌙':'☀️';}
-  function toggleTheme(){const n=document.documentElement.classList.contains('light')?'dark':'light';localStorage.setItem('theme',n);aplicarTema(n);}
-  aplicarTema(localStorage.getItem('theme')||'dark');
-<\/script>
+    <script>window.onload=()=>window.print()<\/script>
 </body></html>`);
     w.document.close();
   };
