@@ -61,6 +61,23 @@ export async function getRol(uid) {
   }
 }
 
+// ─── Datos de usuario (rol + nombre) ──────
+export async function getUserData(uid, emailFallback) {
+  try {
+    const snap = await getDoc(doc(db, 'usuarios', uid));
+    if (snap.exists()) {
+      const data = snap.data();
+      return {
+        rol:    data.rol    || 'checker',
+        nombre: data.nombre || (emailFallback || '').split('@')[0]
+      };
+    }
+  } catch (e) {
+    console.error('[getUserData] Error leyendo Firestore:', e);
+  }
+  return { rol: 'checker', nombre: (emailFallback || '').split('@')[0] };
+}
+
 // ─── Logout ───────────────────────────────
 export async function cerrarSesion() {
   await signOut(auth);

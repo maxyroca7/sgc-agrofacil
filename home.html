@@ -198,21 +198,18 @@
 </script>
 
 <script type="module">
-  import { auth, db, authGuard, cerrarSesion, getRol } from './firebase-init.js';
+  import { auth, db, authGuard, cerrarSesion, getUserData } from './firebase-init.js';
   import { collection, query, orderBy, limit, getDocs }
     from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
   document.getElementById('btn-salir').addEventListener('click', cerrarSesion);
   const user = await authGuard();
-  const rol  = await getRol(user.uid);
+  const { rol, nombre } = await getUserData(user.uid, user.email);
   localStorage.setItem('userRol', rol);
 
-  const email  = user.email || '';
-  const nombre = email.split('@')[0];
   document.getElementById('user-initials').textContent = nombre.slice(0,2).toUpperCase();
   document.getElementById('user-name').textContent     = rol === 'coordinadora' ? 'Coordinación SGC' : 'Checker';
 
-  // Saludo con nombre del email
   const h = new Date().getHours();
   const saludo = h < 12 ? 'Buen día' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
   const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
