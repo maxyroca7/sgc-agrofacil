@@ -232,6 +232,10 @@ input, textarea, select{touch-action:manipulation}
 .cl-check-row.row-nok{border-color:var(--red);background:var(--red-bg);}
 .cl-check-row.row-repro{border-color:var(--orange);background:var(--orange-bg);}
 .cl-check-label{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.03em;flex:1;}
+.cl-check-row .on{gap:2px;}
+.cl-check-row .on button{min-width:26px;padding:0 2px;font-size:8px;height:26px;}
+.lt .on{gap:2px;flex-wrap:nowrap;}
+.lt .on button{min-width:24px;padding:0 3px;font-size:8px;height:24px;}
 .pcard-row.r2{grid-template-columns:1fr 1fr}
 .pcard-row.r4{grid-template-columns:1fr 1fr 1fr 1fr}
 .pf{display:flex;flex-direction:column;gap:3px}
@@ -1109,7 +1113,9 @@ function mkLinea(l){
   const rows=l.linea.slice(_start,_end).map((p,ri)=>{
     const i=_start+ri;
     const s=semaforo(p.indVal,l.cab.indId);
-    const rowStyle=p.indOK===false&&!p.repro?'background:rgba(239,68,68,.06)':p.repro?'background:rgba(251,146,60,.06)':'';
+    const _hasNOK=(p.indOK===false&&!p.repro)||(p.qrLineaOK===false&&!p.qrRepro)||(p.packOK===false&&!p.packRepro)||(p.pltOK===false&&!p.pltRepro);
+    const _hasRepro=p.repro||p.qrRepro||p.packRepro||p.pltRepro;
+    const rowStyle=_hasNOK?'background:rgba(239,68,68,.06)':_hasRepro?'background:rgba(251,146,60,.06)':'';
     const vacio=!p.fecha&&!p.hora&&!p.lote&&p.indOK===null?'pal-vacio':'';
     return `<tr class="${vacio}" style="${rowStyle}">
       <td class="n">${i+1}</td>
@@ -1133,6 +1139,21 @@ function mkLinea(l){
         <input type="number" step="0.01" value="${p.indVal||''}" placeholder="—" style="width:62px!important"
           oninput="updLSem(${i},'indVal',this.value,this)">
         <div class="sem ${s}" id="sem-${i}"></div>
+      </div></td>
+      <td><div class="on">
+        <button class="ok${p.qrLineaOK===true?' active':''}" onclick="setLinea(${i},'qrLineaOK',true)">OK</button>
+        <button class="nk${p.qrLineaOK===false?' active':''}" onclick="setLinea(${i},'qrLineaOK',false)">NOK</button>
+        ${p.qrLineaOK===false?`<button class="rp${p.qrRepro?' active':''}" onclick="setLineaRepro(${i},'qrRepro')">REP</button>`:''}
+      </div></td>
+      <td><div class="on">
+        <button class="ok${p.packOK===true?' active':''}" onclick="setLinea(${i},'packOK',true)">OK</button>
+        <button class="nk${p.packOK===false?' active':''}" onclick="setLinea(${i},'packOK',false)">NOK</button>
+        ${p.packOK===false?`<button class="rp${p.packRepro?' active':''}" onclick="setLineaRepro(${i},'packRepro')">REP</button>`:''}
+      </div></td>
+      <td><div class="on">
+        <button class="ok${p.pltOK===true?' active':''}" onclick="setLinea(${i},'pltOK',true)">OK</button>
+        <button class="nk${p.pltOK===false?' active':''}" onclick="setLinea(${i},'pltOK',false)">NOK</button>
+        ${p.pltOK===false?`<button class="rp${p.pltRepro?' active':''}" onclick="setLineaRepro(${i},'pltRepro')">REP</button>`:''}
       </div></td>
       <td><input type="text" value="${p.obs||''}" placeholder="Observaciones…" oninput="updL(${i},'obs',this.value)" style="min-width:120px"></td>
     </tr>`;
@@ -1217,12 +1238,14 @@ function mkLinea(l){
           <th colspan="4" class="gh">PESO POR PICO (kg)</th>
           <th colspan="4" class="gh">IDENTIFICACIÓN Y TRAZABILIDAD</th>
           <th colspan="2" class="gh">INDUCCIÓN</th>
+          <th colspan="3" class="gh">CONTROL EN LÍNEA</th>
           <th rowspan="2">Observaciones</th>
         </tr>
         <tr>
           <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
           <th>N° Lote</th><th>Cód Prod</th><th>F.Prod.</th><th>F.Venc.</th>
           <th>OK/NOK/REPRO</th><th>${indLbl}</th>
+          <th>TRAZAB./QR</th><th>PACKAGING</th><th>PALETIZ.</th>
         </tr>
       </thead><tbody>${rows}</tbody></table>
     </div></div>

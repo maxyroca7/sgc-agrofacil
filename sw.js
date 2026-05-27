@@ -1,10 +1,9 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v22
-//  Cambio v22: invalida caché v21 — merge LS+Firestore en KPIs,
-//  loteTs() fallback a id, nombre desde Firestore, checks QR/Pack/Plt
+//  sw.js — Agrofacil SGC · v24
+//  Cambio v24: checks TRAZAB./QR, PACKAGING, PALETIZ. en vista tabla landscape
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v23';
+const CACHE_NAME = 'agrofacil-v24';
 
 const ASSETS = [
   '/login.html',
