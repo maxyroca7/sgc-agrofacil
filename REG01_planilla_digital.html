@@ -227,6 +227,11 @@ input, textarea, select{touch-action:manipulation}
 .pcard-num{font-family:var(--mono);font-weight:700;font-size:18px;color:var(--accent);width:28px;flex-shrink:0}
 .pcard-npal{font-family:var(--mono);font-size:11px;color:var(--text3)}
 .pcard-row{display:grid;gap:6px}
+.cl-checks{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:8px 0 4px;}
+.cl-check-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:4px 6px;gap:4px;}
+.cl-check-row.row-nok{border-color:var(--red);background:var(--red-bg);}
+.cl-check-row.row-repro{border-color:var(--orange);background:var(--orange-bg);}
+.cl-check-label{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.03em;flex:1;}
 .pcard-row.r2{grid-template-columns:1fr 1fr}
 .pcard-row.r4{grid-template-columns:1fr 1fr 1fr 1fr}
 .pf{display:flex;flex-direction:column;gap:3px}
@@ -783,7 +788,8 @@ function nuevoLote(cab,n){
 }
 function nPL(num){return{nPal:String(num),fecha:'',hora:'',p1:'',p2:'',p3:'',p4:'',
   lote:'',codProd:'',fProd:'',fVenc:'',indOK:null,indVal:'',repro:false,obs:'',pesoOK:null,
-  qrLineaOK:null,packOK:null,pltOK:null};}
+  qrLineaOK:null,packOK:null,pltOK:null,
+  qrRepro:false,packRepro:false,pltRepro:false};}
 function nPF(){return{idOK:null,qrOK:null,paletOK:null,indCFOK:null,indCFVal:'',repro:false,obs:'',litrosParcial:''};}
 function getLote(){return lotes.find(l=>l.id===loteActivo);}
 
@@ -1136,7 +1142,9 @@ function mkLinea(l){
   const cards=l.linea.slice(_start,_end).map((p,ri)=>{
   const i=_start+ri;
     const s=semaforo(p.indVal,l.cab.indId);
-    const cardCls=p.indOK===false&&!p.repro?'pcard nok-card':p.repro?'pcard repro-card':'pcard';
+    const tieneNOKCard=(p.indOK===false&&!p.repro)||(p.qrLineaOK===false&&!p.qrRepro)||(p.packOK===false&&!p.packRepro)||(p.pltOK===false&&!p.pltRepro)||p.pesoOK===false;
+    const tieneReproCard=p.repro||p.qrRepro||p.packRepro||p.pltRepro;
+    const cardCls=tieneNOKCard?'pcard nok-card':tieneReproCard?'pcard repro-card':'pcard';
     return `<div class="${cardCls}" id="cl-pallet-${i}">
       <div class="pcard-header">
         <div style="display:flex;align-items:center;gap:8px">
@@ -1148,13 +1156,8 @@ function mkLinea(l){
               oninput="updL(${i},'nPal',this.value)">
           </div>
         </div>
-        <div class="on">
-          <button class="ok ${p.indOK===true?'active':''}"  onclick="setIO(${i},true)">OK</button>
-          <button class="nk ${p.indOK===false?'active':''}" onclick="setIO(${i},false)">NOK</button>
-          ${p.indOK===false?`<button class="rp ${p.repro?'active':''}" onclick="setRepro(${i})">REPRO</button>`:''}
-        </div>
       </div>
-      ${p.repro?'<span class="repro-badge">✓ REPROCESADO</span>':''}
+      ${tieneReproCard?'<span class="repro-badge">✓ REPROCESADO</span>':''}
       <div class="pcard-row r2">
         <div class="pf"><label>Fecha</label>
           <input type="text" value="${p.fecha||''}" placeholder="dd/mm/aaaa" maxlength="10"
@@ -1181,21 +1184,7 @@ function mkLinea(l){
       <div class="pf"><label>${indLbl} <span class="sem ${s}" style="display:inline-block;margin-left:6px"></span></label>
         <input type="number" step="0.01" value="${p.indVal||''}" placeholder="Valor inducción"
           oninput="updLSem(${i},'indVal',this.value,this)"></div>
-      <div class="pf"><label>Trazab./QR</label>
-        <div class="on">
-          <button class="ok ${p.qrLineaOK===true?'active':''}" data-field="qrLineaOK" onclick="setLinea(${i},'qrLineaOK',true)">OK</button>
-          <button class="nk ${p.qrLineaOK===false?'active':''}" data-field="qrLineaOK" onclick="setLinea(${i},'qrLineaOK',false)">NOK</button>
-        </div></div>
-      <div class="pf"><label>Packaging</label>
-        <div class="on">
-          <button class="ok ${p.packOK===true?'active':''}" data-field="packOK" onclick="setLinea(${i},'packOK',true)">OK</button>
-          <button class="nk ${p.packOK===false?'active':''}" data-field="packOK" onclick="setLinea(${i},'packOK',false)">NOK</button>
-        </div></div>
-      <div class="pf"><label>Paletizado</label>
-        <div class="on">
-          <button class="ok ${p.pltOK===true?'active':''}" data-field="pltOK" onclick="setLinea(${i},'pltOK',true)">OK</button>
-          <button class="nk ${p.pltOK===false?'active':''}" data-field="pltOK" onclick="setLinea(${i},'pltOK',false)">NOK</button>
-        </div></div>
+      <div class="cl-checks">${innerChecksHTML(p,i)}</div>
       <div class="pf"><label>Observaciones</label>
         <input type="text" value="${p.obs||''}" placeholder="…" oninput="updL(${i},'obs',this.value)"></div>
     </div>`;
@@ -1290,70 +1279,75 @@ function updLSem(i,k,v,inp){
   const s=document.getElementById('sem-'+i);
   if(s)s.className='sem '+semaforo(v,l.cab.indId);
 }
+// ── innerChecksHTML: HTML interior del bloque .cl-checks ──────────────────────
+function innerChecksHTML(p,i){
+  const cfg=[
+    {label:'INDUCC.',   field:'indOK',     repField:'repro',      okFn:`setIO(${i},true)`,                    nokFn:`setIO(${i},false)`,                    rpFn:`setRepro(${i})`},
+    {label:'TRAZAB./QR',field:'qrLineaOK', repField:'qrRepro',    okFn:`setLinea(${i},'qrLineaOK',true)`,    nokFn:`setLinea(${i},'qrLineaOK',false)`,    rpFn:`setLineaRepro(${i},'qrRepro')`},
+    {label:'PACKAGING', field:'packOK',    repField:'packRepro',  okFn:`setLinea(${i},'packOK',true)`,        nokFn:`setLinea(${i},'packOK',false)`,        rpFn:`setLineaRepro(${i},'packRepro')`},
+    {label:'PALETI.',   field:'pltOK',     repField:'pltRepro',   okFn:`setLinea(${i},'pltOK',true)`,         nokFn:`setLinea(${i},'pltOK',false)`,         rpFn:`setLineaRepro(${i},'pltRepro')`},
+  ];
+  return cfg.map(c=>{
+    const isNOK=p[c.field]===false, isRepro=!!p[c.repField];
+    const rowCls=isNOK&&!isRepro?'cl-check-row row-nok':isRepro?'cl-check-row row-repro':'cl-check-row';
+    return `<div class="${rowCls}">
+      <span class="cl-check-label">${c.label}</span>
+      <div class="on">
+        <button class="ok${p[c.field]===true?' active':''}" onclick="${c.okFn}">OK</button>
+        <button class="nk${p[c.field]===false?' active':''}" onclick="${c.nokFn}">NOK</button>
+        ${isNOK?`<button class="rp${isRepro?' active':''}" onclick="${c.rpFn}">REPRO</button>`:''}
+      </div></div>`;
+  }).join('');
+}
+
 // ── patchCLCard: actualiza una tarjeta CL individual sin llamar renderLote() ──
 function patchCLCard(i){
   const l=getLote();if(!l)return;
   const p=l.linea[i];
   const card=document.getElementById('cl-pallet-'+i);
   if(!card){renderLote();return;}
-  const tieneNOK=p.indOK===false||p.pesoOK===false||p.qrLineaOK===false||p.packOK===false||p.pltOK===false;
-  // Clase del card
-  card.className=tieneNOK&&!p.repro?'pcard nok-card':p.repro?'pcard repro-card':'pcard';
-  card.id='cl-pallet-'+i; // preservar id
-  // Botones OK/NOK inducción
-  const okBtn=card.querySelector('.ok:not([data-field])');
-  const nokBtn=card.querySelector('.nk:not([data-field])');
-  if(okBtn)okBtn.classList.toggle('active',p.indOK===true);
-  if(nokBtn)nokBtn.classList.toggle('active',p.indOK===false);
-  // Botones campos adicionales
-  ['qrLineaOK','packOK','pltOK'].forEach(k=>{
-    const okB=card.querySelector(`.ok[data-field="${k}"]`);
-    const nokB=card.querySelector(`.nk[data-field="${k}"]`);
-    if(okB) okB.classList.toggle('active',p[k]===true);
-    if(nokB) nokB.classList.toggle('active',p[k]===false);
-  });
-  // REPRO button
-  const onDiv=card.querySelector('.on');
-  if(onDiv){
-    const existingRepro=onDiv.querySelector('.rp');
-    if(existingRepro)existingRepro.remove();
-    if(p.indOK===false){
-      const rp=document.createElement('button');
-      rp.className='rp'+(p.repro?' active':'');
-      rp.setAttribute('onclick','setRepro('+i+')');
-      rp.title='Reprocesado';
-      rp.textContent='REPRO';
-      onDiv.appendChild(rp);
-    }
-  }
-  // Repro badge
+  const tieneNOK=(p.indOK===false&&!p.repro)||(p.qrLineaOK===false&&!p.qrRepro)||(p.packOK===false&&!p.packRepro)||(p.pltOK===false&&!p.pltRepro)||p.pesoOK===false;
+  const tieneRepro=p.repro||p.qrRepro||p.packRepro||p.pltRepro;
+  card.className=tieneNOK?'pcard nok-card':tieneRepro?'pcard repro-card':'pcard';
+  card.id='cl-pallet-'+i;
+  // Reemplazar bloque de checks
+  const checksDiv=card.querySelector('.cl-checks');
+  if(checksDiv)checksDiv.innerHTML=innerChecksHTML(p,i);
+  // Repro badge global
   let badge=card.querySelector('.repro-badge');
-  if(p.repro&&!badge){
+  if(tieneRepro&&!badge){
     badge=document.createElement('span');
     badge.className='repro-badge';
     badge.textContent='✓ REPROCESADO';
     const header=card.querySelector('.pcard-header');
     if(header)header.insertAdjacentElement('afterend',badge);
-  } else if(!p.repro&&badge){
+  } else if(!tieneRepro&&badge){
     badge.remove();
   }
 }
 function setIO(i,v){
   const l=getLote();if(!l)return;
-  l.linea[i].indOK=l.linea[i].indOK===v&&v===false?null:v;
+  l.linea[i].indOK=l.linea[i].indOK===v?null:v;
   if(v===true)l.linea[i].repro=false;
   marcarPendiente();
   patchCLCard(i);
 }
 function setLinea(i,k,v){
   const l=getLote();if(!l)return;
-  l.linea[i][k]=l.linea[i][k]===v&&v===false?null:v;
+  l.linea[i][k]=l.linea[i][k]===v?null:v;
+  if(v===true){const rf={qrLineaOK:'qrRepro',packOK:'packRepro',pltOK:'pltRepro'}[k];if(rf)l.linea[i][rf]=false;}
   marcarPendiente();
   patchCLCard(i);
 }
 function setRepro(i){
   const l=getLote();if(!l)return;
   l.linea[i].repro=!l.linea[i].repro;
+  marcarPendiente();
+  patchCLCard(i);
+}
+function setLineaRepro(i,field){
+  const l=getLote();if(!l)return;
+  l.linea[i][field]=!l.linea[i][field];
   marcarPendiente();
   patchCLCard(i);
 }
@@ -1771,12 +1765,15 @@ function acNC(){
   const reproFin = l.final.pallets.filter(p=>(p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false)&&p.repro);
   // ── Peso fuera de especificación ──
   const nokPeso = l.linea.filter(p=>p.pesoOK===false&&p.indOK!==false&&!p.repro);
-  // ── Checks adicionales de línea ──
-  const nokQR   = l.linea.filter(p=>p.qrLineaOK===false);
-  const nokPack = l.linea.filter(p=>p.packOK===false);
-  const nokPlt  = l.linea.filter(p=>p.pltOK===false);
+  // ── Checks adicionales de línea (excluir si el check fue reprocesado) ──
+  const nokQR   = l.linea.filter(p=>p.qrLineaOK===false&&!p.qrRepro);
+  const reproQR = l.linea.filter(p=>p.qrLineaOK===false&&p.qrRepro);
+  const nokPack = l.linea.filter(p=>p.packOK===false&&!p.packRepro);
+  const reproPack = l.linea.filter(p=>p.packOK===false&&p.packRepro);
+  const nokPlt  = l.linea.filter(p=>p.pltOK===false&&!p.pltRepro);
+  const reproPlt = l.linea.filter(p=>p.pltOK===false&&p.pltRepro);
 
-  const totalEventos = nokInd.length + reproInd.length + nokFin.length + reproFin.length + nokPeso.length + nokQR.length + nokPack.length + nokPlt.length;
+  const totalEventos = nokInd.length + reproInd.length + nokFin.length + reproFin.length + nokPeso.length + nokQR.length + reproQR.length + nokPack.length + reproPack.length + nokPlt.length + reproPlt.length;
   if(!totalEventos){
     mostrarToast('✔ Sin desvíos detectados en este lote');
     return;
@@ -1887,6 +1884,24 @@ function acNC(){
       plazo:'', est:'Pendiente',
       cierre:'', pallets:'1', resp:'', eficacia:'Pendiente',
       _tipo:'abierta'
+    });
+  });
+
+  // ── CORRECCIONES EN LÍNEA: checks adicionales reprocesados ──
+  [[reproQR,'Trazabilidad / QR NOK'],[reproPack,'Packaging NOK'],[reproPlt,'Paletizado NOK']].forEach(([arr,tipo])=>{
+    arr.forEach(p=>{
+      const pn=p.nPal||String(l.linea.indexOf(p)+1);
+      filas.push({
+        fecha:l.cab.fecha, lote:l.cab.lote, cliente:l.cab.cliente||'',
+        prod:l.cab.prod, tipo, sev:'Leve',
+        detec:'CONTROL LÍNEA',
+        desc:`Pallet ${pn} — ${tipo} · CORREGIDO EN LÍNEA${p.obs?' · '+p.obs:''}`,
+        litNC:'', litTot:l.final.ltsAprobado||'',
+        ac:`Reproceso en línea — pallet ${pn}`,
+        plazo:l.cab.fecha, est:'Finalizado', cierre:l.cab.fecha,
+        pallets:'1', resp:'', eficacia:'Eficaz',
+        _tipo:'correccion'
+      });
     });
   });
 

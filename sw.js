@@ -4,7 +4,7 @@
 //  loteTs() fallback a id, nombre desde Firestore, checks QR/Pack/Plt
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v22';
+const CACHE_NAME = 'agrofacil-v23';
 
 const ASSETS = [
   '/login.html',
