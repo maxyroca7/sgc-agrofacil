@@ -230,30 +230,33 @@
 
   let lotes = [], ncs = [];
   try {
-    const qL = query(collection(db,'lotes'), orderBy('fechaCreacion','desc'), limit(300));
+    const qL = query(collection(db,'lotes'), orderBy('_ts','desc'), limit(300));
     lotes = (await getDocs(qL)).docs.map(d=>({id:d.id,...d.data()}));
   } catch { try { lotes = JSON.parse(localStorage.getItem('reg01_lotes_v3')||'[]'); } catch {} }
 
   try {
-    const qN = query(collection(db,'nc_records'), orderBy('fechaDeteccion','desc'), limit(300));
+    const qN = query(collection(db,'nc_records'), orderBy('_ts','desc'), limit(300));
     ncs = (await getDocs(qN)).docs.map(d=>({id:d.id,...d.data()}));
   } catch { try { ncs = JSON.parse(localStorage.getItem('nc_records')||'[]'); } catch {} }
 
-  function nd(l){const d=(l.dictamen||'').toUpperCase();if(d.includes('PARCIAL'))return'PARCIAL';if(d.includes('RETENIDO'))return'RETENIDO';if(d.includes('APROBADO'))return'APROBADO';return'OTRO';}
-  function fmtC(raw){if(!raw)return'—';try{const d=raw.toDate?raw.toDate():new Date(raw);return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'});}catch{return'—';}}
+  // nd(): usa l.estado ('aprobado','retenido','aprobado_parcial') que setea REG-01
+  function nd(l){const e=l.estado||'';if(e==='aprobado')return'APROBADO';if(e==='retenido')return'RETENIDO';if(e==='aprobado_parcial')return'PARCIAL';return'OTRO';}
+  // fmtC(): usa _ts (Date.now number) o lastModified como fallback
+  function fmtC(ts){if(!ts)return'—';try{return new Date(ts).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'});}catch{return'—';}}
 
   const ahora=new Date(),mes=ahora.getMonth(),anio=ahora.getFullYear();
-  const delMes=lotes.filter(l=>{try{const f=l.fechaCreacion?.toDate?l.fechaCreacion.toDate():new Date(l.fechaCreacion);return f.getMonth()===mes&&f.getFullYear()===anio;}catch{return false;}});
-  const total=delMes.length,apr=delMes.filter(l=>nd(l)==='APROBADO').length,ret=delMes.filter(l=>nd(l)==='RETENIDO').length;
-  const pending=ncs.filter(n=>!n.estado||['Pendiente','En proceso'].includes(n.estado)).length;
+  const delMes=lotes.filter(l=>{try{const ts=l._ts||l.lastModified;return ts&&new Date(ts).getMonth()===mes&&new Date(ts).getFullYear()===anio;}catch{return false;}});
+  const total=delMes.length,apr=delMes.filter(l=>l.estado==='aprobado').length,ret=delMes.filter(l=>l.estado==='retenido').length;
+  // NC abiertas: field es 'est', pendiente = no Finalizado
+  const pending=ncs.filter(n=>(n.est||'').toLowerCase()!=='finalizado').length;
 
   document.getElementById('s-lotes').textContent=total;
   document.getElementById('s-ret').textContent=ret;
   document.getElementById('s-pct').textContent=total?Math.round(apr/total*100)+'%':'—';
   document.getElementById('s-nc').textContent=pending;
   document.getElementById('nc-pend').textContent=pending;
-  if(lotes.length) document.getElementById('ultimo-lote').textContent=lotes[0].nLote||'—';
-  const clientes=new Set(lotes.map(l=>l.cliente).filter(Boolean));
+  if(lotes.length) document.getElementById('ultimo-lote').textContent=lotes[0].cab?.lote||'—';
+  const clientes=new Set(lotes.map(l=>l.cab?.cliente).filter(Boolean));
   document.getElementById('n-clientes').textContent=clientes.size||'—';
 
   const colores={APROBADO:'#22c55e',PARCIAL:'var(--warn)',RETENIDO:'var(--danger)',OTRO:'var(--muted)'};
@@ -264,10 +267,10 @@
       const dict=nd(l);
       return`<div class="actividad-item" onclick="window.location.href='historial.html'">
         <div class="act-dot" style="background:${colores[dict]}"></div>
-        <div class="act-lote">${l.nLote||'—'}</div>
-        <div class="act-prod">${l.producto||'—'}${l.cliente?' · '+l.cliente:''}</div>
-        <span class="act-badge ab-${dict}">${dict==='APROBADO'?'✓ APR':dict==='RETENIDO'?'✕ RET':'~ PAR'}</span>
-        <div class="act-fecha">${fmtC(l.fechaCreacion)}</div>
+        <div class="act-lote">${l.cab?.lote||'—'}</div>
+        <div class="act-prod">${l.cab?.prod||'—'}${l.cab?.cliente?' · '+l.cab.cliente:''}</div>
+        <span class="act-badge ab-${dict}">${dict==='APROBADO'?'✓ APR':dict==='RETENIDO'?'✕ RET':dict==='PARCIAL'?'~ PAR':'—'}</span>
+        <div class="act-fecha">${fmtC(l._ts||l.lastModified)}</div>
       </div>`;
     }).join('');
   }
