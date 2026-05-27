@@ -33,7 +33,26 @@
     .brand-name{font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:600;color:var(--text);letter-spacing:.06em;}
     .brand-ver{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--muted);background:var(--surface2);border:1px solid var(--border);padding:.1rem .35rem;border-radius:3px;}
     .topbar-right{display:flex;align-items:center;gap:.5rem;}
-    .user-chip{display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--muted);}
+    .user-chip{display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--muted);cursor:pointer;padding:.25rem .4rem;border-radius:6px;transition:background .15s;}
+    .user-chip:hover{background:var(--surface2);}
+    /* MODAL PERFIL */
+    .p-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:300;align-items:center;justify-content:center;padding:1rem;}
+    .p-overlay.open{display:flex;}
+    .p-modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:380px;padding:1.5rem;}
+    .p-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;}
+    .p-title{font-family:'IBM Plex Mono',monospace;font-size:.85rem;font-weight:600;color:var(--text);}
+    .p-close{background:transparent;border:none;color:var(--muted);font-size:1rem;cursor:pointer;line-height:1;}
+    .p-close:hover{color:var(--text);}
+    .p-avatar{width:52px;height:52px;background:rgba(0,200,150,.15);border:2px solid rgba(0,200,150,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:var(--accent);font-family:'IBM Plex Mono',monospace;margin:0 auto 1.25rem;}
+    .p-field{margin-bottom:.85rem;}
+    .p-label{display:block;font-size:.6rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.3rem;}
+    .p-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:.45rem .7rem;color:var(--text);font-size:.82rem;font-family:'IBM Plex Sans',sans-serif;transition:border-color .15s;}
+    .p-input:focus{outline:none;border-color:var(--accent);}
+    .p-input:read-only{opacity:.55;cursor:default;}
+    .p-btn{width:100%;padding:.55rem;background:var(--accent);color:#0c1414;border:none;border-radius:7px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;margin-top:.35rem;transition:background .15s;}
+    .p-btn:hover{background:var(--accent2);}
+    .p-btn:disabled{opacity:.5;cursor:default;}
+    .p-toast{display:none;margin-top:.75rem;padding:.45rem .7rem;background:rgba(0,200,150,.12);border:1px solid rgba(0,200,150,.3);border-radius:6px;font-size:.75rem;color:var(--accent);text-align:center;}
     .user-avatar{width:24px;height:24px;background:rgba(0,200,150,.15);border:1px solid rgba(0,200,150,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--accent);font-weight:600;}
     .btn-theme{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:.3rem .5rem;font-size:.85rem;cursor:pointer;transition:all .15s;}
     .btn-theme:hover{border-color:var(--accent);color:var(--accent);}
@@ -113,7 +132,7 @@
     <span class="brand-ver">SGC v9</span>
   </div>
   <div class="topbar-right">
-    <div class="user-chip">
+    <div class="user-chip" onclick="abrirPerfil()" title="Mi perfil">
       <div class="user-avatar" id="user-initials">—</div>
       <span class="user-label" id="user-name">—</span>
     </div>
@@ -182,6 +201,31 @@
 
 <footer>SGC-AGROFACIL · sgc-agrofacil.web.app · ISO 9001:2015 — Aseg. Calidad</footer>
 
+<!-- MODAL PERFIL -->
+<div class="p-overlay" id="p-overlay" onclick="cerrarPerfilClick(event)">
+  <div class="p-modal">
+    <div class="p-hdr">
+      <span class="p-title">Mi perfil</span>
+      <button class="p-close" onclick="cerrarPerfil()">✕</button>
+    </div>
+    <div class="p-avatar" id="p-avatar">—</div>
+    <div class="p-field">
+      <label class="p-label">Nombre</label>
+      <input class="p-input" id="p-nombre" type="text" placeholder="Ej: María González" maxlength="60"/>
+    </div>
+    <div class="p-field">
+      <label class="p-label">Email</label>
+      <input class="p-input" id="p-email" type="text" readonly/>
+    </div>
+    <div class="p-field">
+      <label class="p-label">Rol</label>
+      <input class="p-input" id="p-rol" type="text" readonly/>
+    </div>
+    <button class="p-btn" id="p-guardar" onclick="guardarPerfil()">Guardar nombre</button>
+    <div class="p-toast" id="p-toast">✓ Nombre actualizado</div>
+  </div>
+</div>
+
 <script>
   // ── TEMA (antes del módulo para evitar flash) ──
   function aplicarTema(t) {
@@ -199,7 +243,7 @@
 
 <script type="module">
   import { auth, db, authGuard, cerrarSesion, getRol } from './firebase-init.js';
-  import { collection, getDoc, doc, onSnapshot }
+  import { collection, getDoc, setDoc, doc, onSnapshot }
     from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
   document.getElementById('btn-salir').addEventListener('click', cerrarSesion);
@@ -292,6 +336,42 @@
     try{_ncs=JSON.parse(localStorage.getItem('nc_records')||'[]');}catch{}
     renderKPIs();
   });
+
+  // ── Perfil ────────────────────────────────────────────────────
+  window.abrirPerfil=()=>{
+    document.getElementById('p-nombre').value=nombre;
+    document.getElementById('p-email').value=email;
+    document.getElementById('p-rol').value=rol==='coordinadora'?'Coordinadora SGC':'Checker de Calidad';
+    document.getElementById('p-avatar').textContent=nombre.slice(0,2).toUpperCase();
+    document.getElementById('p-toast').style.display='none';
+    document.getElementById('p-guardar').disabled=false;
+    document.getElementById('p-overlay').classList.add('open');
+    setTimeout(()=>document.getElementById('p-nombre').focus(),80);
+  };
+  window.cerrarPerfil=()=>document.getElementById('p-overlay').classList.remove('open');
+  window.cerrarPerfilClick=e=>{if(e.target===document.getElementById('p-overlay'))cerrarPerfil();};
+  window.guardarPerfil=async()=>{
+    const nuevo=document.getElementById('p-nombre').value.trim();
+    if(!nuevo)return;
+    const btn=document.getElementById('p-guardar');
+    btn.disabled=true;btn.textContent='Guardando...';
+    try{
+      await setDoc(doc(db,'usuarios',user.uid),{nombre:nuevo},{merge:true});
+      nombre=nuevo;
+      const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+      document.getElementById('user-initials').textContent=nombre.slice(0,2).toUpperCase();
+      document.getElementById('p-avatar').textContent=nombre.slice(0,2).toUpperCase();
+      const h=new Date().getHours();
+      const saludo=h<12?'Buen día':h<19?'Buenas tardes':'Buenas noches';
+      document.getElementById('greeting-title').innerHTML=`${saludo}, <strong>${cap(nombre)}</strong>`;
+      document.getElementById('p-toast').style.display='block';
+      btn.textContent='Guardar nombre';
+      setTimeout(()=>cerrarPerfil(),1200);
+    }catch(e){
+      console.error('[perfil] guardar error:',e);
+      btn.disabled=false;btn.textContent='Guardar nombre';
+    }
+  };
 </script>
 </body>
 </html>
