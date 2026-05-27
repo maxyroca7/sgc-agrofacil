@@ -199,7 +199,7 @@
 
 <script type="module">
   import { auth, db, authGuard, cerrarSesion, getRol } from './firebase-init.js';
-  import { collection, query, orderBy, limit, getDocs }
+  import { collection, query, orderBy, limit, getDocs, getDoc, doc }
     from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
   document.getElementById('btn-salir').addEventListener('click', cerrarSesion);
@@ -208,14 +208,20 @@
   localStorage.setItem('userRol', rol);
 
   const email  = user.email || '';
-  const nombre = email.split('@')[0];
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+  // Nombre: campo Firestore "nombre" con fallback al texto antes del @
+  let nombre = email.split('@')[0];
+  try {
+    const snap = await getDoc(doc(db, 'usuarios', user.uid));
+    if (snap.exists() && snap.data().nombre) nombre = snap.data().nombre;
+  } catch {}
+
   document.getElementById('user-initials').textContent = nombre.slice(0,2).toUpperCase();
   document.getElementById('user-name').textContent     = rol === 'coordinadora' ? 'Coordinación SGC' : 'Checker';
 
-  // Saludo con nombre del email
   const h = new Date().getHours();
   const saludo = h < 12 ? 'Buen día' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
-  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
   document.getElementById('greeting-title').innerHTML = `${saludo}, <strong>${cap(nombre)}</strong>`;
 
   document.getElementById('fecha-hoy').textContent =
