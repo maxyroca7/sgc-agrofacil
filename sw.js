@@ -1,10 +1,10 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v21
-//  Cambio v21: invalida caché v20 — KPIs home con onSnapshot,
-//  nombre usuario desde Firestore, checks QR/Pack/Plt visibles
+//  sw.js — Agrofacil SGC · v22
+//  Cambio v22: invalida caché v21 — merge LS+Firestore en KPIs,
+//  loteTs() fallback a id, nombre desde Firestore, checks QR/Pack/Plt
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v21';
+const CACHE_NAME = 'agrofacil-v22';
 
 const ASSETS = [
   '/login.html',

@@ -234,10 +234,11 @@
 
   let _lotes=[], _ncs=[];
 
+  function loteTs(l){return l._ts||l.lastModified||(typeof l.id==='number'?l.id:parseInt(l.id)||0);}
   function renderKPIs(){
-    const sorted=[..._lotes].sort((a,b)=>(b._ts||b.lastModified||0)-(a._ts||a.lastModified||0));
+    const sorted=[..._lotes].sort((a,b)=>loteTs(b)-loteTs(a));
     const ahora=new Date(),mes=ahora.getMonth(),anio=ahora.getFullYear();
-    const delMes=sorted.filter(l=>{try{const ts=l._ts||l.lastModified;return ts&&new Date(ts).getMonth()===mes&&new Date(ts).getFullYear()===anio;}catch{return false;}});
+    const delMes=sorted.filter(l=>{try{const ts=loteTs(l);return ts&&new Date(ts).getMonth()===mes&&new Date(ts).getFullYear()===anio;}catch{return false;}});
     const total=delMes.length,apr=delMes.filter(l=>l.estado==='aprobado').length,ret=delMes.filter(l=>['retenido','reproceso'].includes(l.estado||'')).length;
     const pending=_ncs.filter(n=>(n.est||n.estado||'').toLowerCase()!=='finalizado'&&(n.est||n.estado||'').toLowerCase()!=='cerrada').length;
 
@@ -246,7 +247,7 @@
     document.getElementById('s-pct').textContent=total?Math.round(apr/total*100)+'%':'—';
     document.getElementById('s-nc').textContent=pending;
     document.getElementById('nc-pend').textContent=pending;
-    if(sorted.length) document.getElementById('ultimo-lote').textContent=sorted[0].cab?.lote||'—';
+    if(sorted.length) document.getElementById('ultimo-lote').textContent=sorted[0].cab?.lote||sorted[0].nLote||'—';
     const clientes=new Set(sorted.map(l=>l.cab?.cliente).filter(Boolean));
     document.getElementById('n-clientes').textContent=clientes.size||'—';
 
@@ -260,28 +261,34 @@
           <div class="act-lote">${l.cab?.lote||'—'}</div>
           <div class="act-prod">${l.cab?.prod||'—'}${l.cab?.cliente?' · '+l.cab.cliente:''}</div>
           <span class="act-badge ab-${dict}">${dict==='APROBADO'?'✓ APR':dict==='RETENIDO'?'✕ RET':dict==='PARCIAL'?'~ PAR':'—'}</span>
-          <div class="act-fecha">${fmtC(l._ts||l.lastModified)}</div>
+          <div class="act-fecha">${fmtC(loteTs(l))}</div>
         </div>`;
       }).join('');
     }
   }
 
-  // onSnapshot lotes — sin orderBy para no requerir índice; sort client-side
-  // Si Firestore devuelve vacío, usa localStorage como fallback
-  onSnapshot(collection(db,'lotes'), snap => {
-    _lotes = snap.docs.map(d=>({id:d.id,...d.data()}));
-    if(!_lotes.length) try{_lotes=JSON.parse(localStorage.getItem('reg01_lotes_v3')||'[]');}catch{}
+  // Mezcla Firestore + localStorage: Firestore gana en conflicto de mismo id
+  function mergeById(fromFS, lsKey){
+    let fromLS=[];
+    try{fromLS=JSON.parse(localStorage.getItem(lsKey)||'[]');}catch{}
+    const map=new Map();
+    fromLS.forEach(l=>{if(l.id!=null)map.set(String(l.id),l);});
+    fromFS.forEach(l=>{if(l.id!=null)map.set(String(l.id),l);}); // FS gana
+    return[...map.values()];
+  }
+
+  onSnapshot(collection(db,'lotes'), snap=>{
+    _lotes=mergeById(snap.docs.map(d=>({id:d.id,...d.data()})),'reg01_lotes_v3');
     renderKPIs();
-  }, () => {
+  }, ()=>{
     try{_lotes=JSON.parse(localStorage.getItem('reg01_lotes_v3')||'[]');}catch{}
     renderKPIs();
   });
 
-  onSnapshot(collection(db,'nc_records'), snap => {
-    _ncs = snap.docs.map(d=>({id:d.id,...d.data()}));
-    if(!_ncs.length) try{_ncs=JSON.parse(localStorage.getItem('nc_records')||'[]');}catch{}
+  onSnapshot(collection(db,'nc_records'), snap=>{
+    _ncs=mergeById(snap.docs.map(d=>({id:d.id,...d.data()})),'nc_records');
     renderKPIs();
-  }, () => {
+  }, ()=>{
     try{_ncs=JSON.parse(localStorage.getItem('nc_records')||'[]');}catch{}
     renderKPIs();
   });
