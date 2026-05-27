@@ -1,9 +1,9 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v24
-//  Cambio v24: checks TRAZAB./QR, PACKAGING, PALETIZ. en vista tabla landscape
+//  sw.js — Agrofacil SGC · v25
+//  Cambio v25: botón SCAN QR (BarcodeDetector) en TRAZAB./QR, guarda qrCode en pallet
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v24';
+const CACHE_NAME = 'agrofacil-v25';
 
 const ASSETS = [
   '/login.html',

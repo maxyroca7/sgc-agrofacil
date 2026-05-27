@@ -341,6 +341,16 @@ input, textarea, select, button {
 /* ── TOAST ── */
 #toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:9px 18px;font-family:var(--mono);font-size:11px;color:var(--text);opacity:0;transition:.3s;pointer-events:none;z-index:200;white-space:nowrap;max-width:90vw;text-align:center}
 #toast.show{opacity:1}
+/* ── Scan QR ── */
+button.sc{background:rgba(96,165,250,.12);color:#60a5fa;border-color:#60a5fa;min-width:26px;padding:0 3px;font-size:9px;height:26px;}
+button.sc:active{background:#60a5fa;color:#fff;}
+.lt button.sc{height:24px;font-size:8px;}
+#scan-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9000;display:flex;align-items:center;justify-content:center;}
+.scan-modal{background:var(--bg2);border-radius:var(--r);overflow:hidden;width:min(96vw,380px);display:flex;flex-direction:column;border:1px solid var(--border2);}
+.scan-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);}
+.scan-hdr button{background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;}
+#scan-video{width:100%;aspect-ratio:1/1;object-fit:cover;background:#000;display:block;}
+#scan-status{padding:8px 14px;font-family:var(--mono);font-size:10px;color:var(--text3);text-align:center;}
 
 
 /* ════════════════════════════════════════════════════════
@@ -793,7 +803,7 @@ function nuevoLote(cab,n){
 function nPL(num){return{nPal:String(num),fecha:'',hora:'',p1:'',p2:'',p3:'',p4:'',
   lote:'',codProd:'',fProd:'',fVenc:'',indOK:null,indVal:'',repro:false,obs:'',pesoOK:null,
   qrLineaOK:null,packOK:null,pltOK:null,
-  qrRepro:false,packRepro:false,pltRepro:false};}
+  qrRepro:false,packRepro:false,pltRepro:false,qrCode:''};}
 function nPF(){return{idOK:null,qrOK:null,paletOK:null,indCFOK:null,indCFVal:'',repro:false,obs:'',litrosParcial:''};}
 function getLote(){return lotes.find(l=>l.id===loteActivo);}
 
@@ -1141,6 +1151,7 @@ function mkLinea(l){
         <div class="sem ${s}" id="sem-${i}"></div>
       </div></td>
       <td><div class="on">
+        ${_bdSupported?`<button class="sc" onclick="scanQR(${i})" title="Escanear QR">📷</button>`:''}
         <button class="ok${p.qrLineaOK===true?' active':''}" onclick="setLinea(${i},'qrLineaOK',true)">OK</button>
         <button class="nk${p.qrLineaOK===false?' active':''}" onclick="setLinea(${i},'qrLineaOK',false)">NOK</button>
         ${p.qrLineaOK===false?`<button class="rp${p.qrRepro?' active':''}" onclick="setLineaRepro(${i},'qrRepro')">REP</button>`:''}
@@ -1306,7 +1317,7 @@ function updLSem(i,k,v,inp){
 function innerChecksHTML(p,i){
   const cfg=[
     {label:'INDUCC.',   field:'indOK',     repField:'repro',      okFn:`setIO(${i},true)`,                    nokFn:`setIO(${i},false)`,                    rpFn:`setRepro(${i})`},
-    {label:'TRAZAB./QR',field:'qrLineaOK', repField:'qrRepro',    okFn:`setLinea(${i},'qrLineaOK',true)`,    nokFn:`setLinea(${i},'qrLineaOK',false)`,    rpFn:`setLineaRepro(${i},'qrRepro')`},
+    {label:'TRAZAB./QR',field:'qrLineaOK', repField:'qrRepro',    okFn:`setLinea(${i},'qrLineaOK',true)`,    nokFn:`setLinea(${i},'qrLineaOK',false)`,    rpFn:`setLineaRepro(${i},'qrRepro')`, scanFn:`scanQR(${i})`},
     {label:'PACKAGING', field:'packOK',    repField:'packRepro',  okFn:`setLinea(${i},'packOK',true)`,        nokFn:`setLinea(${i},'packOK',false)`,        rpFn:`setLineaRepro(${i},'packRepro')`},
     {label:'PALETI.',   field:'pltOK',     repField:'pltRepro',   okFn:`setLinea(${i},'pltOK',true)`,         nokFn:`setLinea(${i},'pltOK',false)`,         rpFn:`setLineaRepro(${i},'pltRepro')`},
   ];
@@ -1316,6 +1327,7 @@ function innerChecksHTML(p,i){
     return `<div class="${rowCls}">
       <span class="cl-check-label">${c.label}</span>
       <div class="on">
+        ${c.scanFn&&_bdSupported?`<button class="sc" onclick="${c.scanFn}" title="Escanear QR">📷</button>`:''}
         <button class="ok${p[c.field]===true?' active':''}" onclick="${c.okFn}">OK</button>
         <button class="nk${p[c.field]===false?' active':''}" onclick="${c.nokFn}">NOK</button>
         ${isNOK?`<button class="rp${isRepro?' active':''}" onclick="${c.rpFn}">REPRO</button>`:''}
@@ -2174,6 +2186,71 @@ function mostrarToast(msg,dur=2800){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
   clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('show'),dur);
+}
+
+// ── Escaneo QR / barcode (BarcodeDetector API) ──────────────────────────────
+const _bdSupported = typeof BarcodeDetector !== 'undefined';
+let _bdDetector = null;
+if (_bdSupported) {
+  try {
+    _bdDetector = new BarcodeDetector({
+      formats: ['qr_code','ean_13','ean_8','code_128','code_39','data_matrix','upc_a','upc_e']
+    });
+  } catch(e) { console.warn('[scan] BarcodeDetector init:', e.message); }
+}
+let _scanStream = null, _scanRaf = null, _scanIdx = -1;
+
+async function scanQR(palletIdx) {
+  if (!_bdDetector) return;
+  _scanIdx = palletIdx;
+  // Crear overlay
+  const ov = document.createElement('div');
+  ov.id = 'scan-overlay';
+  ov.innerHTML = `<div class="scan-modal">
+    <div class="scan-hdr"><span>📷 Escanear código — Pallet #${palletIdx+1}</span>
+      <button onclick="cerrarScan()">✕</button></div>
+    <video id="scan-video" autoplay playsinline muted></video>
+    <div id="scan-status">Apuntá la cámara al código QR o de barras…</div>
+  </div>`;
+  document.body.appendChild(ov);
+  try {
+    _scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    const vid = document.getElementById('scan-video');
+    vid.srcObject = _scanStream;
+    await vid.play();
+    _scanLoop(palletIdx, vid);
+  } catch(e) {
+    cerrarScan();
+    mostrarToast('⚠ Sin acceso a cámara: ' + e.message);
+  }
+}
+
+async function _scanLoop(idx, vid) {
+  if (!_bdDetector || !document.getElementById('scan-overlay')) return;
+  try {
+    const codes = await _bdDetector.detect(vid);
+    if (codes.length) {
+      const val = codes[0].rawValue;
+      cerrarScan();
+      const l = getLote(); if (!l || !l.linea[idx]) return;
+      l.linea[idx].qrCode = val;
+      l.linea[idx].qrLineaOK = true;
+      l.linea[idx].qrRepro = false;
+      marcarPendiente();
+      patchCLCard(idx);
+      mostrarToast('QR: ' + val + ' ✓');
+      return;
+    }
+  } catch(e) { /* frame no listo */ }
+  _scanRaf = requestAnimationFrame(() => _scanLoop(idx, vid));
+}
+
+function cerrarScan() {
+  cancelAnimationFrame(_scanRaf);
+  _scanRaf = null;
+  if (_scanStream) { _scanStream.getTracks().forEach(t => t.stop()); _scanStream = null; }
+  const ov = document.getElementById('scan-overlay');
+  if (ov) ov.remove();
 }
 
 
