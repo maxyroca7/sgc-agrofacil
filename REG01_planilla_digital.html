@@ -779,7 +779,8 @@ function nuevoLote(cab,n){
            ltsAprobado:'',ltsRetenido:'',fechaDictamen:'',recepLogistica:''}};
 }
 function nPL(num){return{nPal:String(num),fecha:'',hora:'',p1:'',p2:'',p3:'',p4:'',
-  lote:'',codProd:'',fProd:'',fVenc:'',indOK:null,indVal:'',repro:false,obs:'',pesoOK:null};}
+  lote:'',codProd:'',fProd:'',fVenc:'',indOK:null,indVal:'',repro:false,obs:'',pesoOK:null,
+  qrLineaOK:null,packOK:null,pltOK:null};}
 function nPF(){return{idOK:null,qrOK:null,paletOK:null,indCFOK:null,indCFVal:'',repro:false,obs:'',litrosParcial:''};}
 function getLote(){return lotes.find(l=>l.id===loteActivo);}
 
@@ -1151,6 +1152,27 @@ function mkLinea(l){
         </div>
       </div>
       ${p.repro?'<span class="repro-badge">✓ REPROCESADO</span>':''}
+      <div class="pcard-row" style="display:flex;align-items:center;gap:8px;padding:4px 0;border-top:1px solid var(--border);margin-top:4px">
+        <span style="font-size:11px;font-weight:600;min-width:100px;color:var(--muted)">Trazab./QR</span>
+        <div class="on">
+          <button class="ok ${p.qrLineaOK===true?'active':''}" data-cl="qrLineaOK" onclick="setLinea(${i},'qrLineaOK',true)">OK</button>
+          <button class="nk ${p.qrLineaOK===false?'active':''}" data-cl="qrLineaOK" onclick="setLinea(${i},'qrLineaOK',false)">NOK</button>
+        </div>
+      </div>
+      <div class="pcard-row" style="display:flex;align-items:center;gap:8px;padding:4px 0">
+        <span style="font-size:11px;font-weight:600;min-width:100px;color:var(--muted)">Packaging</span>
+        <div class="on">
+          <button class="ok ${p.packOK===true?'active':''}" data-cl="packOK" onclick="setLinea(${i},'packOK',true)">OK</button>
+          <button class="nk ${p.packOK===false?'active':''}" data-cl="packOK" onclick="setLinea(${i},'packOK',false)">NOK</button>
+        </div>
+      </div>
+      <div class="pcard-row" style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);margin-bottom:4px">
+        <span style="font-size:11px;font-weight:600;min-width:100px;color:var(--muted)">Paletizado</span>
+        <div class="on">
+          <button class="ok ${p.pltOK===true?'active':''}" data-cl="pltOK" onclick="setLinea(${i},'pltOK',true)">OK</button>
+          <button class="nk ${p.pltOK===false?'active':''}" data-cl="pltOK" onclick="setLinea(${i},'pltOK',false)">NOK</button>
+        </div>
+      </div>
       <div class="pcard-row r2">
         <div class="pf"><label>Fecha</label>
           <input type="text" value="${p.fecha||''}" placeholder="dd/mm/aaaa" maxlength="10"
@@ -1300,6 +1322,13 @@ function patchCLCard(i){
       onDiv.appendChild(rp);
     }
   }
+  // Botones QR/Packaging/Paletizado
+  ['qrLineaOK','packOK','pltOK'].forEach(k=>{
+    const okB=card.querySelector(`.ok[data-cl="${k}"]`);
+    const nkB=card.querySelector(`.nk[data-cl="${k}"]`);
+    if(okB)okB.classList.toggle('active',p[k]===true);
+    if(nkB)nkB.classList.toggle('active',p[k]===false);
+  });
   // Repro badge
   let badge=card.querySelector('.repro-badge');
   if(p.repro&&!badge){
@@ -1322,6 +1351,12 @@ function setIO(i,v){
 function setRepro(i){
   const l=getLote();if(!l)return;
   l.linea[i].repro=!l.linea[i].repro;
+  marcarPendiente();
+  patchCLCard(i);
+}
+function setLinea(i,k,v){
+  const l=getLote();if(!l)return;
+  l.linea[i][k]=l.linea[i][k]===v&&v===false?null:v;
   marcarPendiente();
   patchCLCard(i);
 }
@@ -1739,8 +1774,11 @@ function acNC(){
   const reproFin = l.final.pallets.filter(p=>(p.idOK===false||p.qrOK===false||p.paletOK===false||p.indCFOK===false)&&p.repro);
   // ── Peso fuera de especificación ──
   const nokPeso = l.linea.filter(p=>p.pesoOK===false&&p.indOK!==false&&!p.repro);
+  const nokQR   = l.linea.filter(p=>p.qrLineaOK===false);
+  const nokPack = l.linea.filter(p=>p.packOK===false);
+  const nokPlt  = l.linea.filter(p=>p.pltOK===false);
 
-  const totalEventos = nokInd.length + reproInd.length + nokFin.length + reproFin.length + nokPeso.length;
+  const totalEventos = nokInd.length + reproInd.length + nokFin.length + reproFin.length + nokPeso.length + nokQR.length + nokPack.length + nokPlt.length;
   if(!totalEventos){
     mostrarToast('✔ Sin desvíos detectados en este lote');
     return;
@@ -1804,6 +1842,54 @@ function acNC(){
       desc:`Pallet ${pn} — Peso NOK · ${detallePicos} · Rango: ${l.cab.pesoMin}–${l.cab.pesoMax} kg${p.obs?' · '+p.obs:''}`,
       litNC:'', litTot:l.final.ltsAprobado||'',
       ac:`Reproceso pallet ${pn}`,
+      plazo:'', est:'Pendiente',
+      cierre:'', pallets:'1', resp:'', eficacia:'Pendiente',
+      _tipo:'abierta'
+    });
+  });
+
+  // ── NC ABIERTAS: Trazabilidad/QR NOK ──
+  nokQR.forEach(p=>{
+    const pn=p.nPal||String(l.linea.indexOf(p)+1);
+    filas.push({
+      fecha:l.cab.fecha, lote:l.cab.lote, cliente:l.cab.cliente||'',
+      prod:l.cab.prod, tipo:'Trazabilidad / QR NOK', sev:'',
+      detec:'CONTROL LÍNEA',
+      desc:`Pallet ${pn} — Trazabilidad / QR NOK${p.obs?' · '+p.obs:''}`,
+      litNC:'', litTot:l.final.ltsAprobado||'',
+      ac:`Corrección pallet ${pn}`,
+      plazo:'', est:'Pendiente',
+      cierre:'', pallets:'1', resp:'', eficacia:'Pendiente',
+      _tipo:'abierta'
+    });
+  });
+
+  // ── NC ABIERTAS: Packaging NOK ──
+  nokPack.forEach(p=>{
+    const pn=p.nPal||String(l.linea.indexOf(p)+1);
+    filas.push({
+      fecha:l.cab.fecha, lote:l.cab.lote, cliente:l.cab.cliente||'',
+      prod:l.cab.prod, tipo:'Packaging NOK', sev:'',
+      detec:'CONTROL LÍNEA',
+      desc:`Pallet ${pn} — Packaging NOK${p.obs?' · '+p.obs:''}`,
+      litNC:'', litTot:l.final.ltsAprobado||'',
+      ac:`Corrección pallet ${pn}`,
+      plazo:'', est:'Pendiente',
+      cierre:'', pallets:'1', resp:'', eficacia:'Pendiente',
+      _tipo:'abierta'
+    });
+  });
+
+  // ── NC ABIERTAS: Paletizado NOK ──
+  nokPlt.forEach(p=>{
+    const pn=p.nPal||String(l.linea.indexOf(p)+1);
+    filas.push({
+      fecha:l.cab.fecha, lote:l.cab.lote, cliente:l.cab.cliente||'',
+      prod:l.cab.prod, tipo:'Paletizado NOK', sev:'',
+      detec:'CONTROL LÍNEA',
+      desc:`Pallet ${pn} — Paletizado NOK${p.obs?' · '+p.obs:''}`,
+      litNC:'', litTot:l.final.ltsAprobado||'',
+      ac:`Corrección pallet ${pn}`,
       plazo:'', est:'Pendiente',
       cierre:'', pallets:'1', resp:'', eficacia:'Pendiente',
       _tipo:'abierta'
