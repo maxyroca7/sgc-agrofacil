@@ -1,10 +1,10 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v18
-//  Cambio v18: invalida caché v17 para forzar recarga de
-//  home.html, login.html e historial.html (fix logo SVG)
+//  sw.js — Agrofacil SGC · v19
+//  Cambio v19: invalida caché v18 para forzar recarga de
+//  archivos actualizados
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v18';
+const CACHE_NAME = 'agrofacil-v19';
 
 const ASSETS = [
   '/login.html',
@@ -23,7 +23,7 @@ const ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW v18] Precacheando assets...');
+      console.log('[SW v19] Precacheando assets...');
       return cache.addAll(ASSETS);
     })
   );
