@@ -1314,7 +1314,7 @@ function patchCLCard(i){
 }
 function setIO(i,v){
   const l=getLote();if(!l)return;
-  l.linea[i].indOK=v;
+  l.linea[i].indOK=l.linea[i].indOK===v&&v===false?null:v;
   if(v===true)l.linea[i].repro=false;
   marcarPendiente();
   patchCLCard(i);
