@@ -119,7 +119,7 @@
     .spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:.3rem;vertical-align:middle;}
     @keyframes spin{to{transform:rotate(360deg);}}
 
-    footer{position:relative;z-index:1;text-align:center;padding:1rem;font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--muted);border-top:1px solid var(--border);}
+    footer{position:sticky;bottom:0;z-index:1;text-align:center;padding:1rem;font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--muted);border-top:1px solid var(--border);}
 
     @media(max-width:700px){.modulos-grid{grid-template-columns:1fr;}.stats-row{grid-template-columns:repeat(2,1fr);}.greeting-title{font-size:1.2rem;}.brand-ver{display:none;}}
     @media(max-width:480px){.user-label{display:none;}}
