@@ -135,7 +135,7 @@
   font-family: 'IBM Plex Sans', sans-serif;
   white-space: nowrap;
 }
-    .app-footer{margin-top:auto;padding:1.1rem 1rem .9rem;text-align:center;border-top:1px solid var(--border);color:var(--muted);font-size:.70rem;letter-spacing:.04em;user-select:none;}
+    .app-footer{margin-top:auto;padding:1.1rem 1rem .9rem;text-align:center;border-top:1px solid var(--border);color:var(--muted);font-size:.70rem;letter-spacing:.04em;user-select:none;background:var(--bg);position:relative;z-index:1;}
     .footer-dot{margin:0 .45em;opacity:.35;}
   </style>
 </head>
@@ -175,11 +175,11 @@
 
   <div class="section-label">Módulos del sistema</div>
   <div class="modulos-grid">
-    <a href="REG01_planilla_digital.html" class="modulo-card reg01">
+    <a href="REG01_planilla_digital.html" class="modulo-card reg01" id="card-reg01">
       <span class="card-icon">📋</span>
-      <div class="card-code">SGC-REG-01</div>
-      <div class="card-title">Planilla de Control</div>
-      <div class="card-desc">Control en línea y final de pallets. Semáforo de inducción y peso. Dictamen del lote.</div>
+      <div class="card-code" id="card-reg01-code">SGC-REG-01</div>
+      <div class="card-title" id="card-reg01-title">Planilla de Control</div>
+      <div class="card-desc" id="card-reg01-desc">Control en línea y final de pallets. Semáforo de inducción y peso. Dictamen del lote.</div>
       <div class="card-footer">
         <div class="card-stat">Último lote: <span id="ultimo-lote">—</span></div>
         <span class="card-arrow">→</span>
@@ -288,6 +288,17 @@
 
   document.getElementById('user-initials').textContent = nombre.slice(0,2).toUpperCase();
   document.getElementById('user-name').textContent     = rol === 'coordinadora' ? 'Coordinación SGC' : 'Checker';
+
+  // ── Ruteo por rol: la Coordinadora usa su vista dedicada (resumen + dictamen) ──
+  if (rol === 'coordinadora') {
+    const card = document.getElementById('card-reg01');
+    if (card) {
+      card.setAttribute('href', 'coordinadora.html');
+      document.getElementById('card-reg01-code').textContent  = 'COORDINACIÓN';
+      document.getElementById('card-reg01-title').textContent = 'Panel de Coordinación';
+      document.getElementById('card-reg01-desc').textContent  = 'Resumen de lotes activos y retenidos. Revisión de controles y cambio de dictamen.';
+    }
+  }
 
   const h = new Date().getHours();
   const saludo = h < 12 ? 'Buen día' : h < 19 ? 'Buenas tardes' : 'Buenas noches';

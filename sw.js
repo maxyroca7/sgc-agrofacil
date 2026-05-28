@@ -1,29 +1,42 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v29
+//  sw.js — Agrofacil SGC · v30
+//  Cambio v30: + coordinadora.html · FIX paths de íconos a raíz
+//              (estaban en /icons/ inexistente → addAll fallaba entero
+//               y no se precacheaba NADA → PWA rota offline)
 //  Cambio v29: Vista Coordinadora — banner, CSS solo-lectura, body.dataset.rol
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v29';
+const CACHE_NAME = 'agrofacil-v30';
 
 const ASSETS = [
   '/login.html',
   '/home.html',
   '/REG01_planilla_digital.html',
   '/registro_nc.html',
+  '/coordinadora.html',
   '/historial.html',
   '/firebase-init.js',
   '/sync.js',
   '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-touch-icon.png',
+  '/favicon-32.png',
 ];
 
 // ── INSTALL: precachea todos los assets ──────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW v18] Precacheando assets...');
-      return cache.addAll(ASSETS);
+      console.log('[SW v30] Precacheando assets...');
+      // addAll individual tolerante: si un asset falla, no rompe el resto
+      return Promise.all(
+        ASSETS.map((url) =>
+          cache.add(url).catch((err) =>
+            console.warn('[SW v30] No se pudo cachear:', url, err.message)
+          )
+        )
+      );
     })
   );
   // Activa inmediatamente sin esperar que se cierren pestañas viejas
@@ -38,7 +51,7 @@ self.addEventListener('activate', (event) => {
         keys
           .filter((key) => key !== CACHE_NAME)
           .map((key) => {
-            console.log('[SW v18] Eliminando caché viejo:', key);
+            console.log('[SW v30] Eliminando caché viejo:', key);
             return caches.delete(key);
           })
       )

@@ -132,7 +132,7 @@ html,body{overflow:hidden !important;
   font-family: 'IBM Plex Sans', sans-serif;
   white-space: nowrap;
 }
-.app-footer{margin-top:auto;padding:1.1rem 1rem .9rem;text-align:center;border-top:1px solid var(--border);color:var(--text2);font-size:.70rem;letter-spacing:.04em;user-select:none;}
+.app-footer{margin-top:auto;padding:1.1rem 1rem .9rem;text-align:center;border-top:1px solid var(--border);color:var(--text2);font-size:.70rem;letter-spacing:.04em;user-select:none;background:var(--bg2);}
 .footer-dot{margin:0 .45em;opacity:.35;}
 .tb-sep{color:var(--border2)}
 .tb-title{font-size:.75rem;color:var(--text2);white-space:nowrap}
@@ -434,7 +434,7 @@ html.coordinadora #main select { pointer-events:none; opacity:.6; }
   text-align: center;
 }
 
-body[data-rol="coordinadora"] .coord-banner       { display: block; }
+body[data-rol="coordinadora"] .coord-banner       { display: none !important; }
 body[data-rol="coordinadora"] #btn-nl             { display: none !important; }
 body[data-rol="coordinadora"] #btn-cfg            { display: none !important; }
 body[data-rol="coordinadora"] .checker-only       { display: none !important; }
@@ -447,17 +447,25 @@ body[data-rol="coordinadora"] select              { pointer-events:none; opacity
 body[data-rol="coordinadora"] .btn-pallet         { display: none !important; }
 body[data-rol="coordinadora"] .btn-confirmar      { display: none !important; }
 body[data-rol="coordinadora"] .ba-sav              { display: none !important; }
-</style></style>
+</style>
 
 <script type="module">
-  import { authGuard, getRol } from './firebase-init.js';
+  import { authGuard, getRol, db } from './firebase-init.js';
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
   import { pullLotes, escucharLotes } from './sync.js';
+  window.USER_NOMBRE = '';
+  window.USER_ROL = '';
   authGuard().then(async u => {
     const rol = await getRol(u.uid);
+    window.USER_ROL = rol;
+    // Nombre para autoría del dictamen (ISO 8.7.2): usuarios/{uid}.nombre → displayName → email
+    let nombre = u.displayName || (u.email||'').split('@')[0] || 'Usuario';
+    try { const s = await getDoc(doc(db,'usuarios',u.uid)); if(s.exists()&&s.data().nombre) nombre = s.data().nombre; } catch(e){}
+    window.USER_NOMBRE = nombre;
     localStorage.setItem('userRol', rol);
     document.body.dataset.rol = rol;
     if (rol === 'coordinadora') document.documentElement.classList.add('coordinadora');
-    console.log('[REG01] rol aplicado:', rol, '| clase html:', document.documentElement.className);
+    console.log('[REG01] rol aplicado:', rol, '| usuario:', nombre);
     await pullLotes();
     cargarLotes();
     renderTabs();
@@ -465,8 +473,6 @@ body[data-rol="coordinadora"] .ba-sav              { display: none !important; }
   });
 </script>
 
-</head>
-<body>
 </head>
 <body>
 <!-- ════ APP CONTAINER — todo el layout vive aquí ════ -->
@@ -1841,8 +1847,9 @@ function abrirDictamen(){
   // Dictamen previo
   const prev=l.final.dictamen;
   const fechaDict=l.final.fechaDictamen;
+  const porDict=l.final.dictaminadoPor?(' · por '+l.final.dictaminadoPor+(l.final.dictaminadoRol?' ('+l.final.dictaminadoRol+')':'')):'';
   document.getElementById('dict-fecha').textContent=
-    prev?(prev.replace('_',' ')+' · '+fechaDict):'Sin dictamen previo';
+    prev?(prev.replace('_',' ')+' · '+fechaDict+porDict):'Sin dictamen previo';
   document.getElementById('mo-dict').classList.add('show');
 }
 function confirmarDictamen(tipo){
@@ -1852,6 +1859,9 @@ function confirmarDictamen(tipo){
   l.estado=estadoMap[tipo]||'activo';
   const ahora=new Date().toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
   l.final.fechaDictamen=ahora;
+  // Autoría del dictamen (ISO 9001:2015 · 8.7.2 — identifica la autoridad que decide)
+  l.final.dictaminadoPor = window.USER_NOMBRE || l.cab.checker || '';
+  l.final.dictaminadoRol = window.USER_ROL==='coordinadora' ? 'Coordinadora' : 'Checker';
   marcarPendiente();guardarLotes();renderTabs();actualizarISISBtn();
   cerrarMo('mo-dict');
   mostrarToast('✅ Dictamen: '+tipo.replace('_',' '),2000);
