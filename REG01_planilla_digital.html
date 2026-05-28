@@ -235,8 +235,8 @@ input, textarea, select{touch-action:manipulation}
 .pcard-num{font-family:var(--mono);font-weight:700;font-size:18px;color:var(--accent);width:28px;flex-shrink:0}
 .pcard-npal{font-family:var(--mono);font-size:11px;color:var(--text3)}
 .pcard-row{display:grid;gap:6px}
-.cl-checks{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:8px 0 4px;}
-.cl-check-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:4px 6px;gap:4px;}
+.cl-checks{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:8px 0 4px;}@media(max-width:480px){.cl-checks{grid-template-columns:1fr;}}
+.cl-check-row{display:flex;align-items:center;flex-wrap:wrap;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:4px 6px;gap:4px;}
 .cl-check-row.row-nok{border-color:var(--red);background:var(--red-bg);}
 .cl-check-row.row-repro{border-color:var(--orange);background:var(--orange-bg);}
 .cl-check-label{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.03em;flex:1;}
