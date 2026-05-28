@@ -1,10 +1,9 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v27
-//  Cambio v27: CF per-check REPRO (idRepro/qrRepro/paletRepro/indCFRepro),
-//  semáforo APROBADO/RETENIDO/REPROCESO por pallet
+//  sw.js — Agrofacil SGC · v28
+//  Cambio v28: Branding QualityOS — favicons, topbar, footer en todos los HTML
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v27';
+const CACHE_NAME = 'agrofacil-v28';
 
 const ASSETS = [
   '/login.html',

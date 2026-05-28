@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>SGC Agrofacil — Ingresar</title>
-  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="icon"             type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon"                               href="/apple-touch-icon.png">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -34,6 +35,12 @@
     .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(15,25,35,.4);border-top-color:#0f1923;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
     @keyframes spin{to{transform:rotate(360deg);}}
     .footer{text-align:center;font-size:11px;color:var(--muted);margin-top:28px;opacity:.6;}
+    /* ── Branding QualityOS ── */
+    .tb-brand{display:flex;align-items:center;gap:.5rem;flex-shrink:0;}
+    .tb-logo{display:block;flex-shrink:0;}
+    .tb-appname{font-size:.82rem;font-weight:700;letter-spacing:.07em;color:var(--accent);text-transform:uppercase;white-space:nowrap;}
+    .app-footer{margin-top:auto;padding:1.1rem 1rem .9rem;text-align:center;border-top:1px solid var(--border);color:var(--muted);font-size:.70rem;letter-spacing:.04em;user-select:none;}
+    .footer-dot{margin:0 .45em;opacity:.35;}
   </style>
 </head>
 <body>
@@ -120,5 +127,12 @@ function instalarPWA(){
   }
 }
 </script>
+<footer class="app-footer">
+  <span>Desarrollado por Maximiliano Roca</span>
+  <span class="footer-dot">·</span>
+  <span>QualityOS v1.0</span>
+  <span class="footer-dot">·</span>
+  <span>Agrofacil S.A.</span>
+</footer>
 </body>
 </html>

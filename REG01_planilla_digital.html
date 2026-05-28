@@ -41,12 +41,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="REG-01">
 <meta name="theme-color" content="#0c1414">
-<!-- iOS: ícono de la app en la pantalla de inicio -->
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="icon" type="image/x-icon" href="favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><rect width='180' height='180' rx='40' fill='%230f1117'/><text x='90' y='125' font-size='90' text-anchor='middle'>📋</text></svg>">
+<link rel="icon"             type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon"                               href="/apple-touch-icon.png">
 <!-- iOS: ocultar la barra de dirección al abrir desde pantalla de inicio -->
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>REG-01 · Control de Calidad</title>
@@ -125,7 +121,11 @@ html,body{overflow:hidden !important;
 #topbar{display:flex;align-items:center;background:var(--topbar-bg);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:0 14px;min-height:52px;flex-shrink:0;gap:8px}
 .logo{font-family:var(--sans);font-weight:800;font-size:22px;color:var(--accent);letter-spacing:1px;white-space:nowrap}
 .tb-left{display:flex;align-items:center;gap:.5rem;flex-shrink:0;margin-right:8px}
-.tb-brand{font-size:.78rem;font-weight:600;color:var(--accent);letter-spacing:.06em;white-space:nowrap}
+.tb-brand{display:flex;align-items:center;gap:.5rem;flex-shrink:0;}
+.tb-logo{display:block;flex-shrink:0;}
+.tb-appname{font-size:.82rem;font-weight:700;letter-spacing:.07em;color:var(--accent);text-transform:uppercase;white-space:nowrap;}
+.app-footer{margin-top:auto;padding:1.1rem 1rem .9rem;text-align:center;border-top:1px solid var(--border);color:var(--text2);font-size:.70rem;letter-spacing:.04em;user-select:none;}
+.footer-dot{margin:0 .45em;opacity:.35;}
 .tb-sep{color:var(--border2)}
 .tb-title{font-size:.75rem;color:var(--text2);white-space:nowrap}
 #tabs-wrap{display:flex;gap:4px;overflow-x:auto;flex:none;min-width:0;scrollbar-width:none;padding:6px 0;-webkit-overflow-scrolling:touch}
@@ -445,7 +445,7 @@ html.coordinadora #main select { pointer-events:none; opacity:.6; }
       </div>
     </div>
     <div id="topbar">
-    <div class="tb-left"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+Cjxzdmcgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDUyMiA2MTMiIHZlcnNpb249IjEuMSIKICAgICB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgICAgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiCiAgICAgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIKICAgICBzdHlsZT0iZmlsbC1ydWxlOmV2ZW5vZGQ7Y2xpcC1ydWxlOmV2ZW5vZGQ7c3Ryb2tlLWxpbmVqb2luOnJvdW5kO3N0cm9rZS1taXRlcmxpbWl0OjI7Ij4KICAgIDwhLS0gQUdST0ZBQ0lMIOKAlCBJc290aXBvIChzw61tYm9sbyBzaW4gdGV4dG8pIC0tPgogICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSwtMzk4MC40ODY2NjcsLTEyNzQuNDQzMzMzKSI+CiAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoOC4zMzMzMzMsMCwwLDguMzMzMzMzLDAsMCkiPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDQ3Ny42NTg5LDE5MS44NjM4KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtMTAuODA5TDAsMC41NTlDNy42MjksLTMuNTAxIDE1LjA4LC02LjQyNCAyMS45OTQsLTguNTMzQzE0LjEwNywtMTAuODA5IDYuODQ2LC0xMS4zNjggMCwtMTAuODA5IiBzdHlsZT0iZmlsbDpyZ2IoMjE1LDIyMywzNCk7ZmlsbC1ydWxlOm5vbnplcm87Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSw1NDAuMjcyMiwxNzkuOTEwNCkiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsMTYuOTU2TDAsMS40MjZDLTIwLjcyNSwwIC00MC42MDcsNC4wOTcgLTU0LjU5LDExLjY0N0MtMjYuNjc4LDguNTMxIC01LjIwOSwxNC44NjUgMCwxNi45NTYiIHN0eWxlPSJmaWxsOnJnYigxNjEsMjA1LDU4KTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDQ3OC44NzM4LDIwMi40MTk1KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtOC41NTlDLTAuNDAxLC04LjUwOCAtMC44MjMsLTguNDU2IC0xLjIxNSwtOC4zOTVMLTEuMjE1LC0yLjY3NkMxMy43NzIsLTIuMzg2IDI1LjAxNiwwLjg4NSAzMC4wNzksMi41MTJDMzIuMjEsMS41NDggMzQuNDk5LDAuNjAxIDM2Ljk3NywtMC4zMDZDMzguNDIzLC0wLjg0OSAzOS44ODcsLTEuMzU0IDQxLjM4MSwtMS44MTNDNDQuNjY2LC0yLjg2MSA0OC4yMzIsLTMuODI4IDUyLjA3NiwtNC42ODJDMzYuNzk3LC05LjA4OSAxOC44ODYsLTExLjA3MSAwLC04LjU1OSIgc3R5bGU9ImZpbGw6cmdiKDAsMTc3LDEyMyk7ZmlsbC1ydWxlOm5vbnplcm87Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSw0NzcuNjU4OSwyMTYuMDI1NykiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsLTE0LjUwNkwwLC0xMC45MjlDMCwtOC4wOTYgMS40MzMsLTUuNjYxIDMuODg1LC00LjIzOUwxMS4yMjgsMEMxNC4xMDcsLTIuNTQzIDIwLjcxMSwtNS45MTQgMjcuMzM4LC05LjM2NEMxMS4wMTMsLTE0LjI3NSAwLjcsLTE0LjQ2NCAwLC0xNC41MDYiIHN0eWxlPSJmaWxsOnJnYig5LDE0NCwxMTkpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNTA1LjEyMjgsMjAwLjE4MjcpIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDI1LjIxM0MyLjQ1NSwyNi42MzUgNS4yNjgsMjYuNjM1IDcuNzIxLDI1LjIxM0wzMS4zMDgsMTEuNjA0QzMzLjc2LDEwLjE4MiAzNS4xNDksNy43NDcgMzUuMTQ5LDQuOTE0TDM1LjE0OSwtMS40MjJDMzAuODI1LC0wLjkzOCA5LjYsMi4xNDYgLTEzLjM1NiwxNy42N0wwLDI1LjIxM1oiIHN0eWxlPSJmaWxsOnJnYig4LDEyOCwxMzEpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNTM2LjMwNDQsMTY2LjYyMDIpIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDAuOTgxTC0yMy41NzEsLTEyLjYyOEMtMjYuMDIzLC0xNC4wNCAtMjguODM5LC0xNC4wNCAtMzEuMjg5LC0xMi42MjhMLTU0Ljg3MywwLjk4MUMtNTcuMzI2LDIuNDA4IC01OC42NDYsNC44MzIgLTU4LjY0Niw3LjY3TC01OC42NDYsMTEuNTMyQy00OS45NjcsMTEuNDY3IC00My41NzgsMTIuMjUzIC0zMy4xOSwxNS4wMjFDLTExLjc2Myw5LjE2NiAzLjk2OCwxMS4xMjMgMy45NjgsMTEuMTIzTDMuOTY4LDcuNjdDMy45NjgsNC44MzIgMi40NjYsMi40MDggMCwwLjk4MSIgc3R5bGU9ImZpbGw6cmdiKDIwOSwyMTEsMjEyKTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+" alt="Agrofacil" style="height:34px;width:auto;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'"><span class="tb-brand">AGROFACIL</span><span class="tb-sep">|</span><span class="tb-title">REG-01 Digital</span></div>
+    <div class="tb-left"><div class="tb-brand"><img src="/topbar-icon.svg" alt="QualityOS" class="tb-logo" width="28" height="28"><span class="tb-appname">QualityOS</span></div><span class="tb-sep">|</span><span class="tb-title">REG-01 Digital</span></div>
     <div id="tabs-wrap"></div>
     <div class="tb-spacer"></div>
     <button id="btn-nl" onclick="abrirModalLote()">+ Lote</button>
@@ -2390,5 +2390,12 @@ function aplicarTema(t){document.documentElement.classList.toggle('light',t==='l
 function toggleTheme(){const n=document.documentElement.classList.contains('light')?'dark':'light';localStorage.setItem('theme',n);aplicarTema(n);}
 aplicarTema(localStorage.getItem('theme')||'dark');
 </script>
+<footer class="app-footer">
+  <span>Desarrollado por Maximiliano Roca</span>
+  <span class="footer-dot">·</span>
+  <span>QualityOS v1.0</span>
+  <span class="footer-dot">·</span>
+  <span>Agrofacil S.A.</span>
+</footer>
 </body>
 </html>
