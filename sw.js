@@ -1,9 +1,9 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v28
-//  Cambio v28: Branding QualityOS — favicons, topbar, footer en todos los HTML
+//  sw.js — Agrofacil SGC · v29
+//  Cambio v29: Vista Coordinadora — banner, CSS solo-lectura, body.dataset.rol
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v28';
+const CACHE_NAME = 'agrofacil-v29';
 
 const ASSETS = [
   '/login.html',

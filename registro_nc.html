@@ -332,6 +332,7 @@ html.coordinadora #tBody select { pointer-events:none; opacity:.6; }
   import './sync.js';
   authGuard().then(u => getRol(u.uid)).then(rol => {
     localStorage.setItem('userRol', rol);
+    document.body.dataset.rol = rol;
     if (rol === 'coordinadora') document.documentElement.classList.add('coordinadora');
     console.log('[registro_nc] rol aplicado:', rol, '| clase html:', document.documentElement.className);
   });

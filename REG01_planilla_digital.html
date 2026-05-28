@@ -407,6 +407,38 @@ html.coordinadora #btn-cfg { display:none !important; }
 html.coordinadora .btn-ap  { display:none !important; }
 html.coordinadora #main input,
 html.coordinadora #main select { pointer-events:none; opacity:.6; }
+
+/* ════════════════════════════════════
+   VISTA COORDINADORA — Solo lectura
+   ════════════════════════════════════ */
+
+.coord-banner {
+  display: none;
+  background: rgba(0,200,150,.08);
+  border: 1px solid rgba(0,200,150,.25);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 11px;
+  color: var(--accent);
+  font-family: var(--mono);
+  letter-spacing: .05em;
+  margin: 8px 12px 0;
+  text-align: center;
+}
+
+body[data-rol="coordinadora"] .coord-banner       { display: block; }
+body[data-rol="coordinadora"] #btn-nl             { display: none !important; }
+body[data-rol="coordinadora"] #btn-cfg            { display: none !important; }
+body[data-rol="coordinadora"] #tabs-wrap          { display: none !important; }
+body[data-rol="coordinadora"] .checker-only       { display: none !important; }
+body[data-rol="coordinadora"] .ind-form           { display: none !important; }
+body[data-rol="coordinadora"] .pallet-cards       { display: none !important; }
+body[data-rol="coordinadora"] .pallet-table       { display: none !important; }
+body[data-rol="coordinadora"] input[type="number"]{ pointer-events:none; opacity:.5; }
+body[data-rol="coordinadora"] input[type="text"]  { pointer-events:none; opacity:.5; }
+body[data-rol="coordinadora"] select              { pointer-events:none; opacity:.5; }
+body[data-rol="coordinadora"] .btn-pallet         { display: none !important; }
+body[data-rol="coordinadora"] .btn-confirmar      { display: none !important; }
 </style></style>
 
 <script type="module">
@@ -415,6 +447,7 @@ html.coordinadora #main select { pointer-events:none; opacity:.6; }
   authGuard().then(async u => {
     const rol = await getRol(u.uid);
     localStorage.setItem('userRol', rol);
+    document.body.dataset.rol = rol;
     if (rol === 'coordinadora') document.documentElement.classList.add('coordinadora');
     console.log('[REG01] rol aplicado:', rol, '| clase html:', document.documentElement.className);
     await pullLotes();
@@ -455,7 +488,10 @@ html.coordinadora #main select { pointer-events:none; opacity:.6; }
     <button id="btn-theme" onclick="toggleTheme()" title="Cambiar tema" style="flex-shrink:0;background:transparent;border:1px solid var(--border2);color:var(--text2);font-size:.82rem;padding:.28rem .5rem;border-radius:var(--r);cursor:pointer;transition:all .15s">🌙</button>
     <button id="btn-logout" onclick="import('./firebase-init.js').then(m=>m.cerrarSesion())" style="flex-shrink:0;background:transparent;border:1px solid rgba(239,68,68,.3);color:var(--red);font-size:.72rem;padding:.28rem .6rem;border-radius:var(--r);cursor:pointer;white-space:nowrap;transition:all .15s" title="Cerrar sesión">🚪 Salir</button>
   </div>
-  
+  <div class="coord-banner">
+    👁 Vista Coordinadora — Solo lectura · Exportar disponible
+  </div>
+
   <!-- Área principal: vacío o lote activo se renderiza aquí via JS -->
   <div id="main"><div id="empty-state">
     <div class="big">📋</div><p>No hay lotes activos</p>
@@ -1043,7 +1079,7 @@ function renderLote(){
 function mkCabecera(l){
   const ind=cfg.inductoras.find(i=>i.id===l.cab.indId)||{};
   const rango=ind.tolMin!=null?`${ind.tolMin}–${ind.tolMax}${ind.unidad?' '+ind.unidad:''}  ref:${ind.ref}`:'Configurar en ⚙';
-  const c=document.createElement('div');c.className='card';
+  const c=document.createElement('div');c.className='card ind-form';
   c.innerHTML=`<div class="ch" onclick="toggleCard(this)">
     <div class="ch-title">📦 Producto
       <span class="ch-badge">${l.cab.lote}</span>
