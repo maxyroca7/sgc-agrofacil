@@ -235,9 +235,9 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
     <span class="tb-title">Coordinación SGC</span>
   </div>
   <div class="topbar-right">
-    <a href="home.html" class="btn-t" title="Inicio">🏠 Inicio</a>
-    <button class="btn-t" id="btn-theme" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
-    <button class="btn-t danger" id="btn-salir" title="Cerrar sesión">🚪 Salir</button>
+    <a href="home.html" class="btn-t" title="Inicio"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Inicio</a>
+    <button class="btn-t" id="btn-theme" onclick="toggleTheme()" title="Cambiar tema"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></button>
+    <button class="btn-t danger" id="btn-salir" title="Cerrar sesión"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg> Salir</button>
   </div>
 </nav>
 
@@ -257,7 +257,7 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
 
   <!-- Acceso al Registro de NC (edición completa) -->
   <a href="registro_nc.html" class="rnc-link">
-    <span class="rnc-icon">⚠️</span>
+    <span class="rnc-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg></span>
     <div class="rnc-body">
       <div class="rnc-title">Registro de No Conformidades</div>
       <div class="rnc-desc">Registrar, editar, dar seguimiento y verificar eficacia · KPIs AQ-IND</div>
@@ -267,7 +267,7 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
 
   <!-- Requieren atención (retenidos/parciales/NOK) -->
   <div id="atencion-wrap" style="display:none">
-    <div class="section-label alert">⚠ Requieren atención <span class="count" id="atencion-count">0</span></div>
+    <div class="section-label alert"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg> Requieren atención <span class="count" id="atencion-count">0</span></div>
     <div class="lotes-list" id="atencion-list"></div>
   </div>
 
@@ -294,7 +294,7 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
     <div id="md-actual" class="dict-info" style="margin-bottom:1rem"></div>
     <div class="mo-label">Nuevo dictamen</div>
     <div class="dict-opts">
-      <div class="dict-opt ap" data-tipo="APROBADO" onclick="selTipo('APROBADO')">✅<span>Aprobado</span></div>
+      <div class="dict-opt ap" data-tipo="APROBADO" onclick="selTipo('APROBADO')"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Aprobado</span></div>
       <div class="dict-opt par" data-tipo="APROBADO_PARCIAL" onclick="selTipo('APROBADO_PARCIAL')">⚡<span>Ap. Parcial</span></div>
       <div class="dict-opt ret" data-tipo="RETENIDO" onclick="selTipo('RETENIDO')">🔴<span>Retenido</span></div>
     </div>
@@ -316,7 +316,7 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
 
 <script>
   // ── TEMA ──
-  function aplicarTema(t){document.documentElement.classList.toggle('light',t==='light');const b=document.getElementById('btn-theme');if(b)b.textContent=t==='light'?'🌙':'☀️';}
+  function aplicarTema(t){document.documentElement.classList.toggle('light',t==='light');const b=document.getElementById('btn-theme');if(b)b.innerHTML=t==='light'?`<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`:`<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`;}
   function toggleTheme(){const n=document.documentElement.classList.contains('light')?'dark':'light';localStorage.setItem('theme',n);aplicarTema(n);}
   aplicarTema(localStorage.getItem('theme')||'dark');
 </script>
@@ -446,7 +446,7 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
 
     // Cabecera
     const cabHTML=`<div class="det-section">
-      <div class="det-h">📦 Identificación</div>
+      <div class="det-h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg> Identificación</div>
       <div class="det-grid">
         <div class="det-item"><div class="k">Producto</div><div class="v">${esc(cab.prod||'—')}</div></div>
         <div class="det-item"><div class="k">N° Lote</div><div class="v">${esc(cab.lote||'—')}</div></div>
@@ -466,7 +466,7 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
       return `<tr class="${cls}"><td>${i+1}</td><td>${esc(p.nPal||i+1)}</td><td>${esc(picos)}</td><td>${esc(p.indVal||'—')}</td><td>${estCell}</td><td>${esc(p.obs||'')}</td></tr>`;
     }).join('');
     const clHTML=`<div class="det-section">
-      <div class="det-h">🔬 Control en Línea
+      <div class="det-h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M6 18h8M3 22h18M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg> Control en Línea
         <span class="mini-badge mb-ok">${linea.length} pallets</span>
         ${clNOK?`<span class="mini-badge mb-nok">${clNOK} NOK</span>`:''}
         ${clRep?`<span class="mini-badge mb-repro">${clRep} REPRO</span>`:''}
@@ -489,7 +489,7 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
     }).join('');
     const litStr=c.ltsAp!=null?`✅ ${c.ltsAp.toFixed(0)} lt · 🔴 ${c.ltsRet.toFixed(0)} lt`:`✅ ${c.ap} pal · 🔴 ${c.ret} pal`;
     const cfHTML=`<div class="det-section">
-      <div class="det-h">✅ Control Final
+      <div class="det-h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Control Final
         <span class="mini-badge mb-ok">${cf.length} pallets</span>
         ${cfNOK?`<span class="mini-badge mb-nok">${cfNOK} NOK</span>`:''}
         ${cfRep?`<span class="mini-badge mb-repro">${cfRep} REPRO</span>`:''}
@@ -523,7 +523,7 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
 
     // NCs vinculadas
     const ncs=ncsDelLote(l);
-    const ncBtn=`<a class="act-btn nc" href="registro_nc.html">⚠ No Conformidades${ncs.length?' ('+ncs.length+')':''}</a>`;
+    const ncBtn=`<a class="act-btn nc" href="registro_nc.html"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg> No Conformidades${ncs.length?' ('+ncs.length+')':''}</a>`;
 
     const dictSection=`<div class="det-section">
       <div class="det-h">⚖ Dictamen</div>
@@ -532,7 +532,7 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
 
     const actions=`<div class="det-actions">
       <button class="act-btn primary" onclick="abrirDict('${l.id}')">✎ Cambiar dictamen</button>
-      <button class="act-btn" onclick="archivarPDF('${l.id}')">📄 Archivar / PDF</button>
+      <button class="act-btn" onclick="archivarPDF('${l.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg> Archivar / PDF</button>
       ${ncBtn}
     </div>`;
 
