@@ -136,9 +136,9 @@ html,body{overflow:hidden !important;
 .footer-dot{margin:0 .45em;opacity:.35;}
 .tb-sep{color:var(--border2)}
 .tb-title{font-size:.75rem;color:var(--text2);white-space:nowrap}
-#tabs-wrap{display:flex;gap:4px;overflow-x:auto;flex:none;min-width:0;scrollbar-width:none;padding:6px 0;-webkit-overflow-scrolling:touch}
-.tb-spacer{flex:1}
-#btn-nl{margin-left:auto}
+#tabs-wrap{display:flex;gap:4px;overflow-x:auto;flex:1 1 0;min-width:0;scrollbar-width:none;padding:6px 0;-webkit-overflow-scrolling:touch}
+.tb-spacer{display:none}
+#btn-nl{flex-shrink:0}
 #btn-more{flex-shrink:0}
 #tabs-wrap::-webkit-scrollbar{display:none}
 .tab{flex-shrink:0;padding:5px 10px;border-radius:var(--r);background:var(--bg3);border:1px solid var(--border);font-family:var(--mono);font-size:10px;color:var(--text2);cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;transition:.15s}
@@ -391,7 +391,7 @@ button.sc:active{background:#60a5fa;color:#fff;}
   #tabs-wrap:empty{display:none}
   .tab{font-size:9px;padding:4px 8px;gap:4px}
   .tb-left{gap:.35rem;margin-right:4px}
-  .tb-brand,.tb-sep,.tb-title{display:none}
+  .tb-appname,.tb-sep,.tb-title{display:none}
   .tb-spacer{display:none}
 }
 /* ── OVERLAY ROTAR DISPOSITIVO ── */
@@ -459,7 +459,8 @@ body[data-rol="coordinadora"] .ba-sav              { display: none !important; }
 .tw { touch-action: pan-x !important; overflow-x: scroll !important; -webkit-overflow-scrolling: touch; }
 
 /* ── Menú overflow ⋮ ── */
-#tb-menu{position:fixed;top:58px;right:10px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:600;min-width:190px;max-width:calc(100vw - 20px);box-shadow:0 8px 32px rgba(0,0,0,.5);}
+#tb-menu{position:fixed;top:58px;right:10px;background:#121d1d !important;border:1px solid var(--border2);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;z-index:9999;min-width:190px;max-width:calc(100vw - 20px);box-shadow:0 8px 32px rgba(0,0,0,.6);}
+html.light #tb-menu{background:#ffffff !important;}
 #tb-menu.tb-hidden{display:none;}
 #tb-menu button,#tb-menu a{width:100%;box-sizing:border-box;text-align:left;padding:11px 12px;border-radius:8px;background:transparent;border:none;color:var(--text);font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;}
 #tb-menu button:hover,#tb-menu a:hover{background:var(--border);}
