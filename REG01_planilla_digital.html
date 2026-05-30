@@ -460,32 +460,34 @@ body[data-rol="coordinadora"] .ba-sav              { display: none !important; }
 /* ── Fix scroll horizontal tabla CL en landscape ── */
 .tw { touch-action: pan-x !important; overflow-x: scroll !important; -webkit-overflow-scrolling: touch; }
 
-/* ── Menú ⋮ como bottom-sheet ── */
+/* ── Menú ⋮ como dropdown anclado debajo del botón (todos los tamaños) ── */
 #tb-menu{position:fixed;inset:0;z-index:9999;}
 #tb-menu.tb-hidden{display:none;}
-#tb-menu-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55);opacity:0;transition:opacity .22s ease;}
-#tb-menu.tb-open #tb-menu-backdrop{opacity:1;}
+#tb-menu-backdrop{position:absolute;inset:0;background:transparent;}
 #tb-menu-sheet{
-  position:absolute;left:0;right:0;bottom:0;
-  background:#121d1d;border-top:1px solid var(--border2);
-  border-radius:18px 18px 0 0;
-  padding:8px 14px calc(14px + env(safe-area-inset-bottom,0px));
-  box-shadow:0 -8px 32px rgba(0,0,0,.5);
+  position:absolute;top:54px;right:8px;left:auto;bottom:auto;
+  width:min(280px,calc(100vw - 16px));max-height:calc(100vh - 70px);
+  background:#121d1d;border:1px solid var(--border2);
+  border-radius:14px;
+  padding:8px;
+  box-shadow:0 12px 36px rgba(0,0,0,.55);
   display:flex;flex-direction:column;gap:4px;
-  max-height:80vh;overflow-y:auto;
-  transform:translateY(100%);transition:transform .26s cubic-bezier(.32,.72,0,1);
+  overflow-y:auto;
+  transform:translateY(-10px);opacity:0;
+  transform-origin:top right;
+  transition:transform .16s ease,opacity .16s ease;
 }
-#tb-menu.tb-open #tb-menu-sheet{transform:translateY(0);}
+#tb-menu.tb-open #tb-menu-sheet{transform:translateY(0);opacity:1;}
 html.light #tb-menu-sheet{background:#ffffff;}
-#tb-menu-grip{width:40px;height:4px;border-radius:3px;background:var(--border2);margin:6px auto 10px;flex-shrink:0;}
-#tb-menu-head{font-family:var(--sans);font-weight:700;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:0 4px 6px;}
+#tb-menu-grip{display:none;}
+#tb-menu-head{font-family:var(--sans);font-weight:700;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:2px 4px 6px;}
 #tb-menu-sheet button,#tb-menu-sheet a{
   width:100%;box-sizing:border-box;text-align:left;
-  padding:14px 12px;border-radius:12px;
+  padding:12px;border-radius:10px;
   background:transparent;border:none;
-  color:var(--text);font-size:.95rem;font-family:inherit;
+  color:var(--text);font-size:.92rem;font-family:inherit;
   cursor:pointer;display:flex;align-items:center;gap:12px;
-  text-decoration:none;min-height:52px;transition:background .12s;
+  text-decoration:none;min-height:48px;transition:background .12s;
 }
 #tb-menu-sheet button:active,#tb-menu-sheet a:active{background:var(--border);}
 @media(hover:hover){#tb-menu-sheet button:hover,#tb-menu-sheet a:hover{background:var(--border);}}
@@ -497,27 +499,8 @@ html.light #tb-menu-sheet{background:#ffffff;}
   justify-content:flex-start;
   font-size:inherit;
 }
-#tb-menu-sheet .tb-menu-danger{color:var(--red);margin-top:4px;border-top:1px solid var(--border);border-radius:0 0 12px 12px;}
+#tb-menu-sheet .tb-menu-danger{color:var(--red);margin-top:4px;border-top:1px solid var(--border);border-radius:0 0 10px 10px;}
 #tb-menu-sheet .tb-menu-danger svg{color:var(--red);}
-/* En pantallas anchas (desktop/tablet) el menú es un dropdown anclado arriba a
-   la derecha, debajo del botón ⋮ — no un bottom-sheet */
-@media(min-width:700px){
-  #tb-menu-backdrop{background:transparent;}
-  #tb-menu-sheet{
-    top:56px;bottom:auto;left:auto;right:12px;
-    width:280px;max-height:none;
-    border-radius:14px;border:1px solid var(--border2);
-    box-shadow:0 12px 36px rgba(0,0,0,.5);
-    padding:8px;
-    transform:translateY(-10px);opacity:0;
-    transition:transform .16s ease,opacity .16s ease;
-  }
-  #tb-menu.tb-open #tb-menu-sheet{transform:translateY(0);opacity:1;}
-  #tb-menu-grip{display:none;}
-  #tb-menu-head{padding-top:4px;}
-  #tb-menu-sheet button,#tb-menu-sheet a{padding:11px 12px;min-height:44px;font-size:.9rem;border-radius:10px;}
-  #tb-menu-sheet .tb-menu-danger{border-radius:0 0 10px 10px;}
-}
 
 /* ── Primera columna sticky en tabla CL ── */
 .tw table th:first-child,.tw table td:first-child{position:sticky;left:0;z-index:2;background:var(--surface2);}
@@ -2541,7 +2524,7 @@ if('serviceWorker' in navigator && location.protocol !== 'file:'){
     .catch(err => console.log('SW no disponible:', err));
 }
 
-function aplicarTema(t){document.documentElement.classList.toggle('light',t==='light');const b=document.getElementById('btn-theme');if(b)b.innerHTML=t==='light'?`<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`:`<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`;}
+function aplicarTema(t){document.documentElement.classList.toggle('light',t==='light');const b=document.getElementById('btn-theme');if(b){const icon=t==='light'?`<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`:`<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`;b.innerHTML=icon+(t==='light'?' Tema oscuro':' Tema claro');}}
 function toggleTheme(){const n=document.documentElement.classList.contains('light')?'dark':'light';localStorage.setItem('theme',n);aplicarTema(n);}
 aplicarTema(localStorage.getItem('theme')||'dark');
 
@@ -2554,7 +2537,7 @@ document.addEventListener('keydown', function(e){
     }
   }
 });
-// ── Menú ⋮ como bottom-sheet (movido al <body> para escapar del stacking
+// ── Menú ⋮ como dropdown (movido al <body> para escapar del stacking
 //    context del topbar con backdrop-filter) ──
 function abrirMenu(){
   const menu = document.getElementById('tb-menu');
