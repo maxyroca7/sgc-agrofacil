@@ -490,11 +490,33 @@ html.light #tb-menu-sheet{background:#ffffff;}
 #tb-menu-sheet button:active,#tb-menu-sheet a:active{background:var(--border);}
 @media(hover:hover){#tb-menu-sheet button:hover,#tb-menu-sheet a:hover{background:var(--border);}}
 #tb-menu-sheet svg{flex-shrink:0;color:var(--text3);}
+/* Vencer reglas heredadas del topbar (#btn-cfg/#btn-srch eran botones-ícono
+   34x34 centrados): dentro del menú deben ser filas alineadas como el resto */
+#tb-menu-sheet #btn-cfg,#tb-menu-sheet #btn-srch{
+  width:100%;height:auto;
+  justify-content:flex-start;
+  font-size:inherit;
+}
 #tb-menu-sheet .tb-menu-danger{color:var(--red);margin-top:4px;border-top:1px solid var(--border);border-radius:0 0 12px 12px;}
 #tb-menu-sheet .tb-menu-danger svg{color:var(--red);}
-/* En pantallas anchas (desktop/landscape) el sheet se centra y no ocupa todo el ancho */
+/* En pantallas anchas (desktop/tablet) el menú es un dropdown anclado arriba a
+   la derecha, debajo del botón ⋮ — no un bottom-sheet */
 @media(min-width:700px){
-  #tb-menu-sheet{left:auto;right:16px;bottom:16px;width:300px;border-radius:16px;border:1px solid var(--border2);}
+  #tb-menu-backdrop{background:transparent;}
+  #tb-menu-sheet{
+    top:56px;bottom:auto;left:auto;right:12px;
+    width:280px;max-height:none;
+    border-radius:14px;border:1px solid var(--border2);
+    box-shadow:0 12px 36px rgba(0,0,0,.5);
+    padding:8px;
+    transform:translateY(-10px);opacity:0;
+    transition:transform .16s ease,opacity .16s ease;
+  }
+  #tb-menu.tb-open #tb-menu-sheet{transform:translateY(0);opacity:1;}
+  #tb-menu-grip{display:none;}
+  #tb-menu-head{padding-top:4px;}
+  #tb-menu-sheet button,#tb-menu-sheet a{padding:11px 12px;min-height:44px;font-size:.9rem;border-radius:10px;}
+  #tb-menu-sheet .tb-menu-danger{border-radius:0 0 10px 10px;}
 }
 
 /* ── Primera columna sticky en tabla CL ── */
