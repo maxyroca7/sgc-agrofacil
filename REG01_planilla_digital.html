@@ -118,7 +118,7 @@ html,body{overflow:hidden !important;
    El scroll ocurre SOLO dentro de .lote-view
    ════════════════════════════════════════════════════════ */
 /* ── TOP BAR ── */
-#topbar{display:flex;align-items:center;background:var(--topbar-bg);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:0 14px;min-height:52px;flex-shrink:0;gap:8px}
+#topbar{display:flex;align-items:center;background:var(--topbar-bg);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:0 14px;min-height:52px;flex-shrink:0;gap:8px;position:relative}
 .logo{font-family:var(--sans);font-weight:800;font-size:22px;color:var(--accent);letter-spacing:1px;white-space:nowrap}
 .tb-left{display:flex;align-items:center;gap:.5rem;flex-shrink:0;margin-right:8px}
 .tb-brand{display:flex;align-items:center;gap:.5rem;flex-shrink:0;}
@@ -138,6 +138,8 @@ html,body{overflow:hidden !important;
 .tb-title{font-size:.75rem;color:var(--text2);white-space:nowrap}
 #tabs-wrap{display:flex;gap:4px;overflow-x:auto;flex:none;min-width:0;scrollbar-width:none;padding:6px 0;-webkit-overflow-scrolling:touch}
 .tb-spacer{flex:1}
+#btn-nl{margin-left:auto}
+#btn-more{flex-shrink:0}
 #tabs-wrap::-webkit-scrollbar{display:none}
 .tab{flex-shrink:0;padding:5px 10px;border-radius:var(--r);background:var(--bg3);border:1px solid var(--border);font-family:var(--mono);font-size:10px;color:var(--text2);cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;transition:.15s}
 .tab.active{background:var(--accent2);border-color:var(--accent);color:#fff;font-weight:700}
@@ -161,7 +163,7 @@ html,body{overflow:hidden !important;
   position:absolute;
   inset:0;
   overflow-y:scroll;
-  overflow-x:hidden;
+  overflow-x:clip;
   padding:10px;
   padding-bottom:16px;
   display:flex;
@@ -264,7 +266,7 @@ input, textarea, select, button {
   touch-action:manipulation; /* tap inmediato sin delay 300ms */
 }
 /* Excepciones: elementos que necesitan scroll horizontal */
-.tw { touch-action:pan-x pan-y; }
+.tw { touch-action:pan-x; }
 .lote-view { touch-action:pan-y; }
 .on button.ok.active{background:var(--green-bg);border-color:var(--green);color:var(--green)}
 .on button.nk.active{background:var(--red-bg);border-color:var(--red);color:var(--red)}
@@ -2493,7 +2495,7 @@ aplicarTema(localStorage.getItem('theme')||'dark');
 document.addEventListener('click', function(e){
   const menu = document.getElementById('tb-menu');
   const btn = document.getElementById('btn-more');
-  if(menu && btn && !menu.contains(e.target) && e.target !== btn){
+  if(menu && btn && !menu.contains(e.target) && !btn.contains(e.target)){
     menu.classList.add('tb-hidden');
   }
 });
