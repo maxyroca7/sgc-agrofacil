@@ -238,13 +238,14 @@
     <div class="m-actions">
       <button class="m-btn" onclick="irANCs()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg> Ver NCs</button>
       <button class="m-btn pri" onclick="exportarPDFLote()">↓ PDF del lote</button>
+      <button class="m-btn" style="border-color:rgba(239,68,68,.35);color:var(--danger);" onclick="eliminarLoteDefinitivo()">🗑 Eliminar</button>
     </div>
   </div>
 </div>
 
 <script type="module">
   import { auth, db, authGuard, cerrarSesion } from './firebase-init.js';
-  import { collection, onSnapshot, getDocs, where, query }
+  import { collection, onSnapshot, getDocs, where, query, deleteDoc, doc }
     from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
   document.getElementById('btn-salir').addEventListener('click', cerrarSesion);
@@ -511,6 +512,24 @@
   };
 
   window.exportarPDFLote=()=>{if(loteActual)pdfId(loteActual.id);};
+
+  window.eliminarLoteDefinitivo=async()=>{
+    if(!loteActual)return;
+    const num=loteActual.cab?.lote||String(loteActual.id);
+    if(!confirm(`⚠ ¿Eliminar definitivamente el lote "${num}"?\nEsta acción lo borra del historial y no se puede deshacer.`))return;
+    if(!confirm(`Confirmación final: se eliminará permanentemente de Firestore.`))return;
+    try{
+      await deleteDoc(doc(db,'lotes',String(loteActual.id)));
+      // Quitar también de localStorage para que mergeById no lo restaure
+      try{
+        const arr=JSON.parse(localStorage.getItem('reg01_lotes_v3')||'[]');
+        localStorage.setItem('reg01_lotes_v3',JSON.stringify(arr.filter(l=>String(l.id)!==String(loteActual.id))));
+      }catch{}
+      cerrarModal();
+    }catch(e){
+      alert('❌ No se pudo eliminar: '+e.message);
+    }
+  };
 
 </script>
 <script>
