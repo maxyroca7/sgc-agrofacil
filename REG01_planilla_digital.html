@@ -472,7 +472,7 @@ body[data-rol="coordinadora"] .ba-sav              { display: none !important; }
 
 <script type="module">
   import { authGuard, getRol } from './firebase-init.js';
-  import { pullLotes, escucharLotes } from './sync.js';
+  import { pullLotes, escucharLotes, deleteLote } from './sync.js';
   authGuard().then(async u => {
     const rol = await getRol(u.uid);
     localStorage.setItem('userRol', rol);
@@ -484,6 +484,7 @@ body[data-rol="coordinadora"] .ba-sav              { display: none !important; }
     renderTabs();
     escucharLotes(() => { cargarLotes(); renderTabs(); });
   });
+  window._deleteLoteFs = deleteLote;
 </script>
 
 </head>
@@ -926,15 +927,20 @@ function pedirEliminar(id){
         alert('❌ Clave incorrecta.');return;
       }
     } else {
-      if(!confirm('¿Eliminar este lote del registro local?')) return;
+      if(!confirm('¿Eliminar este lote? Se borrará definitivamente (local y nube).')) return;
     }
   } else {
-    if(!confirm('¿Eliminar este lote del registro local?')) return;
+    if(!confirm('¿Eliminar este lote? Se borrará definitivamente (local y nube).')) return;
   }
 
   lotes=lotes.filter(x=>x.id!==id);guardarLotes();
   loteActivo=lotes.length?lotes[lotes.length-1].id:null;
   renderTabs();loteActivo?renderLote():mostrarVacio();
+  if(typeof window._deleteLoteFs==='function'){
+    window._deleteLoteFs(id).catch(err=>{
+      mostrarToast('❌ Error al eliminar de la nube: '+err.message);
+    });
+  }
 }
 function mostrarVacio(){
   document.getElementById('main').innerHTML=`<div id="empty-state"><div class="big">📋</div><p>No hay lotes activos</p><button onclick="abrirModalLote()">+ Nuevo lote</button></div>`;

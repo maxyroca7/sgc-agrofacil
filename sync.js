@@ -65,13 +65,9 @@ export async function pushLote(lote) {
   }
 }
 
-/** Eliminar lote de Firestore al liberar/eliminar */
+/** Eliminar lote de Firestore. Lanza el error para que el llamador pueda manejarlo. */
 export async function deleteLote(loteId) {
-  try {
-    await deleteDoc(doc(db, COL_LOTES, String(loteId)));
-  } catch (e) {
-    console.warn('[sync] deleteLote error:', e.message);
-  }
+  await deleteDoc(doc(db, COL_LOTES, String(loteId)));
 }
 
 /** Listener en tiempo real: actualiza localStorage cuando otro dispositivo cambia un lote */
