@@ -2306,12 +2306,16 @@ function archivarLote(){
 const printStyle=document.createElement('style');
 printStyle.textContent=`
 @media print {
+  /* Resetear el layout fijo de la app para que el contenido fluya en la página */
+  html, body { overflow:visible !important; height:auto !important; width:auto !important; position:static !important; }
+  #app { position:static !important; height:auto !important; overflow:visible !important; }
+  #main { overflow:visible !important; height:auto !important; flex:none !important; }
   body { background:#fff !important; color:#000 !important; font-size:9px; }
   #topbar, #bb { display:none !important; }
   #print-header { display:block !important; }
   .mo { display:none !important; }
   #toast { display:none !important; }
-  .lote-view { overflow:visible !important; padding:4px !important; }
+  .lote-view { overflow:visible !important; padding:4px !important; width:100% !important; max-width:none !important; }
   .card { border:1px solid #ccc !important; background:#fff !important; page-break-inside:avoid; margin-bottom:8px; }
   .ch { background:#f0f0f0 !important; color:#000 !important; }
   .ch-title, .ch-badge { color:#000 !important; background:#e0e0e0 !important; }
