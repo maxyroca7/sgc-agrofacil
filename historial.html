@@ -53,7 +53,7 @@
     .clientes-header h2{font-family:'IBM Plex Mono',monospace;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);}
     .input-buscar{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:.35rem .7rem;color:var(--text);font-size:.75rem;font-family:'IBM Plex Sans',sans-serif;width:200px;transition:border-color .15s;}
     .input-buscar:focus{outline:none;border-color:var(--accent);}
-    .clientes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,300px));gap:.85rem;justify-content:start;}
+    .clientes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.85rem;}
     .cliente-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.1rem 1rem;cursor:pointer;transition:all .18s;position:relative;overflow:hidden;}
     .cliente-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--blue);transform:scaleX(0);transform-origin:left;transition:transform .2s;}
     .cliente-card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.2);}
