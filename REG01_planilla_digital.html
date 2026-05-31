@@ -67,6 +67,7 @@
   --mono:'JetBrains Mono',monospace;
   --sans:'Barlow Condensed',sans-serif;
   --r:6px;--touch:52px;--topbar-bg:rgba(18,29,29,.96);
+  --surface2:var(--bg2);--warn:#f59e0b;--muted:var(--text3);
 }
 /* ── TEMA LIGHT ── */
 :root.light{
@@ -118,7 +119,7 @@ html,body{overflow:hidden !important;
    El scroll ocurre SOLO dentro de .lote-view
    ════════════════════════════════════════════════════════ */
 /* ── TOP BAR ── */
-#topbar{display:flex;align-items:center;background:var(--topbar-bg);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:0 14px;min-height:52px;flex-shrink:0;gap:8px;z-index:50}
+#topbar{display:flex;align-items:center;background:var(--topbar-bg);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:0 14px;min-height:52px;flex-shrink:0;gap:8px}
 .logo{font-family:var(--sans);font-weight:800;font-size:22px;color:var(--accent);letter-spacing:1px;white-space:nowrap}
 .tb-left{display:flex;align-items:center;gap:.5rem;flex-shrink:0;margin-right:8px}
 .tb-brand{display:flex;align-items:center;gap:.5rem;flex-shrink:0;}
@@ -132,14 +133,12 @@ html,body{overflow:hidden !important;
   font-family: 'IBM Plex Sans', sans-serif;
   white-space: nowrap;
 }
-.app-footer{margin-top:auto;padding:1.1rem 1rem .9rem;text-align:center;border-top:1px solid var(--border);color:var(--text2);font-size:.70rem;letter-spacing:.04em;user-select:none;background:var(--bg2);}
+.app-footer{margin-top:auto;padding:1.1rem 1rem .9rem;text-align:center;border-top:1px solid var(--border);color:var(--text2);font-size:.70rem;letter-spacing:.04em;user-select:none;}
 .footer-dot{margin:0 .45em;opacity:.35;}
 .tb-sep{color:var(--border2)}
 .tb-title{font-size:.75rem;color:var(--text2);white-space:nowrap}
-#tabs-wrap{display:flex;gap:4px;overflow-x:auto;flex:1 1 0;min-width:0;scrollbar-width:none;padding:6px 0;-webkit-overflow-scrolling:touch}
-.tb-spacer{display:none}
-#btn-nl{flex-shrink:0}
-#btn-more{flex-shrink:0}
+#tabs-wrap{display:flex;gap:4px;overflow-x:auto;flex:none;min-width:0;scrollbar-width:none;padding:6px 0;-webkit-overflow-scrolling:touch}
+.tb-spacer{flex:1}
 #tabs-wrap::-webkit-scrollbar{display:none}
 .tab{flex-shrink:0;padding:5px 10px;border-radius:var(--r);background:var(--bg3);border:1px solid var(--border);font-family:var(--mono);font-size:10px;color:var(--text2);cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;transition:.15s}
 .tab.active{background:var(--accent2);border-color:var(--accent);color:#fff;font-weight:700}
@@ -163,7 +162,7 @@ html,body{overflow:hidden !important;
   position:absolute;
   inset:0;
   overflow-y:scroll;
-  overflow-x:clip;
+  overflow-x:hidden;
   padding:10px;
   padding-bottom:16px;
   display:flex;
@@ -257,7 +256,7 @@ input, textarea, select{touch-action:manipulation}
 /* ── Botones de estado OK/NOK/REPRO ── */
 /* ── OK/NOK ── */
 .on{display:flex;gap:3px;justify-content:center;align-items:center}
-.on button{min-width:40px;height:34px;border-radius:4px;border:1px solid var(--border2);font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;background:var(--bg3);color:var(--text3);transition:.1s;flex-shrink:0;padding:0 6px;touch-action:manipulation}
+.on button{min-width:44px;height:44px;border-radius:4px;border:1px solid var(--border2);font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;background:var(--bg3);color:var(--text3);transition:.1s;flex-shrink:0;padding:0 6px;touch-action:manipulation}
 /* ── Clase helper para touch-action en todos los elementos táctiles ──
    Reemplaza los 20 estilos inline touch-action:manipulation
    Se aplica automáticamente a botones y inputs via selector global */
@@ -266,7 +265,7 @@ input, textarea, select, button {
   touch-action:manipulation; /* tap inmediato sin delay 300ms */
 }
 /* Excepciones: elementos que necesitan scroll horizontal */
-.tw { touch-action:pan-x; }
+.tw { touch-action:pan-x pan-y; }
 .lote-view { touch-action:pan-y; }
 .on button.ok.active{background:var(--green-bg);border-color:var(--green);color:var(--green)}
 .on button.nk.active{background:var(--red-bg);border-color:var(--red);color:var(--red)}
@@ -391,10 +390,7 @@ button.sc:active{background:#60a5fa;color:#fff;}
   #tabs-wrap:empty{display:none}
   .tab{font-size:9px;padding:4px 8px;gap:4px}
   .tb-left{gap:.35rem;margin-right:4px}
-  .tb-appname,.tb-sep{display:none}
-  .tb-title{font-size:.82rem;margin-left:2px}
-  #btn-nl{margin-left:auto}
-  #btn-more{margin-left:4px}
+  .tb-brand,.tb-sep,.tb-title{display:none}
   .tb-spacer{display:none}
 }
 /* ── OVERLAY ROTAR DISPOSITIVO ── */
@@ -439,7 +435,7 @@ html.coordinadora #main select { pointer-events:none; opacity:.6; }
   text-align: center;
 }
 
-body[data-rol="coordinadora"] .coord-banner       { display: none !important; }
+body[data-rol="coordinadora"] .coord-banner       { display: block; }
 body[data-rol="coordinadora"] #btn-nl             { display: none !important; }
 body[data-rol="coordinadora"] #btn-cfg            { display: none !important; }
 body[data-rol="coordinadora"] .checker-only       { display: none !important; }
@@ -452,88 +448,37 @@ body[data-rol="coordinadora"] select              { pointer-events:none; opacity
 body[data-rol="coordinadora"] .btn-pallet         { display: none !important; }
 body[data-rol="coordinadora"] .btn-confirmar      { display: none !important; }
 body[data-rol="coordinadora"] .ba-sav              { display: none !important; }
+/* ── TOPBAR OVERFLOW MENU ── */
+#topbar{position:relative}
+.btn-t{flex-shrink:0;background:var(--bg3);border:1px solid var(--border2);color:var(--text2);font-size:22px;font-weight:700;width:36px;height:36px;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.tb-menu{position:absolute;top:52px;right:8px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:6px;display:flex;flex-direction:column;gap:4px;z-index:200;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,.4);}
+.tb-menu.hidden{display:none}
+.tb-menu button,.tb-menu a{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:6px;background:transparent;border:none;color:var(--text2);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;width:100%;text-align:left;white-space:nowrap}
+.tb-menu button:active,.tb-menu a:active{background:var(--bg3)}
 
-/* ── UX: botones OK/NOK/REPRO de tabla CL más grandes ── */
-.on button { min-width:36px !important; height:32px !important; font-size:10px !important; font-weight:700 !important; padding:0 7px !important; border-radius:5px !important; }
-.on { gap:4px !important; }
-@media(max-width:480px){ .on button { min-width:32px !important; height:30px !important; font-size:9px !important; } }
+/* ── STICKY FIRST COLUMN ── */
+.tw table td:first-child,.tw table th:first-child{position:sticky;left:0;z-index:1;background:var(--surface2);}
 
-/* ── Fix scroll horizontal tabla CL en landscape ── */
-.tw { touch-action: pan-x !important; overflow-x: scroll !important; -webkit-overflow-scrolling: touch; }
+/* ── SECTION TRANSITIONS ── */
+.cl-section,.cf-section{transition:all 150ms ease}
 
-/* ── Menú ⋮ como dropdown anclado debajo del botón (todos los tamaños) ── */
-#tb-menu{position:fixed;inset:0;z-index:9999;}
-#tb-menu.tb-hidden{display:none;}
-#tb-menu-backdrop{position:absolute;inset:0;background:transparent;}
-#tb-menu-sheet{
-  position:absolute;top:54px;right:8px;left:auto;bottom:auto;
-  width:min(280px,calc(100vw - 16px));max-height:calc(100vh - 70px);
-  background:#121d1d;border:1px solid var(--border2);
-  border-radius:14px;
-  padding:8px;
-  box-shadow:0 12px 36px rgba(0,0,0,.55);
-  display:flex;flex-direction:column;gap:4px;
-  overflow-y:auto;
-  transform:translateY(-10px);opacity:0;
-  transform-origin:top right;
-  transition:transform .16s ease,opacity .16s ease;
-}
-#tb-menu.tb-open #tb-menu-sheet{transform:translateY(0);opacity:1;}
-html.light #tb-menu-sheet{background:#ffffff;}
-#tb-menu-grip{display:none;}
-#tb-menu-head{font-family:var(--sans);font-weight:700;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:2px 4px 6px;}
-#tb-menu-sheet button,#tb-menu-sheet a{
-  width:100%;box-sizing:border-box;text-align:left;
-  padding:12px;border-radius:10px;
-  background:transparent;border:none;
-  color:var(--text);font-size:.92rem;font-family:inherit;
-  cursor:pointer;display:flex;align-items:center;gap:12px;
-  text-decoration:none;min-height:48px;transition:background .12s;
-}
-#tb-menu-sheet button:active,#tb-menu-sheet a:active{background:var(--border);}
-@media(hover:hover){#tb-menu-sheet button:hover,#tb-menu-sheet a:hover{background:var(--border);}}
-#tb-menu-sheet svg{flex-shrink:0;color:var(--text3);}
-/* Vencer reglas heredadas del topbar (#btn-cfg/#btn-srch eran botones-ícono
-   34x34 centrados): dentro del menú deben ser filas alineadas como el resto */
-#tb-menu-sheet #btn-cfg,#tb-menu-sheet #btn-srch{
-  width:100%;height:auto;
-  justify-content:flex-start;
-  font-size:inherit;
-}
-#tb-menu-sheet .tb-menu-danger{color:var(--red);margin-top:4px;border-top:1px solid var(--border);border-radius:0 0 10px 10px;}
-#tb-menu-sheet .tb-menu-danger svg{color:var(--red);}
+/* ── CONN DOT ── */
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;margin-left:4px;transition:background .3s;flex-shrink:0;vertical-align:middle}
+.conn-dot.offline{background:var(--muted)}
 
-/* ── Primera columna sticky en tabla CL ── */
-.tw table th:first-child,.tw table td:first-child{position:sticky;left:0;z-index:2;background:var(--surface2);}
-
-/* ── Transiciones en secciones ── */
-.cl-section,.cf-section,.lh-section,.ch-section{transition:all 150ms ease;}
-
-/* ── Indicador sin guardar más visible ── */
-#sbar.show{background:var(--warn) !important;color:#1a1a1a !important;font-weight:600;padding:5px 14px;}
-
-/* ── Conn dot (online/offline) ── */
-.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;margin-left:6px;flex-shrink:0;transition:background .3s;}
-.conn-dot.offline{background:var(--muted);}
-</style>
+/* ── SBAR SIN GUARDAR ── */
+#sbar.show{background:var(--warn);color:#1a1a1a;padding:6px 12px;border-radius:var(--r);font-weight:700}
+</style></style>
 
 <script type="module">
-  import { authGuard, getRol, db } from './firebase-init.js';
-  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+  import { authGuard, getRol } from './firebase-init.js';
   import { pullLotes, escucharLotes } from './sync.js';
-  window.USER_NOMBRE = '';
-  window.USER_ROL = '';
   authGuard().then(async u => {
     const rol = await getRol(u.uid);
-    window.USER_ROL = rol;
-    // Nombre para autoría del dictamen (ISO 8.7.2): usuarios/{uid}.nombre → displayName → email
-    let nombre = u.displayName || (u.email||'').split('@')[0] || 'Usuario';
-    try { const s = await getDoc(doc(db,'usuarios',u.uid)); if(s.exists()&&s.data().nombre) nombre = s.data().nombre; } catch(e){}
-    window.USER_NOMBRE = nombre;
     localStorage.setItem('userRol', rol);
     document.body.dataset.rol = rol;
     if (rol === 'coordinadora') document.documentElement.classList.add('coordinadora');
-    console.log('[REG01] rol aplicado:', rol, '| usuario:', nombre);
+    console.log('[REG01] rol aplicado:', rol, '| clase html:', document.documentElement.className);
     await pullLotes();
     cargarLotes();
     renderTabs();
@@ -541,7 +486,8 @@ html.light #tb-menu-sheet{background:#ffffff;}
   });
 </script>
 
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+</head>
+<body>
 </head>
 <body>
 <!-- ════ APP CONTAINER — todo el layout vive aquí ════ -->
@@ -561,32 +507,35 @@ html.light #tb-menu-sheet{background:#ffffff;}
       </div>
     </div>
     <div id="topbar">
-    <div class="tb-left"><div class="tb-brand"><img src="/qualityos-topbar.svg" alt="QualityOS" class="tb-logo" width="36" height="36"><span class="tb-appname">QualityOS</span><span class="conn-dot" id="conn-dot" title="Online"></span></div><span class="tb-sep">|</span><span class="tb-title">REG-01 Digital</span></div>
+    <div class="tb-left"><div class="tb-brand"><img src="/qualityos-topbar.svg" alt="QualityOS" class="tb-logo" width="28" height="28"><span class="tb-appname">QualityOS</span><span id="conn-dot" class="conn-dot" title="Online — sync activo"></span></div><span class="tb-sep">|</span><span class="tb-title">REG-01 Digital</span></div>
     <div id="tabs-wrap"></div>
     <div class="tb-spacer"></div>
     <button id="btn-nl" onclick="abrirModalLote()">+ Lote</button>
-<button id="btn-more" title="Más opciones" style="flex-shrink:0;background:var(--bg3);border:1px solid var(--border2);color:var(--text3);font-size:22px;width:34px;height:34px;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center;letter-spacing:0;line-height:1" onclick="event.stopPropagation();toggleMenu()">⋮</button><div id="tb-menu" class="tb-hidden"><div id="tb-menu-backdrop" onclick="cerrarMenu()"></div><div id="tb-menu-sheet" role="menu" aria-label="Menú"><div id="tb-menu-grip"></div><div id="tb-menu-head">Menú</div><button id="btn-srch" onclick="cerrarMenu();abrirBusqueda()" role="menuitem"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> Buscar lote</button>
-    <button id="btn-cfg" onclick="cerrarMenu();abrirCfg()" role="menuitem"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Configuración</button>
-    <a href="home.html" onclick="cerrarMenu()" role="menuitem"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Inicio</a>
-    <button id="btn-theme" onclick="cerrarMenu();toggleTheme()" role="menuitem"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg> Cambiar tema</button>
-    <button id="btn-logout" onclick="cerrarMenu();import('./firebase-init.js').then(m=>m.cerrarSesion())" role="menuitem" class="tb-menu-danger"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg> Salir</button></div></div>
+    <button id="btn-more" class="btn-t" title="Más">⋮</button>
+    <div id="topbar-menu" class="tb-menu hidden">
+      <button id="btn-srch" onclick="abrirBusqueda()">🔍 Buscar</button>
+      <button id="btn-cfg" onclick="abrirCfg()">⚙ Configurar</button>
+      <a href="home.html" id="btn-home">🏠 Inicio</a>
+      <button id="btn-theme" onclick="toggleTheme()"><span class="theme-icon">🌙</span> Tema</button>
+      <button id="btn-logout" onclick="import('./firebase-init.js').then(m=>m.cerrarSesion())">🚪 Salir</button>
+    </div>
   </div>
   <div class="coord-banner">
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg> Vista Coordinadora — Solo lectura · Exportar disponible
+    👁 Vista Coordinadora — Solo lectura · Exportar disponible
   </div>
 
   <!-- Área principal: vacío o lote activo se renderiza aquí via JS -->
   <div id="main"><div id="empty-state">
-    <div class="big"><svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg></div><p>No hay lotes activos</p>
+    <div class="big">📋</div><p>No hay lotes activos</p>
     <button onclick="abrirModalLote()">+ Nuevo lote</button>
   </div></div>
   
   <!-- Barra inferior de acciones (oculta cuando no hay lotes) -->
   <div id="bb" style="display:none">
-    <button class="ba ba-isis" onclick="abrirDictamen()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg> DICTAMINAR</button>
-    <button class="ba ba-nc"   onclick="acNC()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg> Generar NC</button>
-    <button class="ba ba-sav"  onclick="guardarManual()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar</button>
-    <button class="ba" style="background:#1a3535;border:1px solid #8ab83c;color:#8ab83c" onclick="archivarLote()" title="Exportar PDF + JSON para carpeta de lotes cerrados"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg> Archivar</button>
+    <button class="ba ba-isis" onclick="abrirDictamen()">📋 DICTAMINAR</button>
+    <button class="ba ba-nc"   onclick="acNC()">⚠ Generar NC</button>
+    <button class="ba ba-sav"  onclick="guardarManual()">💾 Guardar</button>
+    <button class="ba" style="background:#1a3535;border:1px solid #8ab83c;color:#8ab83c" onclick="archivarLote()" title="Exportar PDF + JSON para carpeta de lotes cerrados">📁 Archivar</button>
     <button class="ba ba-cer" id="btn-cerrar" onclick="cerrar()">✕ Cerrar</button>
     <div id="sbar"><div id="sdot"></div><span id="stxt">OK</span></div>
   </div>
@@ -629,7 +578,7 @@ html.light #tb-menu-sheet{background:#ffffff;}
 <div class="mo" id="mo-cfg">
 <div class="md">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
-    <span style="font-size:26px;line-height:1;flex-shrink:0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+    <span style="font-size:26px;line-height:1;flex-shrink:0">⚙️</span>
     <h2 style="margin:0">Configuración</h2>
     <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+Cjxzdmcgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDUyMiA2MTMiIHZlcnNpb249IjEuMSIKICAgICB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgICAgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiCiAgICAgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIKICAgICBzdHlsZT0iZmlsbC1ydWxlOmV2ZW5vZGQ7Y2xpcC1ydWxlOmV2ZW5vZGQ7c3Ryb2tlLWxpbmVqb2luOnJvdW5kO3N0cm9rZS1taXRlcmxpbWl0OjI7Ij4KICAgIDwhLS0gQUdST0ZBQ0lMIOKAlCBJc290aXBvIChzw61tYm9sbyBzaW4gdGV4dG8pIC0tPgogICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSwtMzk4MC40ODY2NjcsLTEyNzQuNDQzMzMzKSI+CiAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoOC4zMzMzMzMsMCwwLDguMzMzMzMzLDAsMCkiPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDQ3Ny42NTg5LDE5MS44NjM4KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtMTAuODA5TDAsMC41NTlDNy42MjksLTMuNTAxIDE1LjA4LC02LjQyNCAyMS45OTQsLTguNTMzQzE0LjEwNywtMTAuODA5IDYuODQ2LC0xMS4zNjggMCwtMTAuODA5IiBzdHlsZT0iZmlsbDpyZ2IoMjE1LDIyMywzNCk7ZmlsbC1ydWxlOm5vbnplcm87Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSw1NDAuMjcyMiwxNzkuOTEwNCkiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsMTYuOTU2TDAsMS40MjZDLTIwLjcyNSwwIC00MC42MDcsNC4wOTcgLTU0LjU5LDExLjY0N0MtMjYuNjc4LDguNTMxIC01LjIwOSwxNC44NjUgMCwxNi45NTYiIHN0eWxlPSJmaWxsOnJnYigxNjEsMjA1LDU4KTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDQ3OC44NzM4LDIwMi40MTk1KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtOC41NTlDLTAuNDAxLC04LjUwOCAtMC44MjMsLTguNDU2IC0xLjIxNSwtOC4zOTVMLTEuMjE1LC0yLjY3NkMxMy43NzIsLTIuMzg2IDI1LjAxNiwwLjg4NSAzMC4wNzksMi41MTJDMzIuMjEsMS41NDggMzQuNDk5LDAuNjAxIDM2Ljk3NywtMC4zMDZDMzguNDIzLC0wLjg0OSAzOS44ODcsLTEuMzU0IDQxLjM4MSwtMS44MTNDNDQuNjY2LC0yLjg2MSA0OC4yMzIsLTMuODI4IDUyLjA3NiwtNC42ODJDMzYuNzk3LC05LjA4OSAxOC44ODYsLTExLjA3MSAwLC04LjU1OSIgc3R5bGU9ImZpbGw6cmdiKDAsMTc3LDEyMyk7ZmlsbC1ydWxlOm5vbnplcm87Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSw0NzcuNjU4OSwyMTYuMDI1NykiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsLTE0LjUwNkwwLC0xMC45MjlDMCwtOC4wOTYgMS40MzMsLTUuNjYxIDMuODg1LC00LjIzOUwxMS4yMjgsMEMxNC4xMDcsLTIuNTQzIDIwLjcxMSwtNS45MTQgMjcuMzM4LC05LjM2NEMxMS4wMTMsLTE0LjI3NSAwLjcsLTE0LjQ2NCAwLC0xNC41MDYiIHN0eWxlPSJmaWxsOnJnYig5LDE0NCwxMTkpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNTA1LjEyMjgsMjAwLjE4MjcpIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDI1LjIxM0MyLjQ1NSwyNi42MzUgNS4yNjgsMjYuNjM1IDcuNzIxLDI1LjIxM0wzMS4zMDgsMTEuNjA0QzMzLjc2LDEwLjE4MiAzNS4xNDksNy43NDcgMzUuMTQ5LDQuOTE0TDM1LjE0OSwtMS40MjJDMzAuODI1LC0wLjkzOCA5LjYsMi4xNDYgLTEzLjM1NiwxNy42N0wwLDI1LjIxM1oiIHN0eWxlPSJmaWxsOnJnYig4LDEyOCwxMzEpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNTM2LjMwNDQsMTY2LjYyMDIpIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDAuOTgxTC0yMy41NzEsLTEyLjYyOEMtMjYuMDIzLC0xNC4wNCAtMjguODM5LC0xNC4wNCAtMzEuMjg5LC0xMi42MjhMLTU0Ljg3MywwLjk4MUMtNTcuMzI2LDIuNDA4IC01OC42NDYsNC44MzIgLTU4LjY0Niw3LjY3TC01OC42NDYsMTEuNTMyQy00OS45NjcsMTEuNDY3IC00My41NzgsMTIuMjUzIC0zMy4xOSwxNS4wMjFDLTExLjc2Myw5LjE2NiAzLjk2OCwxMS4xMjMgMy45NjgsMTEuMTIzTDMuOTY4LDcuNjdDMy45NjgsNC44MzIgMi40NjYsMi40MDggMCwwLjk4MSIgc3R5bGU9ImZpbGw6cmdiKDIwOSwyMTEsMjEyKTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+" alt="Agrofacil" style="height:32px;object-fit:contain;margin-left:auto">
   </div>
@@ -643,7 +592,7 @@ html.light #tb-menu-sheet{background:#ffffff;}
 <!-- MODAL DICTAMINAR -->
 <div class="mo" id="mo-dict">
 <div class="md" style="gap:12px">
-  <h2><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg> Dictamen</h2>
+  <h2>📋 Dictamen</h2>
   <div id="dict-resumen" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px"></div>
   <div style="font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Dictamen</div>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
@@ -666,14 +615,14 @@ html.light #tb-menu-sheet{background:#ffffff;}
 <!-- MODAL BUSCADOR DE LOTES -->
 <div class="mo" id="mo-srch">
 <div class="md" style="gap:10px">
-  <h2><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> Buscar lote</h2>
+  <h2>🔍 Buscar lote</h2>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
     <button id="tbtn-mañana" onclick="renderBusqueda(document.getElementById('srch-inp').value,'mañana')"
       style="padding:9px 4px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text2);font-family:var(--mono);font-size:10px;cursor:pointer">🌅 Mañana<br><span style="font-size:9px;color:var(--text3)">06–14 h</span></button>
     <button id="tbtn-tarde" onclick="renderBusqueda(document.getElementById('srch-inp').value,'tarde')"
       style="padding:9px 4px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text2);font-family:var(--mono);font-size:10px;cursor:pointer">🌆 Tarde<br><span style="font-size:9px;color:var(--text3)">14–22 h</span></button>
     <button id="tbtn-noche" onclick="renderBusqueda(document.getElementById('srch-inp').value,'noche')"
-      style="padding:9px 4px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text2);font-family:var(--mono);font-size:10px;cursor:pointer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg> Noche<br><span style="font-size:9px;color:var(--text3)">22–06 h</span></button>
+      style="padding:9px 4px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text2);font-family:var(--mono);font-size:10px;cursor:pointer">🌙 Noche<br><span style="font-size:9px;color:var(--text3)">22–06 h</span></button>
   </div>
   <input id="srch-inp" type="text" placeholder="N° lote, producto o cliente…"
     style="height:var(--touch);background:var(--bg3);border:1px solid var(--accent);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:15px;padding:0 14px;width:100%;outline:none"
@@ -887,12 +836,14 @@ function guardarLotes(silent=true){
   pendiente=false;
   const now=new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('stxt').textContent='Guardado '+now;
+  document.getElementById('sbar').classList.remove('show');
   if(!silent)mostrarToast('💾 Guardado',1400);
 }
 function guardarManual(){guardarLotes(false);}
 function marcarPendiente(){
   pendiente=true;
   document.getElementById('stxt').textContent='⚠ Sin guardar';
+  document.getElementById('sbar').classList.add('show');
   const l=getLote();if(l)l.lastModified=Date.now();
 }
 
@@ -986,7 +937,7 @@ function pedirEliminar(id){
   renderTabs();loteActivo?renderLote():mostrarVacio();
 }
 function mostrarVacio(){
-  document.getElementById('main').innerHTML=`<div id="empty-state"><div class="big"><svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg></div><p>No hay lotes activos</p><button onclick="abrirModalLote()">+ Nuevo lote</button></div>`;
+  document.getElementById('main').innerHTML=`<div id="empty-state"><div class="big">📋</div><p>No hay lotes activos</p><button onclick="abrirModalLote()">+ Nuevo lote</button></div>`;
   document.getElementById('bb').style.display='none';
 }
 
@@ -1164,7 +1115,7 @@ function mkCabecera(l){
   const rango=ind.tolMin!=null?`${ind.tolMin}–${ind.tolMax}${ind.unidad?' '+ind.unidad:''}  ref:${ind.ref}`:'Configurar en ⚙';
   const c=document.createElement('div');c.className='card ind-form';
   c.innerHTML=`<div class="ch" onclick="toggleCard(this)">
-    <div class="ch-title"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg> Producto
+    <div class="ch-title">📦 Producto
       <span class="ch-badge">${l.cab.lote}</span>
       <span class="ch-badge" style="background:${EC[l.estado]}22;color:${EC[l.estado]}">${l.estado.toUpperCase()}</span>
     </div><span class="ch-tog">▾</span></div>
@@ -1248,6 +1199,11 @@ function mkLinea(l){
     const _hasRepro=p.repro||p.qrRepro||p.packRepro||p.pltRepro;
     const rowStyle=_hasNOK?'background:rgba(239,68,68,.06)':_hasRepro?'background:rgba(251,146,60,.06)':'';
     const vacio=!p.fecha&&!p.hora&&!p.lote&&p.indOK===null?'pal-vacio':'';
+    const _vals=[p.p1,p.p2,p.p3,p.p4].filter(v=>v!=null&&v!=='');
+    const _prom=_vals.length?(_vals.reduce((a,b)=>a+parseFloat(b),0)/_vals.length).toFixed(2):'—';
+    const _pMin=parseFloat(l.cab.pesoMin),_pMax=parseFloat(l.cab.pesoMax);
+    const _promOK=_vals.length&&!isNaN(_pMin)&&!isNaN(_pMax)&&parseFloat(_prom)>=_pMin&&parseFloat(_prom)<=_pMax;
+    const _promColor=_vals.length&&!isNaN(_pMin)&&!isNaN(_pMax)?(_promOK?'var(--green)':'var(--red)'):'var(--text3)';
     return `<tr class="${vacio}" style="${rowStyle}">
       <td class="n">${i+1}</td>
       <td><input class="npal" type="text" value="${p.nPal||''}" placeholder="${i+1}" oninput="updL(${i},'nPal',this.value)" style="width:40px"></td>
@@ -1257,7 +1213,7 @@ function mkLinea(l){
       <td><input class="ninp" type="text" inputmode="numeric" value="${p.p2||''}" placeholder="—" onfocus="this.select()" oninput="fmtPeso(this);updL(${i},'p2',this.value)"></td>
       <td><input class="ninp" type="text" inputmode="numeric" value="${p.p3||''}" placeholder="—" onfocus="this.select()" oninput="fmtPeso(this);updL(${i},'p3',this.value)"></td>
       <td><input class="ninp" type="text" inputmode="numeric" value="${p.p4||''}" placeholder="—" onfocus="this.select()" oninput="fmtPeso(this);updL(${i},'p4',this.value)"></td>
-      <td style="text-align:center;font-size:11px;font-weight:600;min-width:42px" id="prom-${i}">${(()=>{const vs=[p.p1,p.p2,p.p3,p.p4].filter(v=>v!==''&&v!=null&&!isNaN(parseFloat(v)));if(!vs.length)return '<span style="color:var(--muted)">—</span>';const avg=(vs.reduce((a,b)=>a+parseFloat(b),0)/vs.length).toFixed(2);const pMin=l.cab.pesoMin,pMax=l.cab.pesoMax;const ok=pMin&&pMax?parseFloat(avg)>=parseFloat(pMin)&&parseFloat(avg)<=parseFloat(pMax):true;return '<span style="color:'+(ok?'var(--green)':'var(--red)')+'">'+avg+'</span>';})()}</td>
+      <td style="text-align:center;font-family:var(--mono);font-size:11px;font-weight:700;color:${_promColor};white-space:nowrap">${_prom}</td>
       <td><input type="text" value="${p.lote||''}" placeholder="—" oninput="updL(${i},'lote',this.value)" style="min-width:80px"></td>
       <td><input type="text" value="${p.codProd||''}" placeholder="—" oninput="updL(${i},'codProd',this.value)" style="min-width:60px"></td>
       <td><input class="dinp" type="text" value="${p.fProd||''}" placeholder="dd/mm/aa" maxlength="10" oninput="mskF(this);updL(${i},'fProd',this.value)" style="width:84px"></td>
@@ -1273,7 +1229,7 @@ function mkLinea(l){
         <div class="sem ${s}" id="sem-${i}"></div>
       </div></td>
       <td><div class="on">
-        ${_bdSupported?`<button class="sc" onclick="scanQR(${i})" title="Escanear QR"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button>`:''}
+        ${_bdSupported?`<button class="sc" onclick="scanQR(${i})" title="Escanear QR">📷</button>`:''}
         <button class="ok${p.qrLineaOK===true?' active':''}" onclick="setLinea(${i},'qrLineaOK',true)">OK</button>
         <button class="nk${p.qrLineaOK===false?' active':''}" onclick="setLinea(${i},'qrLineaOK',false)">NOK</button>
         ${p.qrLineaOK===false?`<button class="rp${p.qrRepro?' active':''}" onclick="setLineaRepro(${i},'qrRepro')">REP</button>`:''}
@@ -1353,7 +1309,7 @@ function mkLinea(l){
   </div>`:'';
 
   c.innerHTML=`<div class="ch" onclick="toggleCard(this)">
-    <div class="ch-title"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M6 18h8M3 22h18M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg> Control en Línea
+    <div class="ch-title">🔬 Control en Línea
       <span class="ch-badge">${l.linea.length} pallets</span>
       ${nokCount?`<span class="ch-badge" style="background:var(--red-bg);color:var(--red)">${nokCount} NOK</span>`:''}
       ${reproCount?`<span class="ch-badge" style="background:var(--orange-bg);color:var(--orange)">${reproCount} REPRO</span>`:''}
@@ -1368,14 +1324,14 @@ function mkLinea(l){
           <th rowspan="2" style="width:44px">N°<br>Pallet</th>
           <th rowspan="2" style="width:88px">Fecha</th>
           <th rowspan="2" style="width:60px">Hora</th>
-          <th colspan="4" class="gh">PESO POR PICO (kg)</th>
+          <th colspan="5" class="gh">PESO POR PICO (kg)</th>
           <th colspan="4" class="gh">IDENTIFICACIÓN Y TRAZABILIDAD</th>
           <th colspan="2" class="gh">INDUCCIÓN</th>
           <th colspan="3" class="gh">CONTROL EN LÍNEA</th>
           <th rowspan="2">Observaciones</th>
         </tr>
         <tr>
-          <th>P1</th><th>P2</th><th>P3</th><th>P4</th><th style="color:var(--accent);font-size:10px;min-width:42px">PROM</th>
+          <th>P1</th><th>P2</th><th>P3</th><th>P4</th><th style="color:var(--accent)">PROM</th>
           <th>N° Lote</th><th>Cód Prod</th><th>F.Prod.</th><th>F.Venc.</th>
           <th>OK/NOK/REPRO</th><th>${indLbl}</th>
           <th>TRAZAB./QR</th><th>PACKAGING</th><th>PALETIZ.</th>
@@ -1410,11 +1366,6 @@ function updL(i,k,v){
 }
 // ── patchPesoCard: actualiza badge de peso NOK en tarjeta CL ──
 function patchPesoCard(i){
-  if(typeof esMobPortrait==='function' && !esMobPortrait()){
-    const ae=document.activeElement;
-    if(!ae || ae===document.body || !ae.closest || !ae.closest('.lote-view')) renderLote();
-    return;
-  }
   const l=getLote();if(!l)return;
   const p=l.linea[i];
   const card=document.getElementById('cl-pallet-'+i);
@@ -1454,7 +1405,7 @@ function innerChecksHTML(p,i){
     return `<div class="${rowCls}">
       <span class="cl-check-label">${c.label}</span>
       <div class="on">
-        ${c.scanFn&&_bdSupported?`<button class="sc" onclick="${c.scanFn}" title="Escanear QR"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button>`:''}
+        ${c.scanFn&&_bdSupported?`<button class="sc" onclick="${c.scanFn}" title="Escanear QR">📷</button>`:''}
         <button class="ok${p[c.field]===true?' active':''}" onclick="${c.okFn}">OK</button>
         <button class="nk${p[c.field]===false?' active':''}" onclick="${c.nokFn}">NOK</button>
         ${isNOK?`<button class="rp${isRepro?' active':''}" onclick="${c.rpFn}">REPRO</button>`:''}
@@ -1464,7 +1415,6 @@ function innerChecksHTML(p,i){
 
 // ── patchCLCard: actualiza una tarjeta CL individual sin llamar renderLote() ──
 function patchCLCard(i){
-  if(typeof esMobPortrait==='function' && !esMobPortrait()){ renderLote(); return; }
   const l=getLote();if(!l)return;
   const p=l.linea[i];
   const card=document.getElementById('cl-pallet-'+i);
@@ -1706,7 +1656,7 @@ function mkFinal(l){
   const reproCount=f.pallets.filter(_cfHasAnyRepro).length;
   const c=document.createElement('div');c.className='card';
   c.innerHTML=`<div class="ch collapsed" onclick="toggleCard(this)">
-    <div class="ch-title"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Control Final
+    <div class="ch-title">✅ Control Final
       <span class="ch-badge">${f.pallets.length} pallets</span>
       ${nokCount?`<span class="ch-badge" style="background:var(--red-bg);color:var(--red)">${nokCount} NOK</span>`:''}
       ${reproCount?`<span class="ch-badge" style="background:var(--orange-bg);color:var(--orange)">${reproCount} REPRO</span>`:''}
@@ -1872,7 +1822,7 @@ function actualizarISISBtn(){
     btn.innerHTML=`🔴 RETENIDO<br><span style="font-size:9px">${retStr}</span>`;
     btn.style.cssText='background:var(--red-bg);border:1px solid var(--red);color:var(--red)';
   } else {
-    btn.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg> DICTAMINAR';btn.style.cssText='';
+    btn.innerHTML='📋 DICTAMINAR';btn.style.cssText='';
   }
 }
 function _sugerirDictamen(l){
@@ -1923,9 +1873,8 @@ function abrirDictamen(){
   // Dictamen previo
   const prev=l.final.dictamen;
   const fechaDict=l.final.fechaDictamen;
-  const porDict=l.final.dictaminadoPor?(' · por '+l.final.dictaminadoPor+(l.final.dictaminadoRol?' ('+l.final.dictaminadoRol+')':'')):'';
   document.getElementById('dict-fecha').textContent=
-    prev?(prev.replace('_',' ')+' · '+fechaDict+porDict):'Sin dictamen previo';
+    prev?(prev.replace('_',' ')+' · '+fechaDict):'Sin dictamen previo';
   document.getElementById('mo-dict').classList.add('show');
 }
 function confirmarDictamen(tipo){
@@ -1935,9 +1884,6 @@ function confirmarDictamen(tipo){
   l.estado=estadoMap[tipo]||'activo';
   const ahora=new Date().toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
   l.final.fechaDictamen=ahora;
-  // Autoría del dictamen (ISO 9001:2015 · 8.7.2 — identifica la autoridad que decide)
-  l.final.dictaminadoPor = window.USER_NOMBRE || l.cab.checker || '';
-  l.final.dictaminadoRol = window.USER_ROL==='coordinadora' ? 'Coordinadora' : 'Checker';
   marcarPendiente();guardarLotes();renderTabs();actualizarISISBtn();
   cerrarMo('mo-dict');
   mostrarToast('✅ Dictamen: '+tipo.replace('_',' '),2000);
@@ -2341,7 +2287,7 @@ function mostrarToast(msg,dur=2800){
 }
 
 // ── Escaneo QR / barcode (BarcodeDetector API) ──────────────────────────────
-const _bdSupported = true; /* QR siempre: BarcodeDetector nativo o jsQR fallback */
+const _bdSupported = typeof BarcodeDetector !== 'undefined';
 let _bdDetector = null;
 if (_bdSupported) {
   try {
@@ -2353,14 +2299,11 @@ if (_bdSupported) {
 let _scanStream = null, _scanRaf = null;
 
 async function _openScanner(label, onSuccess) {
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    mostrarToast('⚠ Cámara no disponible en este dispositivo');
-    return;
-  }
+  if (!_bdDetector) return;
   const ov = document.createElement('div');
   ov.id = 'scan-overlay';
   ov.innerHTML = `<div class="scan-modal">
-    <div class="scan-hdr"><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Escanear — ${label}</span>
+    <div class="scan-hdr"><span>📷 Escanear — ${label}</span>
       <button onclick="cerrarScan()">✕</button></div>
     <video id="scan-video" autoplay playsinline muted></video>
     <div id="scan-status">Apuntá la cámara al código QR o de barras…</div>
@@ -2379,19 +2322,13 @@ async function _openScanner(label, onSuccess) {
 }
 
 async function _scanLoopCb(vid, onSuccess) {
-  if (!document.getElementById('scan-overlay')) return;
+  if (!_bdDetector || !document.getElementById('scan-overlay')) return;
   try {
-    if (_bdDetector) {
-      const codes = await _bdDetector.detect(vid);
-      if (codes.length) { cerrarScan(); onSuccess(codes[0].rawValue); return; }
-    } else if (typeof jsQR !== 'undefined' && vid.videoWidth) {
-      const c = document.createElement('canvas');
-      c.width = vid.videoWidth; c.height = vid.videoHeight;
-      const cx = c.getContext('2d', { willReadFrequently: true });
-      cx.drawImage(vid, 0, 0, c.width, c.height);
-      const img = cx.getImageData(0, 0, c.width, c.height);
-      const code = jsQR(img.data, img.width, img.height);
-      if (code && code.data) { cerrarScan(); onSuccess(code.data); return; }
+    const codes = await _bdDetector.detect(vid);
+    if (codes.length) {
+      cerrarScan();
+      onSuccess(codes[0].rawValue);
+      return;
     }
   } catch(e) { /* frame no listo */ }
   _scanRaf = requestAnimationFrame(() => _scanLoopCb(vid, onSuccess));
@@ -2518,6 +2455,36 @@ document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();guardarManual();}
 });
 
+// ── CONEXIÓN ONLINE/OFFLINE ──
+function updateConn(){
+  const d=document.getElementById('conn-dot');if(!d)return;
+  const on=navigator.onLine;
+  d.classList.toggle('offline',!on);
+  d.title=on?'Online — sync activo':'Offline — guardando localmente';
+}
+window.addEventListener('online',updateConn);
+window.addEventListener('offline',updateConn);
+updateConn();
+
+// ── SWIPE ENTRE LOTES (tabs-wrap) ──
+(function(){
+  const tw=document.getElementById('tabs-wrap');if(!tw)return;
+  let _sx=0;
+  tw.addEventListener('touchstart',e=>{_sx=e.touches[0].clientX;},{passive:true});
+  tw.addEventListener('touchend',e=>{
+    const dx=e.changedTouches[0].clientX-_sx;
+    if(Math.abs(dx)<50)return;
+    const idx=lotes.findIndex(l=>l.id===loteActivo);
+    if(idx<0)return;
+    if(dx<0&&idx<lotes.length-1)selLote(lotes[idx+1].id);
+    if(dx>0&&idx>0)selLote(lotes[idx-1].id);
+  },{passive:true});
+})();
+
+// ── TOPBAR OVERFLOW MENU ──
+document.getElementById('btn-more').onclick = (e) => { e.stopPropagation(); document.getElementById('topbar-menu').classList.toggle('hidden'); };
+document.addEventListener('click', () => document.getElementById('topbar-menu')?.classList.add('hidden'));
+
 // ══ SERVICE WORKER (PWA) ══
 if('serviceWorker' in navigator && location.protocol !== 'file:'){
   navigator.serviceWorker.register('sw.js')
@@ -2525,78 +2492,9 @@ if('serviceWorker' in navigator && location.protocol !== 'file:'){
     .catch(err => console.log('SW no disponible:', err));
 }
 
-function aplicarTema(t){document.documentElement.classList.toggle('light',t==='light');const b=document.getElementById('btn-theme');if(b){const icon=t==='light'?`<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`:`<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`;b.innerHTML=icon+(t==='light'?' Tema oscuro':' Tema claro');}}
+function aplicarTema(t){document.documentElement.classList.toggle('light',t==='light');const b=document.getElementById('btn-theme');if(b){const s=b.querySelector('.theme-icon');if(s)s.textContent=t==='light'?'🌙':'☀️';else b.textContent=t==='light'?'🌙':'☀️';}}
 function toggleTheme(){const n=document.documentElement.classList.contains('light')?'dark':'light';localStorage.setItem('theme',n);aplicarTema(n);}
 aplicarTema(localStorage.getItem('theme')||'dark');
-
-// ── Cerrar menú ⋮ con tecla Escape (el backdrop del sheet maneja el click-fuera) ──
-document.addEventListener('keydown', function(e){
-  if(e.key === 'Escape'){
-    const menu = document.getElementById('tb-menu');
-    if(menu && !menu.classList.contains('tb-hidden')){
-      cerrarMenu();
-    }
-  }
-});
-// ── Menú ⋮ como dropdown (movido al <body> para escapar del stacking
-//    context del topbar con backdrop-filter) ──
-function abrirMenu(){
-  const menu = document.getElementById('tb-menu');
-  if(!menu) return;
-  if(menu.parentElement !== document.body){
-    document.body.appendChild(menu);
-  }
-  menu.classList.remove('tb-hidden');
-  // forzar reflow para que la transición de entrada se dispare
-  void menu.offsetWidth;
-  menu.classList.add('tb-open');
-}
-function cerrarMenu(){
-  const menu = document.getElementById('tb-menu');
-  if(!menu) return;
-  menu.classList.remove('tb-open');
-  const sheet = document.getElementById('tb-menu-sheet');
-  const finish = ()=>{ menu.classList.add('tb-hidden'); };
-  if(sheet){
-    let done = false;
-    const onEnd = ()=>{ if(done) return; done = true; sheet.removeEventListener('transitionend', onEnd); finish(); };
-    sheet.addEventListener('transitionend', onEnd);
-    setTimeout(onEnd, 320); // respaldo si transitionend no dispara
-  } else {
-    finish();
-  }
-}
-function toggleMenu(){
-  const menu = document.getElementById('tb-menu');
-  if(!menu) return;
-  if(menu.classList.contains('tb-hidden')){ abrirMenu(); }
-  else { cerrarMenu(); }
-}
-(function(){
-  function moverMenu(){
-    const menu = document.getElementById('tb-menu');
-    if(menu && menu.parentElement !== document.body){
-      document.body.appendChild(menu);
-    }
-  }
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', moverMenu);
-  } else {
-    moverMenu();
-  }
-})();
-// ── Online/offline indicator ──
-function updateConn(){
-  const d=document.getElementById('conn-dot');
-  if(!d)return;
-  d.classList.toggle('offline',!navigator.onLine);
-  d.title=navigator.onLine?'Online — sync activo':'Offline — guardando localmente';
-}
-window.addEventListener('online',updateConn);
-window.addEventListener('offline',updateConn);
-document.addEventListener('DOMContentLoaded',updateConn);
-setTimeout(updateConn,500);
-
 </script>
 <footer class="app-footer">
   <span>Desarrollado por Maximiliano Roca</span>

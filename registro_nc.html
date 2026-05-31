@@ -309,7 +309,13 @@ select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px
   #doc-header-print { display:flex !important; }
 }
 
-/* ── Coordinadora: acceso completo en registro NC ── */
+/* ── Restricciones coordinadora ── */
+html.coordinadora .btn-add,
+html.coordinadora .btn-del,
+html.coordinadora .btn-clear { display:none !important; }
+html.coordinadora #import-banner { display:none !important; }
+html.coordinadora #tBody input,
+html.coordinadora #tBody select { pointer-events:none; opacity:.6; }
 /* ── Branding QualityOS ── */
 .tb-brand{display:flex;align-items:center;gap:.5rem;flex-shrink:0;}
 .tb-logo{display:block;flex-shrink:0;}
@@ -322,7 +328,7 @@ select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px
   font-family: 'IBM Plex Sans', sans-serif;
   white-space: nowrap;
 }
-.app-footer{margin-top:auto;padding:1.1rem 1rem .9rem;text-align:center;border-top:1px solid var(--border);color:var(--muted);font-size:.70rem;letter-spacing:.04em;user-select:none;background:var(--bg);}
+.app-footer{margin-top:auto;padding:1.1rem 1rem .9rem;text-align:center;border-top:1px solid var(--border);color:var(--muted);font-size:.70rem;letter-spacing:.04em;user-select:none;}
 .footer-dot{margin:0 .45em;opacity:.35;}
 </style>
   <!-- SheetJS para exportar .xlsx compatible con Power BI -->
@@ -345,16 +351,19 @@ select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px
 <nav class="topbar no-print">
   <div class="topbar-left">
     <div class="tb-brand">
-      <img src="/qualityos-topbar.svg" alt="QualityOS" class="tb-logo" width="36" height="36">
+      <img src="/qualityos-topbar.svg"
+           alt="QualityOS"
+           class="tb-logo"
+           width="28" height="28">
       <span class="tb-appname">QualityOS</span>
     </div>
     <span style="color:var(--border)">|</span>
     <span class="topbar-title">Registro de NCs</span>
   </div>
   <div class="topbar-right">
-    <a href="home.html" class="btn-t" title="Inicio"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Inicio</a>
-    <button id="btn-theme" class="btn-t" onclick="toggleTheme()" title="Cambiar tema"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></button>
-    <button class="btn-t danger" onclick="import('./firebase-init.js').then(m=>m.cerrarSesion())" title="Cerrar sesión"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg> Salir</button>
+    <a href="home.html" class="btn-t" title="Inicio">🏠 Inicio</a>
+    <button id="btn-theme" class="btn-t" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
+    <button class="btn-t danger" onclick="import('./firebase-init.js').then(m=>m.cerrarSesion())" title="Cerrar sesión">🚪 Salir</button>
   </div>
 </nav>
 <div class="page">
@@ -374,12 +383,12 @@ select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px
     <div class="toolbar-row">
       <button class="btn btn-add"   onclick="addRow()">+ Agregar fila</button>
       <button class="btn btn-del"   onclick="delRow()">− Eliminar última</button>
-      <button class="btn btn-print" onclick="window.print()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg> Imprimir / PDF</button>
+      <button class="btn btn-print" onclick="window.print()">🖨 Imprimir / PDF</button>
       <button class="btn btn-export" onclick="exportarExcel()">⬇ Descargar Excel</button>
     </div>
     <div class="toolbar-row">
-      <button class="btn btn-clear" onclick="clearData()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Borrar todo</button>
-      <button class="btn" onclick="(function(){var p=document.getElementById('panel-codificacion');p.style.display=p.style.display==='block'?'none':'block';})()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Codificación</button>
+      <button class="btn btn-clear" onclick="clearData()">🗑 Borrar todo</button>
+      <button class="btn" onclick="(function(){var p=document.getElementById('panel-codificacion');p.style.display=p.style.display==='block'?'none':'block';})()">⚙️ Codificación</button>
     </div>
   </div>
 
@@ -499,8 +508,8 @@ select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px
     </div>
     <strong>Campos obligatorios ISO 9001:2015 cláusula 10.2.2:</strong>
     <div class="legend-row">
-      <span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg> <strong>Responsable</strong> — persona que ejecuta la acción correctiva</span>
-      <span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> <strong>Verif. Eficacia</strong> — confirma que la acción eliminó la causa · <span class="badge b-efok">Eficaz</span> <span class="badge b-efno">No eficaz</span> <span class="badge b-efpend">Pendiente</span></span>
+      <span>📋 <strong>Responsable</strong> — persona que ejecuta la acción correctiva</span>
+      <span>✅ <strong>Verif. Eficacia</strong> — confirma que la acción eliminó la causa · <span class="badge b-efok">Eficaz</span> <span class="badge b-efno">No eficaz</span> <span class="badge b-efpend">Pendiente</span></span>
     </div>
     <strong>Criterio de registro (una NC por lote · evento · tipo de desvío):</strong>
     <div class="legend-row">
@@ -1046,7 +1055,7 @@ function descartarImport(){
   showToast('Importación descartada');
 }
 
-function aplicarTema(t){document.documentElement.classList.toggle('light',t==='light');const b=document.getElementById('btn-theme');if(b)b.innerHTML=t==='light'?`<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`:`<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`;}
+function aplicarTema(t){document.documentElement.classList.toggle('light',t==='light');const b=document.getElementById('btn-theme');if(b)b.textContent=t==='light'?'🌙':'☀️';}
 function toggleTheme(){const n=document.documentElement.classList.contains('light')?'dark':'light';localStorage.setItem('theme',n);aplicarTema(n);}
 aplicarTema(localStorage.getItem('theme')||'dark');
 </script>
