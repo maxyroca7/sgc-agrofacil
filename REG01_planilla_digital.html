@@ -2337,24 +2337,7 @@ function archivarLote(){
   // Nombre inteligente según estado:
   // activo → _EN_PROCESO  (va a carpeta LOTES_ACTIVOS)
   // cerrado/aprobado/retenido → _APROBADO/_RETENIDO  (va a LOTES_CERRADOS)
-  const estadoNombre = l.estado==='activo'?'EN_PROCESO':l.estado.toUpperCase();
-  const faltantes=palletsFaltantes(l);
-  const sufijo=l.estado==='activo'&&faltantes.length>0
-    ? `EN_PROCESO_${faltantes.length}CF_PENDIENTES`
-    : estadoNombre;
-  const nombreArchivo=`${l.cab.lote}_${l.cab.prod.replace(/[^a-zA-Z0-9]/g,'_')}_${sufijo}`;
-  const json=JSON.stringify({
-    version:'REG01-v3',
-    exportado:new Date().toISOString(),
-    lote:l
-  }, null, 2);
-  const blob=new Blob([json],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download=nombreArchivo+'.json'; a.click();
-  URL.revokeObjectURL(url);
-
-  // 2. Abrir diálogo de impresión para guardar PDF
+  // Abrir diálogo de impresión para guardar PDF
   setTimeout(()=>{
     // Rellenar encabezado de impresión con codificación actual
     const l=getLote();
@@ -2375,30 +2358,8 @@ function archivarLote(){
         </div>`).join('');
     }
     mostrarToast('📄 Guardá como PDF en tu carpeta de lotes');
-
-    // ── Expandir paginación antes de imprimir ──
-    // Guarda las páginas actuales y usa un PAGE_SIZE enorme para que
-    // buildCLHTML y buildCFHTML rendericen TODOS los pallets en el DOM.
-    const _savedClPages = Object.assign({}, clPages);
-    const _savedCfPages = Object.assign({}, cfPages);
-    const _CL_ORIG = CL_PAGE_SIZE;
-    const _CF_ORIG = CF_PAGE_SIZE;
-    // eslint-disable-next-line no-global-assign
-    CL_PAGE_SIZE = 9999; CF_PAGE_SIZE = 9999;
-    renderLote(); // re-renderiza con todas las filas visibles
-
-    // Restaurar paginación normal tras cerrar el diálogo de impresión
-    window.addEventListener('afterprint', function _restorePrint(){
-      window.removeEventListener('afterprint', _restorePrint);
-      // eslint-disable-next-line no-global-assign
-      CL_PAGE_SIZE = _CL_ORIG; CF_PAGE_SIZE = _CF_ORIG;
-      Object.assign(clPages, _savedClPages);
-      Object.assign(cfPages, _savedCfPages);
-      renderLote();
-    });
-
     window.print();
-  }, 500);
+  }, 400);
 }
 
 // Estilos de impresión para el PDF del lote
