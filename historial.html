@@ -265,7 +265,8 @@
     const map=new Map();
     fromLS.forEach(l=>{if(l.id!=null)map.set(String(l.id),l);});
     fromFS.forEach(l=>{if(l.id!=null)map.set(String(l.id),l);});
-    return[...map.values()];
+    // Filtrar lotes archivados (marcados en la app o eliminados de Firestore)
+    return[...map.values()].filter(l=>!l._archivadoApp);
   }
   function palRes(p){return p.repro===true?'REPRO':p.indOK===true?'OK':p.indOK===false?'NOK':'PEND';}
 
@@ -519,12 +520,12 @@
     if(!confirm(`⚠ ¿Eliminar definitivamente el lote "${num}"?\nEsta acción lo borra del historial y no se puede deshacer.`))return;
     if(!confirm(`Confirmación final: se eliminará permanentemente de Firestore.`))return;
     try{
-      await deleteDoc(doc(db,'lotes',String(loteActual.id)));
-      // Quitar también de localStorage para que mergeById no lo restaure
+      // Quitar de localStorage ANTES de Firestore para que mergeById no lo restaure
       try{
         const arr=JSON.parse(localStorage.getItem('reg01_lotes_v3')||'[]');
         localStorage.setItem('reg01_lotes_v3',JSON.stringify(arr.filter(l=>String(l.id)!==String(loteActual.id))));
       }catch{}
+      await deleteDoc(doc(db,'lotes',String(loteActual.id)));
       cerrarModal();
     }catch(e){
       alert('❌ No se pudo eliminar: '+e.message);

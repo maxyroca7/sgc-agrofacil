@@ -421,6 +421,7 @@ html.coordinadora #tBody select { pointer-events:none; opacity:.6; }
   <div class="toolbar no-print">
     <div class="toolbar-row">
       <button class="btn btn-add"   onclick="addRow()">+ Agregar fila</button>
+      <button class="btn" style="background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700" onclick="scheduleSave();showToast('💾 Guardando datos...')">💾 Guardar</button>
       <select id="sel-del-row" class="btn" style="min-width:90px;cursor:pointer" title="Seleccionar fila a eliminar"></select>
       <button class="btn btn-del"   onclick="delRowSel()">− Eliminar fila</button>
       <button class="btn btn-print" onclick="window.print()">🖨 Imprimir / PDF</button>
