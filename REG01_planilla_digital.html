@@ -1372,7 +1372,7 @@ function mkLinea(l){
           <th rowspan="2" style="width:44px">N°<br>Pallet</th>
           <th rowspan="2" style="width:88px">Fecha</th>
           <th rowspan="2" style="width:60px">Hora</th>
-          <th colspan="4" class="gh">PESO POR PICO (kg)</th>
+          <th colspan="5" class="gh">PESO POR PICO (kg)</th>
           <th colspan="4" class="gh">IDENTIFICACIÓN Y TRAZABILIDAD</th>
           <th colspan="2" class="gh">INDUCCIÓN</th>
           <th colspan="3" class="gh">CONTROL EN LÍNEA</th>
@@ -2338,6 +2338,8 @@ printStyle.textContent=`
   .pallet-cards { display:none !important; }
   .pal-vacio { display:none !important; }
   .sem { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .tw { overflow:visible !important; width:100% !important; }
+  .lt input { width:auto !important; min-width:unset !important; }
   @page { size: A4 landscape; margin: 8mm; }
 }`;
 document.head.appendChild(printStyle);

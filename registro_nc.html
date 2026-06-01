@@ -379,6 +379,45 @@ html.coordinadora #tBody select { pointer-events:none; opacity:.6; }
     <button onclick="descartarImport()" style="background:transparent;color:#94a3b8;border:1px solid #2e5252;border-radius:4px;padding:8px 12px;font-size:12px;cursor:pointer;white-space:nowrap">✕ Descartar</button>
   </div>
 
+  <div class="kpi-bar">
+    <div class="kpi-card" id="kpi1-card">
+      <div class="kpi-label">AQ-IND-01 · NC Totales del mes</div>
+      <div class="kpi-val" id="kpi1">0</div>
+      <div class="kpi-sub">eventos registrados</div>
+    </div>
+    <div class="kpi-card" id="kpi2-card">
+      <div class="kpi-label">AQ-IND-02 · Tasa litros NC</div>
+      <div class="kpi-val" id="kpi2">—</div>
+      <div class="kpi-sub">meta: &lt; 5%</div>
+    </div>
+    <div class="kpi-card" id="kpi3-card">
+      <div class="kpi-label">AQ-IND-03 · Desvío más frecuente</div>
+      <div class="kpi-val" style="font-size:13px" id="kpi3">—</div>
+      <div class="kpi-sub" id="kpi3-sub">sin datos</div>
+    </div>
+    <div class="kpi-card" id="kpi4-card">
+      <div class="kpi-label">AQ-IND-04 · Reprocesos en plazo</div>
+      <div class="kpi-val" id="kpi4">—</div>
+      <div class="kpi-sub">meta: &gt; 90%</div>
+    </div>
+    <div class="kpi-card warn" id="kpi5-card">
+      <div class="kpi-label">AQ-IND-05 · Pallets pendientes reproceso</div>
+      <div class="kpi-val" id="kpi5">—</div>
+      <div class="kpi-sub" id="kpi5-sub">pallets sin cerrar</div>
+    </div>
+    <div class="kpi-card mid" id="kpi6-card">
+      <div class="kpi-label">AQ-IND-06 · Carga estimada (HH)</div>
+      <div class="kpi-val" id="kpi6">—</div>
+      <div class="kpi-sub" id="kpi6-sub">horas·hombre pendientes</div>
+    </div>
+  </div>
+
+  <div class="sev-bar">
+    <div class="sev-box sev-leve"><span class="sev-num" id="sev-leve">0</span>🟢 Leve</div>
+    <div class="sev-box sev-mod" ><span class="sev-num" id="sev-mod" >0</span>🟡 Moderado</div>
+    <div class="sev-box sev-crit"><span class="sev-num" id="sev-crit">0</span>🔴 Crítico</div>
+  </div>
+
   <div class="toolbar no-print">
     <div class="toolbar-row">
       <button class="btn btn-add"   onclick="addRow()">+ Agregar fila</button>
@@ -422,45 +461,6 @@ html.coordinadora #tBody select { pointer-events:none; opacity:.6; }
       <div class="meta-row"><span class="meta-label">Elab.</span><span class="meta-val">Maximiliano Roca</span></div>
       <div class="meta-row"><span class="meta-label">Aprob.</span><span class="meta-val">Evelin Alcaraz</span></div>
     </div>
-  </div>
-
-  <div class="kpi-bar">
-    <div class="kpi-card" id="kpi1-card">
-      <div class="kpi-label">AQ-IND-01 · NC Totales del mes</div>
-      <div class="kpi-val" id="kpi1">0</div>
-      <div class="kpi-sub">eventos registrados</div>
-    </div>
-    <div class="kpi-card" id="kpi2-card">
-      <div class="kpi-label">AQ-IND-02 · Tasa litros NC</div>
-      <div class="kpi-val" id="kpi2">—</div>
-      <div class="kpi-sub">meta: &lt; 5%</div>
-    </div>
-    <div class="kpi-card" id="kpi3-card">
-      <div class="kpi-label">AQ-IND-03 · Desvío más frecuente</div>
-      <div class="kpi-val" style="font-size:13px" id="kpi3">—</div>
-      <div class="kpi-sub" id="kpi3-sub">sin datos</div>
-    </div>
-    <div class="kpi-card" id="kpi4-card">
-      <div class="kpi-label">AQ-IND-04 · Reprocesos en plazo</div>
-      <div class="kpi-val" id="kpi4">—</div>
-      <div class="kpi-sub">meta: &gt; 90%</div>
-    </div>
-    <div class="kpi-card warn" id="kpi5-card">
-      <div class="kpi-label">AQ-IND-05 · Pallets pendientes reproceso</div>
-      <div class="kpi-val" id="kpi5">—</div>
-      <div class="kpi-sub" id="kpi5-sub">pallets sin cerrar</div>
-    </div>
-    <div class="kpi-card mid" id="kpi6-card">
-      <div class="kpi-label">AQ-IND-06 · Carga estimada (HH)</div>
-      <div class="kpi-val" id="kpi6">—</div>
-      <div class="kpi-sub" id="kpi6-sub">horas·hombre pendientes</div>
-    </div>
-  </div>
-
-  <div class="sev-bar">
-    <div class="sev-box sev-leve"><span class="sev-num" id="sev-leve">0</span>🟢 Leve</div>
-    <div class="sev-box sev-mod" ><span class="sev-num" id="sev-mod" >0</span>🟡 Moderado</div>
-    <div class="sev-box sev-crit"><span class="sev-num" id="sev-crit">0</span>🔴 Crítico</div>
   </div>
 
   <table>
