@@ -2298,8 +2298,30 @@ function archivarLote(){
         </div>`).join('');
     }
     mostrarToast('📄 Guardá como PDF en tu carpeta de lotes');
+
+    // ── Expandir paginación antes de imprimir ──
+    // Guarda las páginas actuales y usa un PAGE_SIZE enorme para que
+    // buildCLHTML y buildCFHTML rendericen TODOS los pallets en el DOM.
+    const _savedClPages = Object.assign({}, clPages);
+    const _savedCfPages = Object.assign({}, cfPages);
+    const _CL_ORIG = CL_PAGE_SIZE;
+    const _CF_ORIG = CF_PAGE_SIZE;
+    // eslint-disable-next-line no-global-assign
+    CL_PAGE_SIZE = 9999; CF_PAGE_SIZE = 9999;
+    renderLote(); // re-renderiza con todas las filas visibles
+
+    // Restaurar paginación normal tras cerrar el diálogo de impresión
+    window.addEventListener('afterprint', function _restorePrint(){
+      window.removeEventListener('afterprint', _restorePrint);
+      // eslint-disable-next-line no-global-assign
+      CL_PAGE_SIZE = _CL_ORIG; CF_PAGE_SIZE = _CF_ORIG;
+      Object.assign(clPages, _savedClPages);
+      Object.assign(cfPages, _savedCfPages);
+      renderLote();
+    });
+
     window.print();
-  }, 400);
+  }, 500);
 }
 
 // Estilos de impresión para el PDF del lote
