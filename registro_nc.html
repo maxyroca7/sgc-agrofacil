@@ -336,13 +336,51 @@ html.coordinadora #tBody select { pointer-events:none; opacity:.6; }
 </style>
 
 <script type="module">
-  import { authGuard, getRol } from './firebase-init.js';
+  import { authGuard, getRol, db } from './firebase-init.js';
   import './sync.js';
+  import { doc, setDoc, onSnapshot }
+    from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
+
+  const NC_REF = doc(db, 'nc', 'registro');
+
+  // Escritura a Firestore — llamada desde scheduleSave() del script regular
+  window._firestoreSave = function(rows){
+    setDoc(NC_REF, { rows, _ts: Date.now() })
+      .catch(e => console.error('[nc] Firestore write error:', e));
+  };
+
   authGuard().then(u => getRol(u.uid)).then(rol => {
     localStorage.setItem('userRol', rol);
     document.body.dataset.rol = rol;
     if (rol === 'coordinadora') document.documentElement.classList.add('coordinadora');
-    console.log('[registro_nc] rol aplicado:', rol, '| clase html:', document.documentElement.className);
+    console.log('[registro_nc] rol aplicado:', rol);
+
+    // Suscripción en tiempo real — reconciliación inicial sin pérdida
+    let _fsFirst = true;
+    onSnapshot(NC_REF, snap => {
+      const fsRows = snap.exists() ? (snap.data().rows || []) : [];
+      if (_fsFirst) {
+        _fsFirst = false;
+        if (fsRows.length > 0) {
+          // Firestore tiene datos → reemplazar local y cache IDB
+          window._ncSetRows(fsRows);
+          document.getElementById('saveMsg').textContent =
+            '☁ Sincronizado — ' + fsRows.length + ' registro/s';
+        } else if (window._ncGetRows().length > 0) {
+          // Firestore vacío pero hay datos locales → subir sin sobrescribir
+          window._firestoreSave(window._ncGetRows());
+          document.getElementById('saveMsg').textContent =
+            '☁ Datos locales subidos a Firestore — ' + window._ncGetRows().length + ' registro/s';
+        }
+      } else if (snap.exists()) {
+        // Snapshot posterior → Firestore es fuente de verdad
+        window._ncSetRows(fsRows);
+      }
+    }, err => {
+      console.error('[nc] onSnapshot error:', err);
+      document.getElementById('saveMsg').textContent =
+        '⚠ Sin conexión a Firestore — usando datos locales.';
+    });
   });
 </script>
 
@@ -584,6 +622,9 @@ const COLS_HDR = ['#','Fecha Detección','N° Lote','Producto','Tipo de Desvío'
                   'Plazo Reproceso','Estado','Fecha Cierre','Pallets NC','Responsable','Verif. Eficacia'];
 
 let rows = [], saveTimer = null, db;
+// Puentes para el bloque módulo (módulos no comparten scope con scripts regulares)
+window._ncGetRows = function(){ return rows; };
+window._ncSetRows = function(r){ rows=r; render(); idbSet('rows',JSON.stringify(r),null); };
 
 function openDB(cb){
   if(db){cb(db);return;}
@@ -610,7 +651,10 @@ function setSave(state){
 function scheduleSave(){
   setSave('saving');
   clearTimeout(saveTimer);
-  saveTimer=setTimeout(()=>idbSet('rows',JSON.stringify(rows),()=>setSave('ok')),800);
+  saveTimer=setTimeout(()=>{
+    idbSet('rows',JSON.stringify(rows),()=>setSave('ok'));
+    if(window._firestoreSave) window._firestoreSave(rows);
+  },800);
 }
 
 // ════════════════════════════════════════════
@@ -659,7 +703,9 @@ function clearData(){
     tx.objectStore('data').delete('rows');
     tx.oncomplete=()=>{
       rows=[]; for(let i=0;i<3;i++) rows.push(newRow());
-      render(); document.getElementById('saveMsg').textContent='Datos borrados.';
+      render();
+      document.getElementById('saveMsg').textContent='Datos borrados.';
+      if(window._firestoreSave) window._firestoreSave(rows);
     };
   });
 }
