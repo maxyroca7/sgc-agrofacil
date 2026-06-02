@@ -560,6 +560,7 @@ html.light #tb-menu-sheet{background:#ffffff;}
         <div style="width:200px;border-left:2px solid #2a6a6a;font-size:10px" id="print-meta"></div>
       </div>
     </div>
+  <div id="print-body" style="display:none"></div>
     <div id="topbar">
     <div class="tb-left"><div class="tb-brand"><img src="/qualityos-topbar.svg" alt="QualityOS" class="tb-logo" width="36" height="36"><span class="tb-appname">QualityOS</span><span class="conn-dot" id="conn-dot" title="Online"></span></div><span class="tb-sep">|</span><span class="tb-title">REG-01 Digital</span></div>
     <div id="tabs-wrap"></div>
@@ -2348,6 +2349,166 @@ function cerrar(){
 // ════════════════════════════════════════════════════════
 // ══ ARCHIVAR LOTE ══
 // Exporta JSON (respaldo técnico) + abre diálogo de impresión para PDF
+function buildPrintBody(l){
+  const ind=cfg.inductoras.find(x=>x.id===l.cab.indId)||{nombre:'—',tolMin:null,tolMax:null,unidad:''};
+  const indLbl=ind.nombre+(ind.unidad?' ('+ind.unidad+')':'');
+  const rango=ind.tolMin!=null?ind.tolMin+'–'+ind.tolMax+(ind.unidad?' '+ind.unidad:''):'—';
+  const _st=(ok,repro)=>{
+    if(repro)      return '<b style="color:#b45309">&#8635; REPRO</b>';
+    if(ok===false) return '<b style="color:#b91c1c">&#10007; NOK</b>';
+    if(ok===true)  return '<b style="color:#166534">&#10003; OK</b>';
+    return '<span style="color:#888">&#8212;</span>';
+  };
+  const cab=l.cab;
+  const cabHtml=`
+  <div class="card" style="margin-bottom:8px;border:1px solid #ccc">
+    <div style="background:#f0f0f0;color:#000;padding:5px 10px;font-weight:700;font-size:10px;border-bottom:1px solid #ccc">
+      Datos del lote
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:8px;font-family:Arial,sans-serif">
+      <tr>
+        <td style="padding:3px 6px;border:1px solid #ddd;background:#f7f7f7;font-weight:700;width:100px">Producto</td>
+        <td style="padding:3px 6px;border:1px solid #ddd">${cab.prod||'—'}</td>
+        <td style="padding:3px 6px;border:1px solid #ddd;background:#f7f7f7;font-weight:700;width:100px">N° de Lote</td>
+        <td style="padding:3px 6px;border:1px solid #ddd">${cab.lote||'—'}</td>
+        <td style="padding:3px 6px;border:1px solid #ddd;background:#f7f7f7;font-weight:700;width:80px">Cliente</td>
+        <td style="padding:3px 6px;border:1px solid #ddd">${cab.cliente||'—'}</td>
+      </tr>
+      <tr>
+        <td style="padding:3px 6px;border:1px solid #ddd;background:#f7f7f7;font-weight:700">Línea</td>
+        <td style="padding:3px 6px;border:1px solid #ddd">${cab.linea||'—'}</td>
+        <td style="padding:3px 6px;border:1px solid #ddd;background:#f7f7f7;font-weight:700">Inductora</td>
+        <td style="padding:3px 6px;border:1px solid #ddd">${indLbl}</td>
+        <td style="padding:3px 6px;border:1px solid #ddd;background:#f7f7f7;font-weight:700">Rango ind.</td>
+        <td style="padding:3px 6px;border:1px solid #ddd">${rango}</td>
+      </tr>
+      <tr>
+        <td style="padding:3px 6px;border:1px solid #ddd;background:#f7f7f7;font-weight:700">Peso mín. pico</td>
+        <td style="padding:3px 6px;border:1px solid #ddd">${cab.pesoMin?cab.pesoMin+' kg':'—'}</td>
+        <td style="padding:3px 6px;border:1px solid #ddd;background:#f7f7f7;font-weight:700">Peso máx. pico</td>
+        <td style="padding:3px 6px;border:1px solid #ddd">${cab.pesoMax?cab.pesoMax+' kg':'—'}</td>
+        <td style="padding:3px 6px;border:1px solid #ddd;background:#f7f7f7;font-weight:700">Estado</td>
+        <td style="padding:3px 6px;border:1px solid #ddd;font-weight:700">${l.estado.toUpperCase()}</td>
+      </tr>
+    </table>
+  </div>`;
+  const clRows=l.linea.map((p,i)=>{
+    const s=semaforo(p.indVal,l.cab.indId);
+    const _hasNOK=(p.indOK===false&&!p.repro)||(p.qrLineaOK===false&&!p.qrRepro)||(p.packOK===false&&!p.packRepro)||(p.pltOK===false&&!p.pltRepro);
+    const _hasRepro=p.repro||p.qrRepro||p.packRepro||p.pltRepro;
+    const rowStyle=_hasNOK?'background:rgba(239,68,68,.07)':_hasRepro?'background:rgba(251,146,60,.07)':'';
+    const vs=[p.p1,p.p2,p.p3,p.p4].filter(v=>v!==''&&v!=null&&!isNaN(parseFloat(v)));
+    const avg=vs.length?(vs.reduce((a,b)=>a+parseFloat(b),0)/vs.length).toFixed(2):'';
+    const pMin=l.cab.pesoMin,pMax=l.cab.pesoMax;
+    const avgOk=avg&&pMin&&pMax?parseFloat(avg)>=parseFloat(pMin)&&parseFloat(avg)<=parseFloat(pMax):null;
+    const avgCell=avg
+      ?'<b style="color:'+(avgOk===false?'#b91c1c':'#166534')+'">'+avg+'</b>'
+      :'<span style="color:#888">—</span>';
+    const vacio=!p.fecha&&!p.hora&&!p.lote&&p.indOK===null?'pal-vacio':'';
+    return `<tr class="${vacio}" style="${rowStyle}">
+      <td class="n">${i+1}</td>
+      <td>${p.nPal||''}</td>
+      <td>${p.fecha||''}</td>
+      <td>${p.hora||''}</td>
+      <td>${p.p1||''}</td><td>${p.p2||''}</td><td>${p.p3||''}</td><td>${p.p4||''}</td>
+      <td style="text-align:center">${avgCell}</td>
+      <td>${p.lote||''}</td>
+      <td>${p.codProd||''}</td>
+      <td>${p.fProd||''}</td>
+      <td>${p.fVenc||''}</td>
+      <td style="text-align:center">${_st(p.indOK,p.repro)}</td>
+      <td style="text-align:center">
+        <div class="ind-cell" style="justify-content:center">
+          <span style="font-family:var(--mono)">${p.indVal||'—'}</span>
+          <div class="sem ${s}"></div>
+        </div>
+      </td>
+      <td style="text-align:center">${_st(p.qrLineaOK,p.qrRepro)}</td>
+      <td style="text-align:center">${_st(p.packOK,p.packRepro)}</td>
+      <td style="text-align:center">${_st(p.pltOK,p.pltRepro)}</td>
+      <td>${(p.obs||'').replace(/</g,'&lt;')}</td>
+    </tr>`;
+  }).join('');
+  const clHtml=`
+  <div class="card" style="margin-bottom:8px;border:1px solid #ccc">
+    <div style="background:#f0f0f0;color:#000;padding:5px 10px;font-weight:700;font-size:10px;border-bottom:1px solid #ccc">
+      Control en Línea — ${l.linea.length} pallets
+    </div>
+    <div class="tw"><table class="lt"><thead>
+      <tr>
+        <th rowspan="2" style="width:20px">#</th>
+        <th rowspan="2">N° Pallet</th>
+        <th rowspan="2">Fecha</th>
+        <th rowspan="2">Hora</th>
+        <th colspan="5" class="gh">PESO POR PICO (kg)</th>
+        <th colspan="4" class="gh">IDENTIFICACIÓN</th>
+        <th colspan="2" class="gh">INDUCCIÓN</th>
+        <th colspan="3" class="gh">CONTROL EN LÍNEA</th>
+        <th rowspan="2">Obs.</th>
+      </tr>
+      <tr>
+        <th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>PROM</th>
+        <th>Lote</th><th>Cód</th><th>F.Prod</th><th>F.Venc</th>
+        <th>OK/NOK</th><th>${indLbl}</th>
+        <th>QR</th><th>Pack</th><th>Plt</th>
+      </tr>
+    </thead><tbody>${clRows}</tbody></table></div>
+  </div>`;
+  const cfRows=l.final.pallets.map((p,i)=>{
+    const _hasNOK=_cfHasNakedNOK(p);
+    const _hasRepro=_cfHasAnyRepro(p);
+    const rowStyle=_hasNOK?'background:rgba(239,68,68,.07)':_hasRepro?'background:rgba(251,146,60,.07)':'';
+    const s=semaforo(p.indCFVal||'',l.cab.indId);
+    const vacio=p.idOK===null&&p.qrOK===null&&p.paletOK===null&&p.indCFOK===null?'pal-vacio':'';
+    return `<tr class="${vacio}" style="${rowStyle}">
+      <td class="n">${i+1}</td>
+      <td style="text-align:center">${_st(p.idOK,p.idRepro)}</td>
+      <td style="text-align:center">${_st(p.qrOK,p.qrRepro)}</td>
+      <td style="text-align:center">${_st(p.paletOK,p.paletRepro)}</td>
+      <td style="text-align:center">${_st(p.indCFOK,p.indCFRepro)}</td>
+      <td style="text-align:center">
+        <div class="ind-cell" style="justify-content:center">
+          <span style="font-family:var(--mono)">${p.indCFVal||'—'}</span>
+          <div class="sem ${s}"></div>
+        </div>
+      </td>
+      <td style="text-align:center;font-family:var(--mono)">${p.litrosParcial||'—'}</td>
+      <td>${(p.obs||'').replace(/</g,'&lt;')}</td>
+    </tr>`;
+  }).join('');
+  const cfHtml=`
+  <div class="card" style="margin-bottom:8px;border:1px solid #ccc">
+    <div style="background:#f0f0f0;color:#000;padding:5px 10px;font-weight:700;font-size:10px;border-bottom:1px solid #ccc">
+      Control Final — ${l.final.pallets.length} pallets${l.final.dictamen?' · '+l.final.dictamen:''}
+    </div>
+    <div class="tw"><table class="ft"><thead>
+      <tr>
+        <th>#</th>
+        <th>ID Pallet</th>
+        <th>Trazabilidad / QR</th>
+        <th>Estado pallet</th>
+        <th>Inducción CF</th>
+        <th>Valor ind.</th>
+        <th>Lt parcial</th>
+        <th>Observaciones</th>
+      </tr>
+    </thead><tbody>${cfRows}</tbody></table></div>
+  </div>`;
+  const hallazgos=l.hallazgos||[];
+  const hallHtml=hallazgos.length?`
+  <div class="card" style="margin-bottom:8px;border:1px solid #ccc">
+    <div style="background:#f0f0f0;color:#000;padding:5px 10px;font-weight:700;font-size:10px;border-bottom:1px solid #ccc">
+      Observaciones del lote (${hallazgos.length})
+    </div>
+    <div style="padding:6px 10px;font-size:8px;font-family:Arial,sans-serif">
+      ${hallazgos.map(h=>`<div style="padding:4px 0;border-bottom:1px solid #eee">
+        <span style="color:#888;font-size:7px">${h.ts||''}</span>
+        <div style="margin-top:2px;white-space:pre-wrap">${(h.txt||'').replace(/</g,'&lt;')}</div>
+      </div>`).join('')}
+    </div>
+  </div>`:'';
+  return cabHtml+clHtml+cfHtml+hallHtml;
+}
 function archivarLote(){
   const l=getLote();if(!l)return;
   if(l.estado==='activo'){
@@ -2360,8 +2521,9 @@ function archivarLote(){
   // cerrado/aprobado/retenido → _APROBADO/_RETENIDO  (va a LOTES_CERRADOS)
   // Abrir diálogo de impresión para guardar PDF
   setTimeout(()=>{
-    // Rellenar encabezado de impresión con codificación actual
     const l=getLote();
+    const pb=document.getElementById('print-body');
+    if(pb)pb.innerHTML=buildPrintBody(l);
     const meta=document.getElementById('print-meta');
     if(meta){
       const rows=[
@@ -2380,6 +2542,8 @@ function archivarLote(){
     }
     mostrarToast('📄 Guardá como PDF en tu carpeta de lotes');
     window.print();
+    const _cp=()=>{if(pb)pb.innerHTML='';window.removeEventListener('afterprint',_cp);};
+    window.addEventListener('afterprint',_cp);
   }, 400);
 }
 
@@ -2389,7 +2553,8 @@ printStyle.textContent=`
 @media print {
   html, body { overflow:visible !important; height:auto !important; width:auto !important; position:static !important; }
   #app { position:static !important; height:auto !important; overflow:visible !important; }
-  #main { overflow:visible !important; height:auto !important; flex:none !important; }
+  #main { display:none !important; }
+  #print-body { display:block !important; overflow:visible !important; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
   body { background:#fff !important; color:#000 !important; font-size:9px; }
   #topbar, #bb { display:none !important; }
   #print-header { display:block !important; }
@@ -2427,6 +2592,9 @@ printStyle.textContent=`
   .pal-vacio { display:none !important; }
   /* Hallazgos en print: mostrar lista, ocultar input */
   .lh-section .checker-only { display:none !important; }
+  #print-body .card { break-inside:auto; }
+  #print-body thead { display:table-header-group; }
+  #print-body tr { break-inside:avoid; }
   @page { size: A4 landscape; margin: 8mm; }
 }`;
 document.head.appendChild(printStyle);
