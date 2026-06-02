@@ -1254,7 +1254,7 @@ function mkLinea(l){
     const rowStyle=_hasNOK?'background:rgba(239,68,68,.06)':_hasRepro?'background:rgba(251,146,60,.06)':'';
     const vacio=!p.fecha&&!p.hora&&!p.lote&&p.indOK===null?'pal-vacio':'';
     return `<tr class="${vacio}" style="${rowStyle}">
-      <td class="n">${i+1}</td>
+      <td class="n"><div style="display:flex;flex-direction:column;align-items:center;gap:1px"><span>${i+1}</span><button onclick="deletePalletCL(${i})" title="Eliminar pallet" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:11px;padding:0;line-height:1">&#10005;</button></div></td>
       <td><input class="npal" type="text" value="${p.nPal||''}" placeholder="${i+1}" oninput="updL(${i},'nPal',this.value)" style="width:40px"></td>
       <td><input class="dinp" type="text" value="${p.fecha||''}" placeholder="dd/mm/aa" maxlength="10" oninput="mskF(this);updL(${i},'fecha',this.value)" style="width:84px"></td>
       <td><input class="tinp" type="text" value="${p.hora||''}" placeholder="HH:MM" maxlength="5" oninput="mskT(this);updL(${i},'hora',this.value)" style="width:58px;text-align:center"></td>
@@ -1315,6 +1315,7 @@ function mkLinea(l){
               oninput="updL(${i},'nPal',this.value)">
           </div>
         </div>
+        <button onclick="deletePalletCL(${i})" title="Eliminar pallet" style="background:transparent;border:1px solid var(--border2);border-radius:4px;color:var(--text3);font-size:13px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">&#10005;</button>
       </div>
       ${tieneReproCard?'<span class="repro-badge">✓ REPROCESADO</span>':''}
       <div class="pcard-row r2">
@@ -1565,6 +1566,15 @@ function deletePalletCF(i){
   cardsDiv.innerHTML=buildCFCardsHTML(l);
   if(navDiv)navDiv.innerHTML=buildCFNavHTML(l);
   actualizarLitrosCF();
+}
+function deletePalletCL(i){
+  const l=getLote();if(!l)return;
+  if(!confirm('¿Eliminar pallet CL #'+(i+1)+'?'))return;
+  l.linea.splice(i,1);
+  marcarPendiente();
+  const totalPages=Math.max(1,Math.ceil(l.linea.length/CL_PAGE_SIZE));
+  clPages[l.id]=Math.min(clPages[l.id]||0,totalPages-1);
+  renderLote();
 }
 
 
