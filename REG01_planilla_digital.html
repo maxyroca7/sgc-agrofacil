@@ -1416,18 +1416,26 @@ function updL(i,k,v){
 }
 // ── patchPesoCard: actualiza badge de peso NOK en tarjeta CL ──
 function patchPesoCard(i){
-  if(typeof esMobPortrait==='function' && !esMobPortrait()){
-    const ae=document.activeElement;
-    if(!ae || ae===document.body || !ae.closest || !ae.closest('.lote-view')) renderLote();
-    return;
-  }
   const l=getLote();if(!l)return;
   const p=l.linea[i];
+  // Actualizar celda prom en tabla (visible en landscape/desktop)
+  const promCell=document.getElementById('prom-'+i);
+  if(promCell){
+    const pMin=parseFloat(l.cab.pesoMin),pMax=parseFloat(l.cab.pesoMax);
+    const vs=['p1','p2','p3','p4'].map(k=>l.linea[i][k]).filter(v=>v!==''&&v!=null&&!isNaN(parseFloat(v)));
+    if(!vs.length){promCell.innerHTML='<span style="color:var(--muted)">—</span>';}
+    else{
+      const avg=(vs.reduce((a,b)=>a+parseFloat(b),0)/vs.length).toFixed(2);
+      const ok=!isNaN(pMin)&&!isNaN(pMax)?parseFloat(avg)>=pMin&&parseFloat(avg)<=pMax:true;
+      promCell.innerHTML='<span style="color:'+(ok?'var(--green)':'var(--red)')+'">'+avg+'</span>';
+    }
+  }
+  // Actualizar tarjeta (existe en DOM aunque oculta en landscape; CSS la muestra en portrait)
   const card=document.getElementById('cl-pallet-'+i);
   if(!card)return;
-  const tieneNOK=p.indOK===false||p.pesoOK===false;
-  card.className=tieneNOK&&!p.repro?'pcard nok-card':p.repro?'pcard repro-card':'pcard';
-  card.id='cl-pallet-'+i;
+  const tieneNOK=(p.indOK===false&&!p.repro)||(p.qrLineaOK===false&&!p.qrRepro)||(p.packOK===false&&!p.packRepro)||(p.pltOK===false&&!p.pltRepro)||p.pesoOK===false;
+  const tieneRepro=p.repro||p.qrRepro||p.packRepro||p.pltRepro;
+  card.className=tieneNOK?'pcard nok-card':tieneRepro?'pcard repro-card':'pcard';
   let pesoBadge=card.querySelector('.peso-nok-badge');
   if(p.pesoOK===false&&!pesoBadge){
     pesoBadge=document.createElement('span');
