@@ -14,7 +14,7 @@
 ║  ARQUITECTURA:                                                        ║
 ║  • SPA offline-first (Single Page Application)                       ║
 ║  • Sin frameworks — Vanilla JS puro                                  ║
-║  • Datos en localStorage (configuración) + IndexedDB (lotes)         ║
+║  • Datos en localStorage (configuración y lotes)                     ║
 ║  • PWA instalable desde Android/iOS                                  ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║  PARA MODIFICAR:                                                      ║
@@ -894,6 +894,8 @@ function marcarPendiente(){
   pendiente=true;
   document.getElementById('stxt').textContent='⚠ Sin guardar';
   const l=getLote();if(l)l.lastModified=Date.now();
+  clearTimeout(marcarPendiente._t);
+  marcarPendiente._t=setTimeout(()=>{if(pendiente&&lotes.length)guardarLotes(true);},1500);
 }
 
 
@@ -2045,6 +2047,7 @@ function acISIS(){abrirDictamen();}// compatibilidad
 
 function acNC(){
   const l=getLote();if(!l)return;
+  if(pendiente&&lotes.length)guardarLotes(true);
   const nokInd  = l.linea.filter(p=>p.indOK===false&&!p.repro);
   const reproInd = l.linea.filter(p=>p.indOK===false&&p.repro);
   const nokFin  = l.final.pallets.filter(_cfHasNakedNOK);
@@ -2528,6 +2531,8 @@ function scanQRCF(palletIdx) {
 // ════════════════════════════════════════════════════════
 // ══ AUTO-GUARDADO silencioso cada 60s ══
 setInterval(()=>{if(pendiente&&lotes.length){guardarLotes(true);}},60000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&pendiente&&lotes.length)guardarLotes(true);});
+window.addEventListener('pagehide',()=>{if(pendiente&&lotes.length)guardarLotes(true);});
 
 // ═══════════════════════════════════════════════════════════
 // TECLADO VIRTUAL — SOLUCIÓN DEFINITIVA ANDROID
