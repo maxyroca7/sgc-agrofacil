@@ -2397,13 +2397,6 @@ function buildPrintBody(l){
     const _hasNOK=(p.indOK===false&&!p.repro)||(p.qrLineaOK===false&&!p.qrRepro)||(p.packOK===false&&!p.packRepro)||(p.pltOK===false&&!p.pltRepro);
     const _hasRepro=p.repro||p.qrRepro||p.packRepro||p.pltRepro;
     const rowStyle=_hasNOK?'background:rgba(239,68,68,.07)':_hasRepro?'background:rgba(251,146,60,.07)':'';
-    const vs=[p.p1,p.p2,p.p3,p.p4].filter(v=>v!==''&&v!=null&&!isNaN(parseFloat(v)));
-    const avg=vs.length?(vs.reduce((a,b)=>a+parseFloat(b),0)/vs.length).toFixed(2):'';
-    const pMin=l.cab.pesoMin,pMax=l.cab.pesoMax;
-    const avgOk=avg&&pMin&&pMax?parseFloat(avg)>=parseFloat(pMin)&&parseFloat(avg)<=parseFloat(pMax):null;
-    const avgCell=avg
-      ?'<b style="color:'+(avgOk===false?'#b91c1c':'#166534')+'">'+avg+'</b>'
-      :'<span style="color:#888">—</span>';
     const vacio=!p.fecha&&!p.hora&&!p.lote&&p.indOK===null?'pal-vacio':'';
     return `<tr class="${vacio}" style="${rowStyle}">
       <td class="n">${i+1}</td>
@@ -2411,7 +2404,6 @@ function buildPrintBody(l){
       <td>${p.fecha||''}</td>
       <td>${p.hora||''}</td>
       <td>${p.p1||''}</td><td>${p.p2||''}</td><td>${p.p3||''}</td><td>${p.p4||''}</td>
-      <td style="text-align:center">${avgCell}</td>
       <td>${p.lote||''}</td>
       <td>${p.codProd||''}</td>
       <td>${p.fProd||''}</td>
@@ -2440,13 +2432,13 @@ function buildPrintBody(l){
         <th rowspan="2">N° Pallet</th>
         <th rowspan="2">Fecha</th>
         <th rowspan="2">Hora</th>
-        <th colspan="5" class="gh">PESO POR PICO (kg)</th>
+        <th colspan="4" class="gh">PESO POR PICO (kg)</th>
         <th colspan="4" class="gh">IDENTIFICACIÓN</th>
         <th colspan="2" class="gh">INDUCCIÓN</th>
         <th colspan="3" class="gh">CONTROL EN LÍNEA</th>
       </tr>
       <tr>
-        <th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>PROM</th>
+        <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
         <th>Lote</th><th>Cód</th><th>F.Prod</th><th>F.Venc</th>
         <th>OK/NOK</th><th>${indLbl}</th>
         <th>QR</th><th>Pack</th><th>Plt</th>
@@ -2551,6 +2543,7 @@ printStyle.textContent=`
   #print-header { display:block !important; }
   .mo { display:none !important; }
   #toast { display:none !important; }
+  .app-footer { display:none !important; }
   .lote-view { overflow:visible !important; padding:4px !important; width:100% !important; max-width:none !important; }
   .card { border:1px solid #ccc !important; background:#fff !important; page-break-inside:avoid; margin-bottom:8px; }
   .ch { background:#f0f0f0 !important; color:#000 !important; }
