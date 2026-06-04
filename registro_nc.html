@@ -775,6 +775,18 @@ function render(){
       if(r.lote){const s=document.createElement('span');s.className='nc-hdr-lote';s.textContent=r.lote;hdr.appendChild(s);}
       if(r.prod){const s=document.createElement('span');s.className='nc-hdr-prod';s.textContent=r.prod;hdr.appendChild(s);}
       if(r.sev){const s=document.createElement('span');s.className='sev-badge '+(SEV_CLS[r.sev]||'');s.textContent=(SEV_ICON[r.sev]||'')+' '+r.sev;hdr.appendChild(s);}
+      const btnDel=document.createElement('button');
+      btnDel.textContent='×';
+      btnDel.setAttribute('style','background:none;border:none;color:#ef4444;font-size:16px;padding:0 6px;cursor:pointer;line-height:1');
+      btnDel.addEventListener('click',e=>{
+        e.stopPropagation();
+        const label='#'+(i+1)+(r.lote?' ('+r.lote+')':'');
+        if(!confirm('¿Eliminar NC '+label+'?'))return;
+        rows.splice(i,1);
+        if(_cardExpanded) _cardExpanded.splice(i,1);
+        scheduleSave(); render();
+      });
+      hdr.appendChild(btnDel);
       const chev=document.createElement('span');chev.className='nc-hdr-chev';chev.textContent='▼';hdr.appendChild(chev);
       hdr.addEventListener('click',()=>_toggleCard(i));
       tr.appendChild(hdr);
