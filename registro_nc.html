@@ -718,6 +718,16 @@ function clearData(){
 // que a su vez llama scheduleSave() para guardar en IndexedDB.
 // ════════════════════════════════════════════
 function render(){
+  const ae=document.activeElement;
+  let focusKey=null,focusVal=null;
+  if(ae&&ae.closest('#tBody')){
+    const tr=ae.closest('tr');
+    const td=ae.closest('td');
+    const idx=tr?tr.rowIndex-1:-1;
+    focusKey=ae.dataset.field||ae.name||td?.className||null;
+    focusVal=ae.value;
+    if(idx>=0&&focusKey)focusKey=idx+'::'+focusKey;
+  }
   const tb=document.getElementById('tBody');
   tb.innerHTML='';
   rows.forEach((r,i)=>{
@@ -781,6 +791,18 @@ function render(){
   });
   updateKPIs();
   updateDelSelector();
+  if(focusKey){
+    const [idxStr,fieldKey]=focusKey.split('::');
+    const targetRow=tb.rows[parseInt(idxStr)];
+    if(targetRow){
+      const el=targetRow.querySelector(`.${fieldKey} input,.${fieldKey} select`);
+      if(el){
+        el.focus();
+        el.value=focusVal;
+        if(el.setSelectionRange)el.setSelectionRange(focusVal.length,focusVal.length);
+      }
+    }
+  }
 }
 
 function mkTdEl(tr,cls,label){ const el=document.createElement('td');el.className=cls;if(label)el.dataset.label=label;tr.appendChild(el);return el; }
