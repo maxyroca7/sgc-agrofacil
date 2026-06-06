@@ -361,6 +361,20 @@ button.sc:active{background:#60a5fa;color:#fff;}
 .scan-hdr button{background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;}
 #scan-video{width:100%;aspect-ratio:1/1;object-fit:cover;background:#000;display:block;}
 #scan-status{padding:8px 14px;font-family:var(--mono);font-size:10px;color:var(--text3);text-align:center;}
+/* ── Modal QR post-escaneo ── */
+#qr-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9001;display:flex;align-items:center;justify-content:center;}
+.qr-modal{background:var(--bg2);border-radius:var(--r);width:min(96vw,400px);display:flex;flex-direction:column;border:1px solid var(--border2);}
+.qr-modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);border-bottom:1px solid var(--border2);}
+.qr-modal-body{padding:14px;display:flex;flex-direction:column;gap:10px;}
+.qr-modal-label{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.qr-modal-val{font-family:var(--mono);font-size:11px;color:var(--text);background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:6px 8px;word-break:break-all;user-select:text;cursor:text;}
+.qr-modal-sep{border:none;border-top:1px solid var(--border2);margin:2px 0;}
+.qr-modal-q{font-size:12px;font-weight:700;color:var(--text);}
+.qr-modal-acts{display:flex;gap:8px;flex-wrap:wrap;}
+.qr-url-badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;vertical-align:middle;flex-shrink:0;}
+.qr-url-ok{background:rgba(22,163,74,.13);color:#16a34a;border:1px solid #16a34a;}
+.qr-url-nok{background:rgba(220,38,38,.13);color:#dc2626;border:1px solid #dc2626;}
+.qr-url-unk{background:rgba(107,114,128,.13);color:#6b7280;border:1px solid #6b7280;}
 
 
 /* ════════════════════════════════════════════════════════
@@ -1132,6 +1146,8 @@ function renderLote(){
   view.appendChild(mkLinea(l));
   view.appendChild(mkFinal(l));
   view.appendChild(mkHallazgos(l));
+  const _qrCard = mkQRs(l);
+  if (_qrCard) view.appendChild(_qrCard);
   main.appendChild(view);
 
   // ── Scroll manual Android: intercepta touchmove y mueve scrollTop directo ──
@@ -1468,10 +1484,12 @@ function innerChecksHTML(p,i){
   return cfg.map(c=>{
     const isNOK=p[c.field]===false, isRepro=!!p[c.repField];
     const rowCls=isNOK&&!isRepro?'cl-check-row row-nok':isRepro?'cl-check-row row-repro':'cl-check-row';
+    const urlBadge=c.field==='qrLineaOK'?_qrBadgeHTML(p.qrCode,p.qrUrlCargada):'';
     return `<div class="${rowCls}">
       <span class="cl-check-label">${c.label}</span>
       <div class="on">
         ${c.scanFn&&_bdSupported?`<button class="sc" onclick="${c.scanFn}" title="Escanear QR"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button>`:''}
+        ${urlBadge}
         <button class="ok${p[c.field]===true?' active':''}" onclick="${c.okFn}">OK</button>
         <button class="nk${p[c.field]===false?' active':''}" onclick="${c.nokFn}">NOK</button>
         ${isNOK?`<button class="rp${isRepro?' active':''}" onclick="${c.rpFn}">REPRO</button>`:''}
@@ -1635,10 +1653,11 @@ function _cfCardRowsHTML(p,i,semCF){
     const scanBtn=(fk==='qrOK'&&_bdSupported)
       ?'<button class="sc" onclick="scanQRCF('+i+')" title="Escanear QR" style="height:48px;min-width:44px;font-size:16px">&#128247;</button>'
       :'';
+    const urlBadge=fk==='qrOK'?_qrBadgeHTML(p.qrCodeCF,p.qrUrlCargadaCF):'';
     const reproBtn=isNOK?'<button class="rp'+(isRepro?' active':'')+'" onclick="setFFRepro('+i+",'"+rf+"')"+'" style="height:48px;padding:0 10px">REPRO</button>':'';
     return '<div>'
       +'<div style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">'+label+(extra||'')+'</div>'
-      +'<div class="on" style="gap:8px">'+scanBtn+btn(fk,true)+btn(fk,false)+reproBtn+'</div>'
+      +'<div class="on" style="gap:8px">'+scanBtn+urlBadge+btn(fk,true)+btn(fk,false)+reproBtn+'</div>'
       +'</div>';
   }
   return '<div id="cf-rows-'+i+'" style="display:grid;gap:10px">'
@@ -1870,6 +1889,50 @@ function toggleCard(h){
 
 
 // ════════════════════════════════════════════════════════
+// ── Códigos QR escaneados del lote ──
+function mkQRs(l) {
+  function _qrOpenUrl(idx, tipo) {
+    const ll = getLote(); if (!ll) return;
+    const url = tipo === 'cl' ? ll.linea[idx]?.qrCode : ll.final?.pallets[idx]?.qrCodeCF;
+    if (url) window.open(url, '_blank');
+  }
+  window._qrOpenUrl = _qrOpenUrl;
+  const items = [];
+  (l.linea || []).forEach((p, i) => {
+    if (!p.qrCode) return;
+    const badge = _qrBadgeHTML(p.qrCode, p.qrUrlCargada);
+    const short = p.qrCode.length > 60 ? p.qrCode.slice(0, 60) + '…' : p.qrCode;
+    const isUrl = p.qrCode.startsWith('http');
+    const openBtn = isUrl ? `<button onclick="_qrOpenUrl(${i},'cl')" style="background:none;border:none;color:#60a5fa;cursor:pointer;font-size:14px;padding:0 4px;flex-shrink:0" title="Abrir">🔗</button>` : '';
+    items.push(`<div style="display:flex;gap:6px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0;min-width:40px">CL #${i+1}</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${short.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</span>
+      ${badge}${openBtn}
+    </div>`);
+  });
+  (l.final && l.final.pallets || []).forEach((p, i) => {
+    if (!p.qrCodeCF) return;
+    const badge = _qrBadgeHTML(p.qrCodeCF, p.qrUrlCargadaCF);
+    const short = p.qrCodeCF.length > 60 ? p.qrCodeCF.slice(0, 60) + '…' : p.qrCodeCF;
+    const isUrl = p.qrCodeCF.startsWith('http');
+    const openBtn = isUrl ? `<button onclick="_qrOpenUrl(${i},'cf')" style="background:none;border:none;color:#60a5fa;cursor:pointer;font-size:14px;padding:0 4px;flex-shrink:0" title="Abrir">🔗</button>` : '';
+    items.push(`<div style="display:flex;gap:6px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0;min-width:40px">CF #${i+1}</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${short.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</span>
+      ${badge}${openBtn}
+    </div>`);
+  });
+  if (!items.length) return null;
+  const c = document.createElement('div');
+  c.className = 'card';
+  c.innerHTML = `<div class="ch" onclick="toggleCard(this)">
+    <div class="ch-title"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Códigos QR escaneados
+      <span class="ch-badge">${items.length}</span>
+    </div><span class="ch-tog">▾</span></div>
+  <div class="cb collapsed"><div style="padding:0 2px">${items.join('')}</div></div>`;
+  return c;
+}
+
 // ── Hallazgos / Observaciones del lote ──
 function mkHallazgos(l){
   if(!l.hallazgos)l.hallazgos=[];
@@ -2656,26 +2719,78 @@ function cerrarScan() {
   if (ov) ov.remove();
 }
 
+function _qrBadgeHTML(qrCode, urlCargada) {
+  if (!qrCode) return '';
+  if (urlCargada === true)  return '<span class="qr-url-badge qr-url-ok">URL ✓</span>';
+  if (urlCargada === false) return '<span class="qr-url-badge qr-url-nok">URL ✗</span>';
+  return '<span class="qr-url-badge qr-url-unk">sin verificar</span>';
+}
+
+function _mostrarModalQR(rawVal, label, onConfirm) {
+  const isUrl = typeof rawVal === 'string' && rawVal.startsWith('http');
+  let shortVal = rawVal;
+  if (isUrl) {
+    try {
+      const u = new URL(rawVal);
+      const full = u.hostname + u.pathname + (u.search || '');
+      shortVal = full.length > 40 ? full.slice(0, 40) + '…' : full;
+    } catch(e) {
+      shortVal = rawVal.length > 40 ? rawVal.slice(0, 40) + '…' : rawVal;
+    }
+  }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  const ov = document.createElement('div');
+  ov.id = 'qr-modal-overlay';
+  ov.innerHTML = `<div class="qr-modal">
+    <div class="qr-modal-hdr">
+      <span>QR Escaneado — ${esc(label)}</span>
+      <button id="qr-mx" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:0 4px;line-height:1">✕</button>
+    </div>
+    <div class="qr-modal-body">
+      <div><div class="qr-modal-label">URL completa</div><div class="qr-modal-val">${esc(rawVal)}</div></div>
+      ${isUrl ? `<div><div class="qr-modal-label">URL corta</div><div class="qr-modal-val">${esc(shortVal)}</div></div>` : ''}
+      ${isUrl ? `<button id="qr-abrir" style="align-self:flex-start;background:rgba(96,165,250,.12);color:#60a5fa;border:1px solid #60a5fa;border-radius:var(--r);padding:6px 12px;font-size:12px;cursor:pointer">🔗 Abrir</button>` : ''}
+      <hr class="qr-modal-sep">
+      <div class="qr-modal-q">¿URL cargada en el sistema?</div>
+      <div class="qr-modal-acts">
+        <button id="qr-cargada" style="flex:1;background:rgba(22,163,74,.13);color:#16a34a;border:1px solid #16a34a;border-radius:var(--r);padding:10px 8px;font-size:13px;font-weight:700;cursor:pointer">✓ CARGADA</button>
+        <button id="qr-nocargada" style="flex:1;background:rgba(220,38,38,.13);color:#dc2626;border:1px solid #dc2626;border-radius:var(--r);padding:10px 8px;font-size:13px;font-weight:700;cursor:pointer">✗ NO CARGADA</button>
+        <button id="qr-cancelar" style="background:transparent;color:var(--text3);border:1px solid var(--border2);border-radius:var(--r);padding:10px 8px;font-size:13px;cursor:pointer">Cancelar</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  function cerrar(){ const el=document.getElementById('qr-modal-overlay');if(el)el.remove(); }
+  document.getElementById('qr-mx').addEventListener('click', cerrar);
+  document.getElementById('qr-cancelar').addEventListener('click', cerrar);
+  if (isUrl) document.getElementById('qr-abrir').addEventListener('click', () => window.open(rawVal, '_blank'));
+  document.getElementById('qr-cargada').addEventListener('click', () => { cerrar(); onConfirm(rawVal, true); });
+  document.getElementById('qr-nocargada').addEventListener('click', () => { cerrar(); onConfirm(rawVal, false); });
+}
+
 function scanQR(palletIdx) {
-  _openScanner('CL Pallet #' + (palletIdx+1), function(val) {
-    const l = getLote(); if (!l || !l.linea[palletIdx]) return;
-    l.linea[palletIdx].qrCode = val;
-    l.linea[palletIdx].qrLineaOK = true;
-    l.linea[palletIdx].qrRepro = false;
-    marcarPendiente();
-    patchCLCard(palletIdx);
-    mostrarToast('QR: ' + val + ' ✓');
+  _openScanner('CL Pallet #' + (palletIdx+1), function(rawVal) {
+    _mostrarModalQR(rawVal, 'CL Pallet #' + (palletIdx+1), function(val, urlCargada) {
+      const l = getLote(); if (!l || !l.linea[palletIdx]) return;
+      l.linea[palletIdx].qrCode = val;
+      l.linea[palletIdx].qrUrlCargada = urlCargada;
+      marcarPendiente();
+      patchCLCard(palletIdx);
+      mostrarToast(urlCargada ? '✓ URL cargada guardada' : '✗ URL no cargada registrada');
+    });
   });
 }
 
 function scanQRCF(palletIdx) {
-  _openScanner('CF Pallet #' + (palletIdx+1), function(val) {
-    const l = getLote(); if (!l || !l.final.pallets[palletIdx]) return;
-    l.final.pallets[palletIdx].qrCodeCF = val;
-    l.final.pallets[palletIdx].qrOK = true;
-    marcarPendiente();
-    patchCFCard(palletIdx);
-    mostrarToast('QR CF: ' + val + ' ✓');
+  _openScanner('CF Pallet #' + (palletIdx+1), function(rawVal) {
+    _mostrarModalQR(rawVal, 'CF Pallet #' + (palletIdx+1), function(val, urlCargada) {
+      const l = getLote(); if (!l || !l.final.pallets[palletIdx]) return;
+      l.final.pallets[palletIdx].qrCodeCF = val;
+      l.final.pallets[palletIdx].qrUrlCargadaCF = urlCargada;
+      marcarPendiente();
+      patchCFCard(palletIdx);
+      mostrarToast(urlCargada ? '✓ URL cargada guardada' : '✗ URL no cargada registrada');
+    });
   });
 }
 
