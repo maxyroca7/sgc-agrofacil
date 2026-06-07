@@ -221,7 +221,7 @@
     .et-lineas .et-row { grid-template-columns: 80px 1fr 36px; }
 
     .et-inductoras .et-head,
-    .et-inductoras .et-row { grid-template-columns: 80px 1fr 80px 70px 70px 36px; }
+    .et-inductoras .et-row { grid-template-columns: 80px 1fr 80px 70px 70px 50px 36px; }
 
     .et-input {
       background: transparent;
@@ -363,7 +363,7 @@
       .content { padding: 1.25rem; }
       .form-grid { grid-template-columns: 1fr; }
       .et-inductoras .et-head,
-      .et-inductoras .et-row { grid-template-columns: 60px 1fr 60px 55px 55px 36px; }
+      .et-inductoras .et-row { grid-template-columns: 60px 1fr 60px 55px 55px 44px 36px; }
     }
   </style>
 </head>
@@ -441,6 +441,10 @@
           <label>Aprobador (pie de PDF)</label>
           <input type="text" id="f-aprobador" placeholder="Ej: L. Pérez — Coordinadora SGC">
         </div>
+        <div class="field">
+          <label>Clave de cierre forzado</label>
+          <input type="text" id="f-claveCoord" placeholder="Ej: 1234">
+        </div>
         <div class="field form-full">
           <label>URL del logo (Firebase Storage)</label>
           <input type="text" id="f-logo" placeholder="https://storage.googleapis.com/...">
@@ -497,7 +501,7 @@
         </div>
         <div class="editable-table et-inductoras">
           <div class="et-head">
-            <span>ID</span><span>Nombre</span><span>Unidad</span><span>Mín</span><span>Máx</span><span></span>
+            <span>ID</span><span>Nombre</span><span>Unidad</span><span>Mín</span><span>Máx</span><span>Semáf.</span><span></span>
           </div>
           <div id="inductoras-body"></div>
         </div>
@@ -595,6 +599,10 @@
         <input class="et-input" value="${esc(ind.unidad)}" placeholder="kg" onchange="inductoras[${i}].unidad=this.value">
         <input class="et-input" type="number" value="${ind.min??''}" placeholder="0" onchange="inductoras[${i}].min=parseFloat(this.value)||0">
         <input class="et-input" type="number" value="${ind.max??''}" placeholder="0" onchange="inductoras[${i}].max=parseFloat(this.value)||0">
+        <label class="u-toggle" title="Semáforo activo" style="margin:auto">
+          <input type="checkbox" ${ind.semaforo ? 'checked' : ''} onchange="inductoras[${i}].semaforo=this.checked">
+          <span class="u-slider"></span>
+        </label>
         <button class="btn-del" onclick="delInductora(${i})" title="Eliminar">✕</button>
       </div>`).join('');
   }
@@ -602,7 +610,7 @@
   // ── Agregar filas ──
   window.addProducto  = () => { productos.push({id:'',nombre:'',codigo:''}); renderProductos(); };
   window.addLinea     = () => { lineas.push({id:'',nombre:''}); renderLineas(); };
-  window.addInductora = () => { inductoras.push({id:'',nombre:'',unidad:'',min:0,max:0}); renderInductoras(); };
+  window.addInductora = () => { inductoras.push({id:'',nombre:'',unidad:'',min:0,max:0,semaforo:false}); renderInductoras(); };
 
   // ── Eliminar filas ──
   window.delProducto  = i => { productos.splice(i,1);  renderProductos(); };
@@ -625,6 +633,7 @@
       document.getElementById('f-version').value    = d.version     || '';
       document.getElementById('f-elaborador').value = d.elaborador  || '';
       document.getElementById('f-aprobador').value  = d.aprobador   || '';
+      document.getElementById('f-claveCoord').value = d.claveCoord  || '';
       document.getElementById('f-logo').value       = d.logoUrl     || '';
       productos  = d.productos  || [];
       lineas     = d.lineas     || [];
@@ -652,6 +661,7 @@
         version:    document.getElementById('f-version').value.trim(),
         elaborador: document.getElementById('f-elaborador').value.trim(),
         aprobador:  document.getElementById('f-aprobador').value.trim(),
+        claveCoord: document.getElementById('f-claveCoord').value.trim(),
         logoUrl:    document.getElementById('f-logo').value.trim() || null,
         productos:  productos.filter(p => p.id || p.nombre),
         lineas:     lineas.filter(l => l.id || l.nombre),
