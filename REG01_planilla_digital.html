@@ -404,7 +404,6 @@ button.sc:active{background:#60a5fa;color:#fff;}
   .tb-left{gap:.35rem;margin-right:4px}
   .tb-appname,.tb-sep{display:none}
   .tb-title{font-size:.82rem;margin-left:2px}
-  .conn-dot{display:none !important}
   #btn-nl{margin-left:auto}
   .tb-spacer{display:none}
 }
@@ -412,7 +411,6 @@ button.sc:active{background:#60a5fa;color:#fff;}
 @media(max-width:480px){
   .tb-sep,.tb-title{display:none}
   #btn-nl{padding:5px 8px;font-size:11px}
-  .conn-dot{display:none !important}
 }
 /* ── OVERLAY ROTAR DISPOSITIVO ── */
 #rotate-overlay{
@@ -488,9 +486,6 @@ body[data-rol="coordinadora"] .ba-sav              { display: none !important; }
 /* ── Indicador sin guardar más visible ── */
 #sbar.show{background:var(--warn) !important;color:#1a1a1a !important;font-weight:600;padding:5px 14px;}
 
-/* ── Conn dot (online/offline) ── */
-.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;margin-left:6px;flex-shrink:0;transition:background .3s;}
-.conn-dot.offline{background:var(--muted);}
 </style>
 
 <script type="module">
@@ -547,7 +542,7 @@ body[data-rol="coordinadora"] .ba-sav              { display: none !important; }
     </div>
   <div id="print-body" style="display:none"></div>
     <div id="topbar">
-    <div class="tb-left"><a href="home.html" style="text-decoration:none;color:inherit"><div class="tb-brand"><img src="/qualityos-topbar.svg" alt="QualityOS" class="tb-logo"><div><div class="tb-name">Quality<span>OS</span></div><div class="tb-empresa-reg" id="tb-empresa-reg">—</div></div></div></a><span class="tb-sep">|</span><span class="tb-title">REG-01 Digital <span class="conn-dot" id="conn-dot" title="Online"></span></span></div>
+    <div class="tb-left"><a href="home.html" style="text-decoration:none;color:inherit"><div class="tb-brand"><img src="/qualityos-topbar.svg" alt="QualityOS" class="tb-logo"><div><div class="tb-name">Quality<span>OS</span></div><div class="tb-empresa-reg" id="tb-empresa-reg">—</div></div></div></a><span class="tb-sep">|</span><span class="tb-title">REG-01 Digital</span></div>
     <div id="tabs-wrap"></div>
     <div class="tb-spacer"></div>
     <button id="btn-nl" onclick="abrirModalLote()">+ Lote</button>
@@ -2860,17 +2855,6 @@ function aplicarTema(t){document.documentElement.classList.toggle('light',t==='l
 function toggleTheme(){const n=document.documentElement.classList.contains('light')?'dark':'light';localStorage.setItem('theme',n);aplicarTema(n);}
 aplicarTema(localStorage.getItem('theme')||'dark');
 
-// ── Online/offline indicator ──
-function updateConn(){
-  const d=document.getElementById('conn-dot');
-  if(!d)return;
-  d.classList.toggle('offline',!navigator.onLine);
-  d.title=navigator.onLine?'Online — sync activo':'Offline — guardando localmente';
-}
-window.addEventListener('online',updateConn);
-window.addEventListener('offline',updateConn);
-document.addEventListener('DOMContentLoaded',updateConn);
-setTimeout(updateConn,500);
 
 </script>
 <footer class="app-footer">
