@@ -192,240 +192,10 @@ select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px
 .toast.show { opacity:1; }
 
 /* ══ MOBILE / TABLET — vista de tarjetas ══ */
-@media (max-width: 900px) {
-  body { padding: 60px 8px 8px; font-size: 13px; background: var(--bg); color: var(--text); }
-  .page { background: var(--surface); box-shadow: none; padding: 10px; border-radius: 10px; max-width: 100%; }
-
-  /* Encabezado compacto */
-  .header { flex-direction: column; border-color: var(--border); }
-  .logo-area { width: 100%; min-height: 36px; border-right: none; border-bottom: 1px solid var(--border); display:flex; align-items:center; justify-content:center; background:transparent; }
-  .logo-area span { color: var(--accent); }
-  .doc-title span:first-child { font-size: 13px; color: var(--text); }
-  .doc-title span:last-child { color: var(--muted); }
-  .doc-meta { width: 100%; border-left: none; border-top: 1px solid var(--border); font-size: 11px; }
-  .meta-label { background: var(--bg); color: var(--muted); border-color: var(--border); }
-  .meta-val { color: var(--text); }
-
-  /* KPI cards */
-  .kpi-bar { gap: 8px; }
-  .kpi-card { background: var(--surface2); border-color: var(--border); border-radius: 8px; }
-  .kpi-label { color: var(--muted); }
-  .kpi-val { color: var(--accent); font-size: 26px; }
-  .kpi-card.warn .kpi-val { color: #f87171; }
-  .kpi-card.mid  .kpi-val { color: #fb923c; }
-  .kpi-sub { color: var(--text3); }
-
-  /* Logo: forzar tamaño en todos los browsers (Firefox no respeta height solo en SVG con width/height="100%") */
-  .logo-area img { display:block; height:44px !important; width:auto !important; max-width:180px !important; object-fit:contain; }
-
-  /* Ocultar tabla, mostrar tarjetas */
-  table { display: block; width: 100%; border: none; background: transparent; }
-  thead { display: none; }
-  #tBody { display: block; width: 100%; }
-  #tBody tr { display: block; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; padding: 12px; }
-  #tBody td { display: none; } /* ocultar celdas — se muestran las que tienen data-label */
-  #tBody td[data-label] { display: flex !important; flex-direction: column; max-width: none !important; overflow: visible !important; width: 100% !important; gap: 4px; padding: 5px 0; border: none !important; font-size: 12px; color: var(--text); }
-  #tBody td[data-label]::before { content: attr(data-label); color: var(--text3); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
-  #tBody td[data-label] input, #tBody td[data-label] select { background: var(--surface); color: var(--text); -webkit-text-fill-color: var(--text); border: 1px solid var(--border); border-radius: 5px; padding: 5px 8px; font-size: 12px; width: 100%; }
-  #tBody td[data-label] select { color: var(--text); -webkit-text-fill-color: var(--text); }
-  #tBody td[data-label] input:focus, #tBody td[data-label] select:focus { border-color: var(--accent); outline: none; }
-  .c0 { display: flex !important; max-width: none !important; overflow: visible !important; font-size: 16px; font-weight: 700; color: var(--accent); padding-bottom: 6px !important; border-bottom: 1px solid var(--border) !important; margin-bottom: 4px; }
-
-  /* Save bar */
-  .save-bar { background: var(--bg); border-radius: 6px; padding: 6px 10px; }
-  .save-msg { color: var(--muted); }
-
-  /* Legend oculta en mobile */
-  .legend { display: none; }
-  .sigs { display: none; }
-
-  /* ── NC Cards colapsables ── */
-  .nc-card-hdr { display: flex !important; align-items: center; gap: 8px; flex-wrap: nowrap; padding: 6px 0 8px !important; border: none !important; border-bottom: 1px solid var(--border) !important; cursor: pointer; user-select: none; max-width: none !important; overflow: visible !important; width: 100% !important; margin-bottom: 2px; }
-  .nc-hdr-num  { font-size: 15px; font-weight: 700; color: var(--accent); flex-shrink: 0; }
-  .nc-hdr-lote { font-size: 12px; font-weight: 700; color: var(--text); flex-shrink: 0; }
-  .nc-hdr-prod { font-size: 11px; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .nc-hdr-chev { margin-left: auto; font-size: 14px; color: var(--muted); flex-shrink: 0; display: inline-block; transition: transform .2s; }
-  #tBody tr.nc-collapsed .nc-hdr-chev { transform: rotate(-90deg); }
-  #tBody tr.nc-collapsed td[data-label],
-  #tBody tr.nc-collapsed .c0 { display: none !important; }
-  #tBody tr.nc-collapsed { padding-bottom: 4px !important; }
+@media (max-width: 540px) {
+  .topbar-vsep, .topbar-title { display: none; }
+  .tb-empresa { max-width: 80px; }
 }
-
-
-@media print {
-  body { background:#fff; padding:0; font-size:8.5px; color:#000; }
-  .page { box-shadow:none; padding:6px; max-width:100%; }
-  .no-print { display:none !important; }
-  .kpi-bar, .sev-bar { display:flex !important; }
-  .kpi-card { border:1px solid #999 !important; }
-  /* ── Ocultar flechas de inputs numéricos en print ── */
-  input[type="number"]::-webkit-inner-spin-button,
-  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none; appearance:none; margin:0; }
-  input[type="number"] { -moz-appearance:textfield; appearance:textfield; }
-  /* ── Reset mobile card layout para print ── */
-  table { display:table !important; width:100% !important; font-size:8.5px; border-collapse:collapse; }
-  thead { display:table-header-group !important; }
-  #tBody { display:table-row-group !important; }
-  #tBody tr { display:table-row !important; background:transparent !important; border:none !important; border-radius:0 !important; padding:0 !important; margin:0 !important; }
-  #tBody td, td { display:table-cell !important; max-width:none !important; overflow:visible !important; }
-  #tBody <!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Registro de No Conformidades – Agrofacil</title>
-<link rel="icon"             type="image/png" sizes="32x32" href="/favicon-32.png">
-  <link rel="apple-touch-icon"                               href="/apple-touch-icon.png">
-<style>
-/* ── TEMA DARK (default) ── */
-:root{--bg:#0d141f;--surface:#111c2a;--surface2:#162030;--border:#1e2f42;--border2:#243649;--teal:#2a6a6a;--teal-lit:#3d9090;--accent:#00c896;--green2:#22c55e;--warn:#f59e0b;--danger:#ef4444;--text:#e7eef6;--muted:#5b6f86;--muted2:#7a8fa8;--text3:#5b6f86;--topbar-bg:rgba(13,20,31,.92);}
-/* ── TEMA LIGHT ── */
-:root.light{--bg:#f0f5f2;--surface:#ffffff;--surface2:#f7faf8;--border:#cdddd6;--border2:#b8cec6;--teal:#2a6a6a;--teal-lit:#3d9090;--accent:#00906e;--green2:#16a34a;--warn:#d97706;--danger:#dc2626;--text:#1a2e28;--muted:#4a7068;--muted2:#5a8078;--text3:#4a7068;--topbar-bg:rgba(240,245,242,.96);}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'SF Mono','Fira Code','Cascadia Code',ui-monospace,monospace; font-size: 11px; background: var(--bg); padding: 62px 20px 20px; color: var(--text); }
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 55% 40% at 10% 5%,rgba(42,106,106,.08) 0%,transparent 70%),radial-gradient(ellipse 40% 30% at 90% 95%,rgba(0,200,150,.05) 0%,transparent 70%);pointer-events:none;z-index:0}
-body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(42,106,106,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(42,106,106,.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
-.topbar{background:var(--topbar-bg);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;position:fixed;top:0;left:0;right:0;z-index:100;}
-.topbar-left{display:flex;align-items:center;gap:.55rem;}
-.logo-tb{font-size:.78rem;font-weight:700;color:var(--accent);letter-spacing:.06em;}
-.topbar-title{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
-.topbar-vsep{width:1px;height:20px;background:var(--border);margin:0 .1rem}
-.topbar-right{display:flex;align-items:center;gap:.4rem;}
-.btn-t{display:flex;align-items:center;gap:.3rem;padding:.3rem .6rem;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--muted2);font-family:inherit;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .15s;text-decoration:none;}
-.btn-t:hover{border-color:var(--teal-lit);color:var(--teal-lit);}
-.btn-t.danger{border-color:rgba(239,68,68,.3);color:var(--danger);}
-.btn-t.danger:hover{background:rgba(239,68,68,.08);}
-.page { background: var(--surface); max-width: 100%; margin: 0 auto; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.4); position:relative; z-index:1; }
-
-.header { display: flex; align-items: stretch; border: 2px solid var(--border); margin-bottom: 12px; }
-.logo-area { width: 160px; min-height: 70px; border-right: 2px solid var(--border); background: var(--surface2); display: flex; align-items: center; justify-content: center; }
-.logo-area span { font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
-.doc-title { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
-.doc-title span:first-child { font-size: 14px; font-weight: 700; text-transform: uppercase; }
-.doc-title span:last-child { font-size: 10px; color: var(--muted); }
-.doc-meta { width: 210px; border-left: 2px solid var(--border); font-size: 10px; }
-.meta-row { display: flex; border-bottom: 1px solid var(--border); }
-.meta-row:last-child { border-bottom: none; }
-.meta-label { width: 80px; padding: 4px 6px; background: var(--surface2); font-weight: 700; color: var(--muted); border-right: 1px solid var(--border); }
-.meta-val { padding: 4px 6px; flex: 1; background: var(--surface2); color: var(--text); }
-
-.kpi-bar { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-.kpi-card { flex: 1; min-width: 130px; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; background: var(--surface2); }
-.kpi-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 2px; }
-.kpi-val { font-size: 22px; font-weight: 700; color: var(--accent); }
-.kpi-sub { font-size: 9px; color: var(--text3); margin-top: 1px; }
-.kpi-card.warn .kpi-val { color: #c0392b; }
-.kpi-card.mid  .kpi-val { color: #e67e22; }
-
-.sev-bar { display: flex; gap: 8px; margin-bottom: 12px; }
-.sev-box { flex: 1; border-radius: 5px; padding: 6px 10px; font-size: 10px; font-weight: 700; text-align: center; }
-.sev-box .sev-num { font-size: 20px; display: block; }
-.sev-leve { background: #d0ecec; color: #1a5555; border: 1px solid #3a9090; }
-.sev-mod  { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
-.sev-crit { background: #f8d7da; color: #721c24; border: 1px solid #e74c3c; }
-:root:not(.light) .sev-leve { background: #154545; color: #b5e8e5; border-color: var(--accent); }
-:root:not(.light) .sev-mod  { background: #451a03; color: #fed7aa; border-color: #fb923c; }
-:root:not(.light) .sev-crit { background: #450a0a; color: #fecaca; border-color: #f87171; }
-
-.save-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 11px; }
-.save-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); display: inline-block; }
-.save-dot.saving { background: #ffc107; }
-.save-dot.error  { background: #e74c3c; }
-.save-msg { color: var(--muted); }
-
-table { width: 100%; border-collapse: collapse; font-size: 10px; }
-th { background: #2a6a6a; color: #fff; padding: 6px 4px; text-align: center; border: 1px solid #1e5530; font-size: 9px; vertical-align: middle; line-height: 1.3; }
-th .kpi-tag { display: inline-block; background: rgba(255,255,255,.22); border-radius: 8px; font-size: 7.5px; padding: 1px 4px; margin-top: 2px; }
-td { border: 1px solid var(--border); padding: 3px 4px; vertical-align: middle; max-width: 0; overflow: hidden; background: var(--surface); color: var(--text); }
-tr:nth-child(even) td { background: var(--surface2); }
-
-/* Columnas rediseñadas: fechas angostas, producto/lote/desc más anchos */
-.c0 {width:24px; text-align:center}
-.c1 {width:62px}                        /* Fecha Detección */
-.c2 {width:72px}                        /* N° Lote */
-.c3 {width:100px; word-break:break-word; white-space:normal} /* Producto */
-.c4 {width:110px}                       /* Tipo de Desvío */
-.c5 {width:50px; text-align:center}     /* Gravedad */
-.c5b{width:72px; text-align:center}     /* Detección (Control Línea/Final) */
-.c6 {width:148px; word-break:break-word; white-space:normal} /* Descripción */
-.c7 {width:46px; text-align:right}      /* Litros NC */
-.c8 {width:50px; text-align:right}      /* Litros Tot */
-.c9 {width:118px; word-break:break-word; white-space:normal} /* Acción */
-.c10{width:56px}                        /* Plazo Reproceso */
-.c11{width:66px; text-align:center}     /* Estado */
-.c12{width:56px}                        /* Fecha Cierre */
-.c13{width:44px; text-align:center}     /* Pallets NC */
-.c14{width:74px; word-break:break-word; white-space:normal} /* Responsable — ISO 10.2.2 */
-.c15{width:60px; text-align:center}     /* Verif. Eficacia — ISO 10.2.2 */
-
-.badge { display:inline-block; padding:2px 6px; border-radius:10px; font-size:8.5px; font-weight:700; white-space:nowrap; }
-.b-pend  { background:#fff3cd; color:#856404; border:1px solid #ffc107; }
-.b-proc  { background:#cce5ff; color:#004085; border:1px solid #66b2ff; }
-.b-final { background:#d0ecec; color:#1a5555; border:1px solid #3a9090; }
-.b-cancel{ background:#f8d7da; color:#721c24; border:1px solid #f5c6cb; }
-.b-efok  { background:#d0ecec; color:#1a5555; border:1px solid #3a9090; }
-.b-efno  { background:#f8d7da; color:#721c24; border:1px solid #e74c3c; }
-.b-efpend{ background:#e2e3e5; color:#383d41; border:1px solid #adb5bd; }
-
-.sev-badge { display:inline-block; padding:2px 5px; border-radius:8px; font-size:8px; font-weight:700; }
-.sb-leve { background:#d0ecec; color:#1a5555; }
-.sb-mod  { background:#fff3cd; color:#856404; }
-.sb-crit { background:#f8d7da; color:#721c24; }
-
-.legend { margin-top:12px; border:1px solid var(--border); padding:8px 12px; font-size:10px; background:var(--surface2); border-radius:6px; }
-.legend strong { display:block; margin-bottom:4px; font-size:10.5px; }
-.legend-row { display:flex; flex-wrap:wrap; gap:5px 16px; margin-bottom:6px; }
-
-.sigs { display:flex; gap:24px; margin-top:20px; }
-.sig-box { flex:1; border-top:1.5px solid var(--border); padding-top:4px; text-align:center; font-size:10px; color:var(--muted); }
-
-.toolbar { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; background:var(--surface); border-radius:8px; padding:8px 12px; }
-.toolbar-row { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
-.btn { display:flex; align-items:center; gap:.3rem; padding:.28rem .65rem; border:1px solid var(--border); border-radius:6px; cursor:pointer; font-size:.72rem; background:transparent; color:var(--muted); font-family:inherit; transition:all .15s; text-decoration:none; white-space:nowrap; }
-.btn:hover { border-color:var(--accent); color:var(--accent); }
-.btn-add   { border-color:rgba(0,200,150,.4); color:var(--accent); }
-.btn-add:hover { background:rgba(0,200,150,.08); }
-.btn-del   { border-color:rgba(239,68,68,.35); color:#ef4444; }
-.btn-del:hover { background:rgba(239,68,68,.08); }
-.btn-print { }
-.btn-export { border-color:rgba(77,184,184,.4); color:#4db8b8; }
-.btn-export:hover { background:rgba(77,184,184,.08); }
-.btn-copy  { }
-.btn-copy:hover { }
-.btn-clear { border-color:rgba(249,115,22,.35); color:#fb923c; }
-.btn-clear:hover { background:rgba(249,115,22,.08); }
-#panel-codificacion { display:none; margin-bottom:10px; border:1px solid var(--border); border-radius:6px; background:var(--surface2); padding:10px 16px; font-size:11px; }
-#panel-codificacion .pcod-row { display:flex; gap:20px; flex-wrap:wrap; align-items:center; }
-#panel-codificacion .pcod-item { display:flex; gap:5px; align-items:baseline; }
-#panel-codificacion .pcod-label { color:var(--muted); font-weight:700; font-size:10px; white-space:nowrap; }
-#panel-codificacion .pcod-val { color:var(--text); }
-@media print { #panel-codificacion { display:block !important; } }
-
-select, input[type="text"], input[type="date"], input[type="number"] {
-  width:100%; border:none; background:inherit; font-size:9.5px;
-  font-family:Arial,sans-serif; padding:1px 2px; color:var(--text);
-  -webkit-text-fill-color: var(--text);
-  color-scheme: dark;
-}
-:root.light select, :root.light input[type="text"], :root.light input[type="date"], :root.light input[type="number"] { color-scheme: light; }
-/* Texto largo en inputs: permitir wrap visual */
-input[type="text"] {
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-input[type="number"] { text-align:right; }
-select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px; background:var(--surface2); }
-/* Span de fecha que aparece solo en impresión */
-.print-date { font-size:8px; display:none; }
-@media print { .print-date { display:inline; } }
-
-.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
-  background:var(--surface2); color:var(--text); border:1px solid var(--border); padding:10px 22px; border-radius:6px;
-  font-size:12px; font-weight:700; opacity:0; transition:opacity .3s; pointer-events:none; z-index:999; }
-.toast.show { opacity:1; }
-
-/* ══ MOBILE / TABLET — vista de tarjetas ══ */
 @media (max-width: 900px) {
   body { padding: 60px 8px 8px; font-size: 13px; background: var(--bg); color: var(--text); }
   .page { background: var(--surface); box-shadow: none; padding: 10px; border-radius: 10px; max-width: 100%; }
@@ -569,13 +339,16 @@ html.coordinadora #tBody select { pointer-events:none; opacity:.6; }
 .tb-logo{display:block;flex-shrink:0;height:34px;width:auto;object-fit:contain;}
 .tb-name{font-size:.8rem;font-weight:700;letter-spacing:.06em;color:var(--text);}
 .tb-name span{color:var(--accent);}
-.tb-empresa{font-size:.6rem;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;opacity:0;transition:opacity .4s}
+.tb-empresa{font-size:.6rem;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;opacity:0;transition:opacity .4s;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tb-empresa.loaded{opacity:1}
 .app-footer{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:.5rem;padding:1rem;border-top:1px solid var(--border);font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);opacity:.5;}
 .status-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:pulse-dot 2.4s ease-in-out infinite}
 @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
 /* nc-card-hdr oculto en desktop — solo se muestra en mobile via media query */
 .nc-card-hdr { display: none; }
+
+    /* Botón Inicio — solo ícono en mobile */
+    @media (max-width: 480px) { .btn-inicio-txt { display: none; } }
 </style>
   <!-- SheetJS para exportar .xlsx compatible con Power BI -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -645,7 +418,7 @@ html.coordinadora #tBody select { pointer-events:none; opacity:.6; }
     <span class="topbar-title">Registro de NCs</span>
   </div>
   <div class="topbar-right">
-    <a href="home.html" class="btn-t"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Inicio</a>
+    <a href="home.html" class="btn-t"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="btn-inicio-txt"> Inicio</span></a>
     <button id="btn-theme" class="btn-t" onclick="toggleTheme()" title="Cambiar tema"></button>
     <button class="btn-t danger" onclick="import('./firebase-init.js').then(m=>m.cerrarSesion())"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg> Salir</button>
   </div>
@@ -734,7 +507,7 @@ html.coordinadora #tBody select { pointer-events:none; opacity:.6; }
   </div>
 
   <div class="header" id="doc-header-print" style="display:none">
-    <div class="logo-area"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+Cjxzdmcgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDI0MDMgNjEzIiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHhtbDpzcGFjZT0icHJlc2VydmUiIHhtbG5zOnNlcmlmPSJodHRwOi8vd3d3LnNlcmlmLmNvbS8iIHN0eWxlPSJmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtzdHJva2UtbGluZWpvaW46cm91bmQ7c3Ryb2tlLW1pdGVybGltaXQ6MjsiPgogICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSwtMzk4MC40ODY2NjcsLTEyNzQuNDQzMzMzKSI+CiAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoOC4zMzMzMzMsMCwwLDguMzMzMzMzLDAsMCkiPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDU3NS4yNjM0LDIwMS4wMjk0KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtMjIuNjY1TC0yLjMzOCwtNi4xNzVMMi4zMzYsLTYuMTc1TDAsLTIyLjY2NVpNLTMuMzE0LC0wLjAzM0wtNC44NDgsOS41OEwtMTEuNDE3LDkuNThMLTQuMzA3LC0zMi4yNDVMNC4zNzIsLTMyLjI0NUwxMS4zODEsOS41OEw0Ljc0OCw5LjU4TDMuMjcyLC0wLjAzM0wtMy4zMTQsLTAuMDMzWiIgc3R5bGU9ImZpbGw6cmdiKDgsMTI4LDEzMSk7ZmlsbC1ydWxlOm5vbnplcm87Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSw2MDAuOTk3OCwxNjguMzE3NykiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsNDIuODI3Qy0yLjc4MSw0Mi44MjcgLTUuMTQ2LDQxLjg0OCAtNy4wOTMsMzkuODg5Qy05LjA0LDM3LjkzMSAtMTAuMDEzLDM1LjU4MyAtMTAuMDEzLDMyLjg0NkwtMTAuMDEzLDEwLjAxNEMtMTAuMDEzLDcuMjMyIC05LjAzNCw0Ljg2OCAtNy4wNzUsMi45MkMtNS4xMTcsMC45NzMgLTIuNzU5LDAgMCwwQzIuNzgyLDAgNS4xNDEsMC45NzkgNy4wNzcsMi45MzdDOS4wMTQsNC44OTYgOS45ODEsNy4yNTUgOS45ODEsMTAuMDE0TDkuOTgxLDE0Ljc4N0wzLjQzOCwxNC43ODdMMy40MzgsOS44OEMzLjQzOCw4Ljg3OSAzLjA4Myw4LjAyMiAyLjM3MSw3LjMxQzEuNjU4LDYuNTk4IDAuODAyLDYuMjQyIC0wLjE5OSw2LjI0MkMtMS4yMDEsNi4yNDIgLTIuMDUzLDYuNTk4IC0yLjc1Myw3LjMxQy0zLjQ1NCw4LjAyMiAtMy44MDUsOC44NzkgLTMuODA1LDkuODhMLTMuODA1LDMyLjc3OUMtMy44MDUsMzMuNzggLTMuNDU0LDM0LjYzMSAtMi43NTMsMzUuMzMzQy0yLjA1MywzNi4wMzMgLTEuMjAxLDM2LjM4NSAtMC4xOTksMzYuMzg1QzAuODAyLDM2LjM4NSAxLjY1OCwzNi4wMzQgMi4zNzEsMzUuMzM2QzMuMDgzLDM0LjYzNyAzLjQzOCwzMy43ODggMy40MzgsMzIuNzg5TDMuNDM4LDI0LjU2N0wtMC4wNjYsMjQuNTY3TC0wLjA2NiwxOC4yMjVMOS45ODEsMTguMjI1TDkuOTgxLDMyLjg0NkM5Ljk4MSwzNS42MjggOS4wMDIsMzcuOTg2IDcuMDQ0LDM5LjkyMkM1LjA4Niw0MS44NTggMi43MzgsNDIuODI3IDAsNDIuODI3IiBzdHlsZT0iZmlsbDpyZ2IoOCwxMjgsMTMxKTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDYzMC4xNzE2LDIwMC41Mjg0KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtMjEuNjYzQzAsLTI0LjA4OCAtMS4yMDEsLTI1LjMwMiAtMy42MDUsLTI1LjMwMkwtNy40MSwtMjUuMzAyTC03LjQxLC0xMS45MTZMLTMuNjA1LC0xMS45MTZDLTIuNjA0LC0xMS45MTYgLTEuNzUyLC0xMi4yNzEgLTEuMDUyLC0xMi45ODRDLTAuMzUxLC0xMy42OTYgMCwtMTQuNTUzIDAsLTE1LjU1NUwwLC0yMS42NjNaTS0zLjc3MiwtMzEuNzQ0Qy0wLjI1NiwtMzEuNzQ0IDIuMzI1LC0zMC43NzYgMy45NzMsLTI4Ljg0QzUuNDE4LC0yNy4xNDkgNi4xNDIsLTI0Ljc5IDYuMTQyLC0yMS43NjNMNi4xNDIsLTE1LjY4OEM2LjE0MiwtMTIuNzI4IDUuMDE4LC0xMC4yMjUgMi43NzEsLTguMTc4TDcuNDQzLDEwLjA4MUwwLjYyMSwxMC4wODFMLTMuMjA1LC01LjY3NEwtNy40MSwtNS42NzRMLTcuNDEsMTAuMDgxTC0xMy43MTksMTAuMDgxTC0xMy43MTksLTMxLjc0NEwtMy43NzIsLTMxLjc0NFoiIHN0eWxlPSJmaWxsOnJnYig4LDEyOCwxMzEpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNjU1LjM3MjgsMjAxLjIzMSkiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsLTIzLjFDMCwtMjQuMTAxIC0wLjM1LC0yNC45NTMgLTEuMDUxLC0yNS42NTRDLTEuNzUyLC0yNi4zNTQgLTIuNjAzLC0yNi43MDUgLTMuNjA0LC0yNi43MDVDLTQuNjA1LC0yNi43MDUgLTUuNDYzLC0yNi4zNTQgLTYuMTc1LC0yNS42NTRDLTYuODg3LC0yNC45NTMgLTcuMjQyLC0yNC4xMDEgLTcuMjQyLC0yMy4xTC03LjI0MiwtMC4yMDJDLTcuMjQyLDAuNzk5IC02Ljg4NywxLjY1MSAtNi4xNzUsMi4zNTJDLTUuNDYzLDMuMDUzIC00LjYwNSwzLjQwNCAtMy42MDQsMy40MDRDLTIuNjAzLDMuNDA0IC0xLjc1MiwzLjA1MyAtMS4wNTEsMi4zNTJDLTAuMzUsMS42NTEgMCwwLjc5OSAwLC0wLjIwMkwwLC0yMy4xWk0tMy40MzgsLTMyLjk4QC0wLjY1NiwtMzIuOTggMS43MDksLTMyLjAwMSAzLjY1NSwtMzAuMDQzQzUuNjA0LC0yOC4wODQgNi41NzYsLTI1LjcyNSA2LjU3NiwtMjIuOTY3TDYuNTc2LC0wLjEzNEM2LjU3NiwyLjY0NyA1LjU5OCw1LjAxMiAzLjY0LDYuOTU5QzEuNjgxLDguOTA3IC0wLjY3OCw5Ljg4IC0zLjQzOCw5Ljg4Qy02LjIyLDkuODggLTguNTc3LDguOTAxIC0xMC41MTQsNi45NDNDLTEyLjQ1LDQuOTg1IC0xMy40MTgsMi42MjYgLTEzLjQxOCwtMC4xMzRMLTEzLjQxOCwtMjIuOTY3Qy0xMy40MTgsLTI1Ljc0NyAtMTIuNDM4LC0yOC4xMTIgLTEwLjQ4LC0zMC4wNkMtOC41MjIsLTMyLjAwNyAtNi4xNzUsLTMyLjk4IC0zLjQzOCwtMzIuOTgiIHN0eWxlPSJmaWxsOnJnYig4LDEyOCwxMzEpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNjczLjc5ODYsMTY4Ljc1MTUpIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDQxLjg1OEwtNi4zMDksNDEuODU4TC02LjMwOSwwTDExLjY0OCwwTDExLjY0OCw2LjM0MUwwLDYuMzQxTDAsMTcuNzU3TDguNTExLDE3Ljc1N0w4LjUxMSwyNC4xTDAsMjQuMUwwLDQxLjg1OFoiIHN0eWxlPSJmaWxsOnJnYigxNjEsMjA1LDU4KTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDY5NS45Mjk0LDIwMS4wMjk0KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtMjIuNjY1TC0yLjMzNywtNi4xNzVMMi4zMzYsLTYuMTc1TDAsLTIyLjY2NVpNLTMuMzE1LC0wLjAzM0wtNC44NDcsOS41OEwtMTEuNDE2LDkuNThMLTQuMzA2LC0zMi4yNDVMNC4zNzIsLTMyLjI0NUwxMS4zODIsOS41OEw0Ljc0OCw5LjU4TDMuMjcyLC0wLjAzM0wtMy4zMTUsLTAuMDMzWiIgc3R5bGU9ImZpbGw6cmdiKDE2MSwyMDUsNTgpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNzIxLjY2NDgsMTY4LjMxNzcpIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDQyLjgyN0MtMi43ODIsNDIuODI3IC01LjE0Niw0MS44NTMgLTcuMDk0LDM5LjkwNUMtOS4wNCwzNy45NTkgLTEwLjAxNCwzNS42MDUgLTEwLjAxNCwzMi44NDZMLTEwLjAxNCwxMC4wMTRDLTEwLjAxNCw3LjIzMiAtOS4wMzQsNC44NjggLTcuMDc2LDIuOTJDLTUuMTE4LDAuOTczIC0yLjc1OSwwIDAsMEMyLjc4MSwwIDUuMTQxLDAuOTc5IDcuMDc3LDIuOTM3QzkuMDEzLDQuODk2IDkuOTgsNy4yNTUgOS45OCwxMC4wMTRMOS45OCwxNC43ODdMMy40MzgsMTQuNzg3TDMuNDM4LDkuODhDMy40MzgsOC44NzkgMy4wODIsOC4wMjIgMi4zNyw3LjMxQzEuNjU3LDYuNTk4IDAuODAyLDYuMjQyIC0wLjE5OSw2LjI0MkMtMS4yMDEsNi4yNDIgLTIuMDUzLDYuNTk4IC0yLjc1Myw3LjMxQy0zLjQ1NSw4LjAyMiAtMy44MDUsOC44NzkgLTMuODA1LDkuODhMLTMuODA1LDMyLjc3OUMtMy44MDUsMzMuNzggLTMuNDU1LDM0LjYzMSAtMi43NTMsMzUuMzMzQy0yLjA1MywzNi4wMzMgLTEuMjAxLDM2LjM4NSAtMC4xOTksMzYuMzg1QzAuODAyLDM2LjM4NSAxLjY1NywzNi4wMzMgMi4zNywzNS4zMzNDMy4wODIsMzQuNjMxIDMuNDM4LDMzLjc4IDMuNDM4LDMyLjc3OUwzLjQzOCwyNy4wMDVMOS45OCwyNy4wMDVMOS45OCwzMi44NDZDOS45OCwzNS42MjggOS4wMDIsMzcuOTg2IDcuMDQzLDM5LjkyMkM1LjA4NSw0MS44NTggMi43MzcsNDIuODI3IDAsNDIuODI3IiBzdHlsZT0iZmlsbDpyZ2IoMTYxLDIwNSw1OCk7ZmlsbC1ydWxlOm5vbnplcm87Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoLTEsMCwwLDEsMTQ3OS45NDYsLTIxNS44ODUpIj4KICAgICAgICAgICAgICAgIDxyZWN0IHg9IjczNi44MTgiIHk9IjM4NC42NyIgd2lkdGg9IjYuMzEiIGhlaWdodD0iNDEuODI1IiBzdHlsZT0iZmlsbDpyZ2IoMTYxLDIwNSw1OCk7Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSw3NjUuOTU5NywxNjguNzg0NSkiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsNDEuODI1TC0xNy4xOSw0MS44MjVMLTE3LjE5LDBMLTEwLjg4MiwwTC0xMC44ODIsMzUuNTVMMCwzNS41NUwwLDQxLjgyNVoiIHN0eWxlPSJmaWxsOnJnYigxNjEsMjA1LDU4KTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDQ3Ny42NTg5LDE5MS44NjM4KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtMTAuODA5TDAsMC41NTlDNy42MjksLTMuNTAxIDE1LjA4LC02LjQyNCAyMS45OTQsLTguNTMzQzE0LjEwNywtMTAuODA5IDYuODQ2LC0xMS4zNjggMCwtMTAuODA5IiBzdHlsZT0iZmlsbDpyZ2IoMjE1LDIyMywzNCk7ZmlsbC1ydWxlOm5vbnplcm87Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSw1NDAuMjcyMiwxNzkuOTEwNCkiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsMTYuOTU2TDAsMS40MjZDLTIwLjcyNSwwIC00MC42MDcsNC4wOTcgLTU0LjU5LDExLjY0N0MtMjYuNjc4LDguNTMxIC01LjIwOSwxNC44NjUgMCwxNi45NTYiIHN0eWxlPSJmaWxsOnJnYigxNjEsMjA1LDU4KTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDQ3OC44NzM4LDIwMi40MTk1KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtOC41NTlDLTAuNDAxLC04LjUwOCAtMC44MjMsLTguNDU2IC0xLjIxNSwtOC4zOTVMLTEuMjE1LC0yLjY3NkMxMy43NzIsLTIuMzg2IDI1LjAxNiwwLjg4NSAzMC4wNzksMi41MTJDMzIuMjEsMS41NDggMzQuNDk5LDAuNjAxIDM2Ljk3NywtMC4zMDZDMzguNDIzLC0wLjg0OSAzOS44ODcsLTEuMzU0IDQxLjM4MSwtMS44MTNDNDQuNjY2LC0yLjg2MSA0OC4yMzIsLTMuODI4IDUyLjA3NiwtNC42ODJDMzYuNzk3LC05LjA4OSAxOC44ODYsLTExLjA3MSAwLC04LjU1OSIgc3R5bGU9ImZpbGw6cmdiKDAsMTc3LDEyMyk7ZmlsbC1ydWxlOm5vbnplcm87Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSw0NzcuNjU4OSwyMTYuMDI1NykiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsLTE0LjUwNkwwLC0xMC45MjlDMCwtOC4wOTYgMS40MzMsLTUuNjYxIDMuODg1LC00LjIzOUwxMS4yMjgsMEMxNC4xMDcsLTIuNTQzIDIwLjcxMSwtNS45MTQgMjcuMzM4LC05LjM2NEMxMS4wMTMsLTE0LjI3NSAwLjcsLTE0LjQ2NCAwLC0xNC41MDYiIHN0eWxlPSJmaWxsOnJnYig5LDE0NCwxMTkpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNTA1LjEyMjgsMjAwLjE4MjcpIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDI1LjIxM0MyLjQ1NSwyNi42MzUgNS4yNjgsMjYuNjM1IDcuNzIxLDI1LjIxM0wzMS4zMDgsMTEuNjA0QzMzLjc2LDEwLjE4MiAzNS4xNDksNy43NDcgMzUuMTQ5LDQuOTE0TDM1LjE0OSwtMS40MjJDMzAuODI1LC0wLjkzOCA5LjYsMi4xNDYgLTEzLjM1NiwxNy42N0wwLDI1LjIxM1oiIHN0eWxlPSJmaWxsOnJnYig4LDEyOCwxMzEpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNTM2LjMwNDQsMTY2LjYyMDIpIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDAuOTgxTC0yMy41NzEsLTEyLjYyOEMtMjYuMDIzLC0xNC4wNCAtMjguODM5LC0xNC4wNCAtMzEuMjg5LC0xMi42MjhMLTU0Ljg3MywwLjk4MUMtNTcuMzI2LDIuNDA4IC01OC42NDYsNC44MzIgLTU4LjY0Niw3LjY3TC01OC42NDYsMTEuNTMyQy00OS45NjcsMTEuNDY3IC00My41NzgsMTIuMjUzIC0zMy4xOSwxNS4wMjFDLTExLjc2Myw5LjE2NiAzLjk2OCwxMS4xMjMgMy45NjgsMTEuMTIzTDMuOTY4LDcuNjdDMy45NjgsNC44MzIgMi40NjYsMi40MDggMCwwLjk4MSIgc3R5bGU9ImZpbGw6cmdiKDIwOSwyMTEsMjEyKTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+Cg==" alt="Agrofacil" style="display:block;height:44px;width:auto;max-width:180px;object-fit:contain;padding:4px"></div>
+    <div class="logo-area"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+Cjxzdmcgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDI0MDMgNjEzIiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHhtbDpzcGFjZT0icHJlc2VydmUiIHhtbG5zOnNlcmlmPSJodHRwOi8vd3d3LnNlcmlmLmNvbS8iIHN0eWxlPSJmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtzdHJva2UtbGluZWpvaW46cm91bmQ7c3Ryb2tlLW1pdGVybGltaXQ6MjsiPgogICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSwtMzk4MC40ODY2NjcsLTEyNzQuNDQzMzMzKSI+CiAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoOC4zMzMzMzMsMCwwLDguMzMzMzMzLDAsMCkiPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDU3NS4yNjM0LDIwMS4wMjk0KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtMjIuNjY1TC0yLjMzOCwtNi4xNzVMMi4zMzYsLTYuMTc1TDAsLTIyLjY2NVpNLTMuMzE0LC0wLjAzM0wtNC44NDgsOS41OEwtMTEuNDE3LDkuNThMLTQuMzA3LC0zMi4yNDVMNC4zNzIsLTMyLjI0NUwxMS4zODEsOS41OEw0Ljc0OCw5LjU4TDMuMjcyLC0wLjAzM0wtMy4zMTQsLTAuMDMzWiIgc3R5bGU9ImZpbGw6cmdiKDgsMTI4LDEzMSk7ZmlsbC1ydWxlOm5vbnplcm87Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSw2MDAuOTk3OCwxNjguMzE3NykiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsNDIuODI3Qy0yLjc4MSw0Mi44MjcgLTUuMTQ2LDQxLjg0OCAtNy4wOTMsMzkuODg5Qy05LjA0LDM3LjkzMSAtMTAuMDEzLDM1LjU4MyAtMTAuMDEzLDMyLjg0NkwtMTAuMDEzLDEwLjAxNEMtMTAuMDEzLDcuMjMyIC05LjAzNCw0Ljg2OCAtNy4wNzUsMi45MkMtNS4xMTcsMC45NzMgLTIuNzU5LDAgMCwwQzIuNzgyLDAgNS4xNDEsMC45NzkgNy4wNzcsMi45MzdDOS4wMTQsNC44OTYgOS45ODEsNy4yNTUgOS45ODEsMTAuMDE0TDkuOTgxLDE0Ljc4N0wzLjQzOCwxNC43ODdMMy40MzgsOS44OEMzLjQzOCw4Ljg3OSAzLjA4Myw4LjAyMiAyLjM3MSw3LjMxQzEuNjU4LDYuNTk4IDAuODAyLDYuMjQyIC0wLjE5OSw2LjI0MkMtMS4yMDEsNi4yNDIgLTIuMDUzLDYuNTk4IC0yLjc1Myw3LjMxQy0zLjQ1NCw4LjAyMiAtMy44MDUsOC44NzkgLTMuODA1LDkuODhMLTMuODA1LDMyLjc3OUMtMy44MDUsMzMuNzggLTMuNDU0LDM0LjYzMSAtMi43NTMsMzUuMzMzQy0yLjA1MywzNi4wMzMgLTEuMjAxLDM2LjM4NSAtMC4xOTksMzYuMzg1QzAuODAyLDM2LjM4NSAxLjY1OCwzNi4wMzQgMi4zNzEsMzUuMzM2QzMuMDgzLDM0LjYzNyAzLjQzOCwzMy43ODggMy40MzgsMzIuNzg5TDMuNDM4LDI0LjU2N0wtMC4wNjYsMjQuNTY3TC0wLjA2NiwxOC4yMjVMOS45ODEsMTguMjI1TDkuOTgxLDMyLjg0NkM5Ljk4MSwzNS42MjggOS4wMDIsMzcuOTg2IDcuMDQ0LDM5LjkyMkM1LjA4Niw0MS44NTggMi43MzgsNDIuODI3IDAsNDIuODI3IiBzdHlsZT0iZmlsbDpyZ2IoOCwxMjgsMTMxKTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDYzMC4xNzE2LDIwMC41Mjg0KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtMjEuNjYzQzAsLTI0LjA4OCAtMS4yMDEsLTI1LjMwMiAtMy42MDUsLTI1LjMwMkwtNy40MSwtMjUuMzAyTC03LjQxLC0xMS45MTZMLTMuNjA1LC0xMS45MTZDLTIuNjA0LC0xMS45MTYgLTEuNzUyLC0xMi4yNzEgLTEuMDUyLC0xMi45ODRDLTAuMzUxLC0xMy42OTYgMCwtMTQuNTUzIDAsLTE1LjU1NUwwLC0yMS42NjNaTS0zLjc3MiwtMzEuNzQ0Qy0wLjI1NiwtMzEuNzQ0IDIuMzI1LC0zMC43NzYgMy45NzMsLTI4Ljg0QzUuNDE4LC0yNy4xNDkgNi4xNDIsLTI0Ljc5IDYuMTQyLC0yMS43NjNMNi4xNDIsLTE1LjY4OEM2LjE0MiwtMTIuNzI4IDUuMDE4LC0xMC4yMjUgMi43NzEsLTguMTc4TDcuNDQzLDEwLjA4MUwwLjYyMSwxMC4wODFMLTMuMjA1LC01LjY3NEwtNy40MSwtNS42NzRMLTcuNDEsMTAuMDgxTC0xMy43MTksMTAuMDgxTC0xMy43MTksLTMxLjc0NEwtMy43NzIsLTMxLjc0NFoiIHN0eWxlPSJmaWxsOnJnYig4LDEyOCwxMzEpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNjU1LjM3MjgsMjAxLjIzMSkiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsLTIzLjFDMCwtMjQuMTAxIC0wLjM1LC0yNC45NTMgLTEuMDUxLC0yNS42NTRDLTEuNzUyLC0yNi4zNTQgLTIuNjAzLC0yNi43MDUgLTMuNjA0LC0yNi43MDVDLTQuNjA1LC0yNi43MDUgLTUuNDYzLC0yNi4zNTQgLTYuMTc1LC0yNS42NTRDLTYuODg3LC0yNC45NTMgLTcuMjQyLC0yNC4xMDEgLTcuMjQyLC0yMy4xTC03LjI0MiwtMC4yMDJDLTcuMjQyLDAuNzk5IC02Ljg4NywxLjY1MSAtNi4xNzUsMi4zNTJDLTUuNDYzLDMuMDUzIC00LjYwNSwzLjQwNCAtMy42MDQsMy40MDRDLTIuNjAzLDMuNDA0IC0xLjc1MiwzLjA1MyAtMS4wNTEsMi4zNTJDLTAuMzUsMS42NTEgMCwwLjc5OSAwLC0wLjIwMkwwLC0yMy4xWk0tMy40MzgsLTMyLjk4Qy0wLjY1NiwtMzIuOTggMS43MDksLTMyLjAwMSAzLjY1NSwtMzAuMDQzQzUuNjA0LC0yOC4wODQgNi41NzYsLTI1LjcyNSA2LjU3NiwtMjIuOTY3TDYuNTc2LC0wLjEzNEM2LjU3NiwyLjY0NyA1LjU5OCw1LjAxMiAzLjY0LDYuOTU5QzEuNjgxLDguOTA3IC0wLjY3OCw5Ljg4IC0zLjQzOCw5Ljg4Qy02LjIyLDkuODggLTguNTc3LDguOTAxIC0xMC41MTQsNi45NDNDLTEyLjQ1LDQuOTg1IC0xMy40MTgsMi42MjYgLTEzLjQxOCwtMC4xMzRMLTEzLjQxOCwtMjIuOTY3Qy0xMy40MTgsLTI1Ljc0NyAtMTIuNDM4LC0yOC4xMTIgLTEwLjQ4LC0zMC4wNkMtOC41MjIsLTMyLjAwNyAtNi4xNzUsLTMyLjk4IC0zLjQzOCwtMzIuOTgiIHN0eWxlPSJmaWxsOnJnYig4LDEyOCwxMzEpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNjczLjc5ODYsMTY4Ljc1MTUpIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDQxLjg1OEwtNi4zMDksNDEuODU4TC02LjMwOSwwTDExLjY0OCwwTDExLjY0OCw2LjM0MUwwLDYuMzQxTDAsMTcuNzU3TDguNTExLDE3Ljc1N0w4LjUxMSwyNC4xTDAsMjQuMUwwLDQxLjg1OFoiIHN0eWxlPSJmaWxsOnJnYigxNjEsMjA1LDU4KTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDY5NS45Mjk0LDIwMS4wMjk0KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtMjIuNjY1TC0yLjMzNywtNi4xNzVMMi4zMzYsLTYuMTc1TDAsLTIyLjY2NVpNLTMuMzE1LC0wLjAzM0wtNC44NDcsOS41OEwtMTEuNDE2LDkuNThMLTQuMzA2LC0zMi4yNDVMNC4zNzIsLTMyLjI0NUwxMS4zODIsOS41OEw0Ljc0OCw5LjU4TDMuMjcyLC0wLjAzM0wtMy4zMTUsLTAuMDMzWiIgc3R5bGU9ImZpbGw6cmdiKDE2MSwyMDUsNTgpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNzIxLjY2NDgsMTY4LjMxNzcpIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDQyLjgyN0MtMi43ODIsNDIuODI3IC01LjE0Niw0MS44NTMgLTcuMDk0LDM5LjkwNUMtOS4wNCwzNy45NTkgLTEwLjAxNCwzNS42MDUgLTEwLjAxNCwzMi44NDZMLTEwLjAxNCwxMC4wMTRDLTEwLjAxNCw3LjIzMiAtOS4wMzQsNC44NjggLTcuMDc2LDIuOTJDLTUuMTE4LDAuOTczIC0yLjc1OSwwIDAsMEMyLjc4MSwwIDUuMTQxLDAuOTc5IDcuMDc3LDIuOTM3QzkuMDEzLDQuODk2IDkuOTgsNy4yNTUgOS45OCwxMC4wMTRMOS45OCwxNC43ODdMMy40MzgsMTQuNzg3TDMuNDM4LDkuODhDMy40MzgsOC44NzkgMy4wODIsOC4wMjIgMi4zNyw3LjMxQzEuNjU3LDYuNTk4IDAuODAyLDYuMjQyIC0wLjE5OSw2LjI0MkMtMS4yMDEsNi4yNDIgLTIuMDUzLDYuNTk4IC0yLjc1Myw3LjMxQy0zLjQ1NSw4LjAyMiAtMy44MDUsOC44NzkgLTMuODA1LDkuODhMLTMuODA1LDMyLjc3OUMtMy44MDUsMzMuNzggLTMuNDU1LDM0LjYzMSAtMi43NTMsMzUuMzMzQy0yLjA1MywzNi4wMzMgLTEuMjAxLDM2LjM4NSAtMC4xOTksMzYuMzg1QzAuODAyLDM2LjM4NSAxLjY1NywzNi4wMzMgMi4zNywzNS4zMzNDMy4wODIsMzQuNjMxIDMuNDM4LDMzLjc4IDMuNDM4LDMyLjc3OUwzLjQzOCwyNy4wMDVMOS45OCwyNy4wMDVMOS45OCwzMi44NDZDOS45OCwzNS42MjggOS4wMDIsMzcuOTg2IDcuMDQzLDM5LjkyMkM1LjA4NSw0MS44NTggMi43MzcsNDIuODI3IDAsNDIuODI3IiBzdHlsZT0iZmlsbDpyZ2IoMTYxLDIwNSw1OCk7ZmlsbC1ydWxlOm5vbnplcm87Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoLTEsMCwwLDEsMTQ3OS45NDYsLTIxNS44ODUpIj4KICAgICAgICAgICAgICAgIDxyZWN0IHg9IjczNi44MTgiIHk9IjM4NC42NyIgd2lkdGg9IjYuMzEiIGhlaWdodD0iNDEuODI1IiBzdHlsZT0iZmlsbDpyZ2IoMTYxLDIwNSw1OCk7Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSw3NjUuOTU5NywxNjguNzg0NSkiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsNDEuODI1TC0xNy4xOSw0MS44MjVMLTE3LjE5LDBMLTEwLjg4MiwwTC0xMC44ODIsMzUuNTVMMCwzNS41NUwwLDQxLjgyNVoiIHN0eWxlPSJmaWxsOnJnYigxNjEsMjA1LDU4KTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDQ3Ny42NTg5LDE5MS44NjM4KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtMTAuODA5TDAsMC41NTlDNy42MjksLTMuNTAxIDE1LjA4LC02LjQyNCAyMS45OTQsLTguNTMzQzE0LjEwNywtMTAuODA5IDYuODQ2LC0xMS4zNjggMCwtMTAuODA5IiBzdHlsZT0iZmlsbDpyZ2IoMjE1LDIyMywzNCk7ZmlsbC1ydWxlOm5vbnplcm87Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSw1NDAuMjcyMiwxNzkuOTEwNCkiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsMTYuOTU2TDAsMS40MjZDLTIwLjcyNSwwIC00MC42MDcsNC4wOTcgLTU0LjU5LDExLjY0N0MtMjYuNjc4LDguNTMxIC01LjIwOSwxNC44NjUgMCwxNi45NTYiIHN0eWxlPSJmaWxsOnJnYigxNjEsMjA1LDU4KTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDQ3OC44NzM4LDIwMi40MTk1KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtOC41NTlDLTAuNDAxLC04LjUwOCAtMC44MjMsLTguNDU2IC0xLjIxNSwtOC4zOTVMLTEuMjE1LC0yLjY3NkMxMy43NzIsLTIuMzg2IDI1LjAxNiwwLjg4NSAzMC4wNzksMi41MTJDMzIuMjEsMS41NDggMzQuNDk5LDAuNjAxIDM2Ljk3NywtMC4zMDZDMzguNDIzLC0wLjg0OSAzOS44ODcsLTEuMzU0IDQxLjM4MSwtMS44MTNDNDQuNjY2LC0yLjg2MSA0OC4yMzIsLTMuODI4IDUyLjA3NiwtNC42ODJDMzYuNzk3LC05LjA4OSAxOC44ODYsLTExLjA3MSAwLC04LjU1OSIgc3R5bGU9ImZpbGw6cmdiKDAsMTc3LDEyMyk7ZmlsbC1ydWxlOm5vbnplcm87Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSw0NzcuNjU4OSwyMTYuMDI1NykiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsLTE0LjUwNkwwLC0xMC45MjlDMCwtOC4wOTYgMS40MzMsLTUuNjYxIDMuODg1LC00LjIzOUwxMS4yMjgsMEMxNC4xMDcsLTIuNTQzIDIwLjcxMSwtNS45MTQgMjcuMzM4LC05LjM2NEMxMS4wMTMsLTE0LjI3NSAwLjcsLTE0LjQ2NCAwLC0xNC41MDYiIHN0eWxlPSJmaWxsOnJnYig5LDE0NCwxMTkpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNTA1LjEyMjgsMjAwLjE4MjcpIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDI1LjIxM0MyLjQ1NSwyNi42MzUgNS4yNjgsMjYuNjM1IDcuNzIxLDI1LjIxM0wzMS4zMDgsMTEuNjA0QzMzLjc2LDEwLjE4MiAzNS4xNDksNy43NDcgMzUuMTQ5LDQuOTE0TDM1LjE0OSwtMS40MjJDMzAuODI1LC0wLjkzOCA5LjYsMi4xNDYgLTEzLjM1NiwxNy42N0wwLDI1LjIxM1oiIHN0eWxlPSJmaWxsOnJnYig4LDEyOCwxMzEpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNTM2LjMwNDQsMTY2LjYyMDIpIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDAuOTgxTC0yMy41NzEsLTEyLjYyOEMtMjYuMDIzLC0xNC4wNCAtMjguODM5LC0xNC4wNCAtMzEuMjg5LC0xMi42MjhMLTU0Ljg3MywwLjk4MUMtNTcuMzI2LDIuNDA4IC01OC42NDYsNC44MzIgLTU4LjY0Niw3LjY3TC01OC42NDYsMTEuNTMyQy00OS45NjcsMTEuNDY3IC00My41NzgsMTIuMjUzIC0zMy4xOSwxNS4wMjFDLTExLjc2Myw5LjE2NiAzLjk2OCwxMS4xMjMgMy45NjgsMTEuMTIzTDMuOTY4LDcuNjdDMy45NjgsNC44MzIgMi40NjYsMi40MDggMCwwLjk4MSIgc3R5bGU9ImZpbGw6cmdiKDIwOSwyMTEsMjEyKTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+Cg==" alt="Agrofacil" style="display:block;height:44px;width:auto;max-width:180px;object-fit:contain;padding:4px"></div>
     <div class="doc-title">
       <span>Registro de No Conformidades</span>
       <span>Proceso: Control de Línea y Producto Final — 8170 PRO-02</span>
@@ -848,6 +621,14 @@ const TIPOS = [
   {label:'Pérdida (bidón/es pinchados)',  sev:'Crítico'},
 ];
 const SEVS    = ['','Leve','Moderado','Crítico'];
+// ════════════════════════════════════════════
+// BLOQUE 1: CONSTANTES
+// ESTADOS: opciones del selector de estado por fila
+// EFICACIA: opciones de verificación de eficacia (ISO 10.2.2)
+// BADGES: clases CSS para cada estado
+// TIPOS: lista de tipos de desvío con severidad sugerida
+// PLAZO_DIAS: días hábiles para calcular el plazo automático
+// ════════════════════════════════════════════
 const ESTADOS = ['Pendiente','En proceso','Finalizado','Anulado'];
 const EFICACIA = ['Pendiente','Eficaz','No eficaz'];
 const BADGES  = {Pendiente:'b-pend','En proceso':'b-proc',Finalizado:'b-final',Anulado:'b-cancel'};
@@ -860,7 +641,8 @@ const COLS_HDR = ['#','Fecha Detección','N° Lote','Producto','Tipo de Desvío'
                   'Plazo Reproceso','Estado','Fecha Cierre','Pallets NC','Responsable','Verif. Eficacia'];
 
 let rows = [], saveTimer = null, db;
-let _cardExpanded = null;
+let _cardExpanded = null; // null = sin inicializar; array bool por índice de fila
+// Puentes para el bloque módulo (módulos no comparten scope con scripts regulares)
 window._ncGetRows = function(){ return rows; };
 window._ncSetRows = function(r){ rows=r; render(); idbSet('rows',JSON.stringify(r),null); };
 
@@ -895,6 +677,14 @@ function scheduleSave(){
   },800);
 }
 
+// ════════════════════════════════════════════
+// BLOQUE 2: MODELO DE DATOS
+// newRow(): crea una fila vacía con todos los campos del registro.
+// IMPORTANTE: cada vez que se agrega un campo nuevo aquí,
+// hay que incrementar la versión de IndexedDB.
+// Campos exportados a Power BI: fecha, prod, cliente, litTot,
+// lote, tipo, litNC, pallets, detec, horas calculadas, est
+// ════════════════════════════════════════════
 function newRow(){
   return {fecha:'',lote:'',cliente:'',prod:'',tipo:'',sev:'',detec:'',desc:'',litNC:'',litTot:'',ac:'',plazo:'',est:'Pendiente',cierre:'',pallets:'',resp:'',eficacia:'Pendiente'};
 }
@@ -912,7 +702,7 @@ function delRowSel(){
   if(!sel||rows.length===0)return;
   const idx=parseInt(sel.value);
   if(isNaN(idx)||idx<0||idx>=rows.length)return;
-  if(!confirm("¿Eliminar la fila N°"+(idx+1)+"? Esta acción no se puede deshacer."))return;
+  if(!confirm("\u00bfEliminar la fila N\u00b0"+(idx+1)+"? Esta acci\u00f3n no se puede deshacer."))return;
   rows.splice(idx,1);
   if(_cardExpanded) _cardExpanded.splice(idx,1);
   render();
@@ -928,7 +718,7 @@ function updateDelSelector(){
     const o=document.createElement("option");
     o.value=i;
     const raw="#"+(i+1)+" "+(r.lote||r.prod||r.fecha||"Fila "+(i+1));
-    o.textContent=raw.length>22?raw.slice(0,21)+"…":raw;
+    o.textContent=raw.length>22?raw.slice(0,21)+"\u2026":raw;
     sel.appendChild(o);
   });
   sel.value=(!isNaN(prev)&&prev<rows.length)?prev:rows.length-1;
@@ -948,6 +738,13 @@ function clearData(){
   });
 }
 
+// ════════════════════════════════════════════
+// BLOQUE 3: RENDER DE LA TABLA
+// render(): reconstruye toda la tabla desde el array rows[].
+// Patrón: borrar tbody → map de rows → appendChild.
+// Cada celda tiene un event handler que llama updRow(i, campo, val)
+// que a su vez llama scheduleSave() para guardar en IndexedDB.
+// ════════════════════════════════════════════
 function render(){
   const ae=document.activeElement;
   let focusKey=null,focusVal=null;
@@ -1116,6 +913,17 @@ function autoCalcPlazo(i){
   rows[i].plazo=d.toISOString().split('T')[0];
 }
 
+// ════════════════════════════════════════════
+// BLOQUE 4: CÁLCULO DE KPIs
+// updateKPIs(): recalcula los 6 indicadores desde el array rows[].
+// AQ-IND-01: count de filas activas
+// AQ-IND-02: suma(litNC) / suma(litTot) × 100
+// AQ-IND-03: tipo con más ocurrencias (mode)
+// AQ-IND-04: % finalizados dentro del plazo
+// AQ-IND-05: suma pallets en estado Pendiente/En proceso
+// AQ-IND-06: suma(pallets × MINS[tipo]) / 60
+// Reglas HH: Bidón/es por inducción=10min | resto=30min
+// ════════════════════════════════════════════
 function updateKPIs(){
   const a=rows.filter(r=>r.est!=='Anulado');
   document.getElementById('kpi1').textContent=a.length;
@@ -1141,6 +949,13 @@ function updateKPIs(){
   document.getElementById('sev-mod').textContent =a.filter(r=>r.sev==='Moderado').length;
   document.getElementById('sev-crit').textContent=a.filter(r=>r.sev==='Crítico').length;
 
+  // KPI5 — Pallets pendientes de reproceso
+  // KPI6 — Horas·hombre estimadas
+  // Reglas: Pérdida por inducción → 30 min/pallet | Inducción débil → 10 min/pallet
+  // Solo filas con estado Pendiente o En proceso y con pallets > 0
+  // Reglas HH corregidas:
+  // Bidón/es por inducción = trabajo puntual por bidón → 10 min
+  // Todo lo demás (inducción débil, pérdida, pallet chocado, pinchado) → 30 min por pallet
   const MINS = {
     'Bidón/es por inducción':       5,
     'Pérdida por inducción':        20,
@@ -1154,7 +969,7 @@ function updateKPIs(){
     const p = parseInt(r.pallets) || 0;
     if(p > 0){
       totalPallets += p;
-      const mins = MINS[r.tipo] !== undefined ? MINS[r.tipo] : 30;
+      const mins = MINS[r.tipo] !== undefined ? MINS[r.tipo] : 30; // default 30 min si tipo no mapeado
       totalMins += p * mins;
     }
   });
@@ -1185,6 +1000,12 @@ function updateKPIs(){
   }
 }
 
+
+// ════════════════════════════════════════════
+// BLOQUE 5: EXPORTACIÓN A EXCEL — registro completo
+// Exporta todas las filas con datos. Incluye todos los campos.
+// Fechas en formato DD/MM/YYYY legible.
+// ════════════════════════════════════════════
 function exportarExcel(){
   if(typeof XLSX === 'undefined'){
     showToast('⚠ SheetJS no cargó. Verificá conexión a internet.');
@@ -1251,7 +1072,7 @@ function exportarExcel(){
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'REGISTRO NC');
 
-  const periodo = document.getElementById('periodo-val')?.textContent?.trim() ||
+  const periodo = document.getElementById('periodo-val')?.textContent?.trim() || 
                   (expRows[0].fecha ? expRows[0].fecha.substring(0,7).replace('-','_') : 'export');
   const nombre = `Registro_NC_${periodo.replace(' ','_')}.xlsx`;
   XLSX.writeFile(wb, nombre);
@@ -1264,6 +1085,7 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),3000);
 }
 
+/* ── Conversión de fechas para impresión ── */
 function fmtDate(iso){
   if(!iso) return '';
   const [y,m,d]=iso.split('-');
@@ -1285,6 +1107,7 @@ window.addEventListener('afterprint',()=>{
   });
 });
 
+// ── Período dinámico ──
 (function(){
   const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const hoy=new Date();
@@ -1306,9 +1129,21 @@ idbGet('rows',saved=>{
     document.getElementById('saveMsg').textContent='Registro vacío — listo para cargar NCs del mes.';
   }
   render();
+  // Verificar si hay NC pendientes del REG-01
   verificarImportPendiente();
 });
 
+// ════════════════════════════════════════════
+// BLOQUE 6: BRIDGE DE COMUNICACIÓN CON REG-01
+// Canal: localStorage clave 'reg01_nc_pendientes'
+// Flujo:
+//   REG-01 guarda payload JSON en localStorage
+//   REG-01 abre esta pestaña
+//   verificarImportPendiente() detecta los datos al cargar
+//   Muestra banner verde con desglose abiertos/corregidos
+//   importarDesdeReg01() agrega las filas y limpia el canal
+// ════════════════════════════════════════════
+// ══ BRIDGE REG-01 → RNC ══
 function verificarImportPendiente(){
   try{
     const raw=localStorage.getItem('reg01_nc_pendientes');
@@ -1338,6 +1173,7 @@ function importarDesdeReg01(){
     const payload=JSON.parse(raw);
     const nuevas=payload.filas.map(f=>{
       const r=newRow();
+      // Mapear campos del REG-01 al modelo del RNC
       r.fecha   = f.fecha   || '';
       r.lote    = f.lote    || '';
       r.cliente = f.cliente || '';
@@ -1353,6 +1189,8 @@ function importarDesdeReg01(){
       r.pallets = f.pallets || '';
       r.resp    = f.resp    || '';
       r.eficacia= f.eficacia|| 'Pendiente';
+      // Calcular plazo automático (5 días desde fecha detección)
+      // La fecha viene en dd/mm/aaaa — convertir para sumar días
       if(f.fecha){
         try{
           const parts=f.fecha.split('/');
@@ -1364,9 +1202,11 @@ function importarDesdeReg01(){
       }
       return r;
     });
+    // Agregar al final del registro
     rows=rows.concat(nuevas);
     render();
     scheduleSave();
+    // Limpiar localStorage para que no aparezca de nuevo
     localStorage.removeItem('reg01_nc_pendientes');
     document.getElementById('import-banner').style.display='none';
     showToast(`✅ ${nuevas.length} fila(s) importadas del REG-01`);
