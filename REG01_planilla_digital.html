@@ -135,7 +135,6 @@ html,body{overflow:hidden !important;
 #tabs-wrap{display:flex;gap:4px;overflow-x:auto;flex:1 1 0;min-width:0;scrollbar-width:none;padding:6px 0;-webkit-overflow-scrolling:touch}
 .tb-spacer{display:none}
 #btn-nl{flex-shrink:0}
-#btn-more{flex-shrink:0}
 #tabs-wrap::-webkit-scrollbar{display:none}
 .tab{flex-shrink:0;padding:5px 10px;border-radius:var(--r);background:var(--bg3);border:1px solid var(--border);font-family:var(--mono);font-size:10px;color:var(--text2);cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;transition:.15s}
 .tab.active{background:var(--accent2);border-color:var(--accent);color:#fff;font-weight:700}
@@ -404,7 +403,6 @@ button.sc:active{background:#60a5fa;color:#fff;}
   .tb-appname,.tb-sep{display:none}
   .tb-title{font-size:.82rem;margin-left:2px}
   #btn-nl{margin-left:auto}
-  #btn-more{margin-left:4px}
   .tb-spacer{display:none}
 }
 /* ── OVERLAY ROTAR DISPOSITIVO ── */
@@ -471,47 +469,6 @@ body[data-rol="coordinadora"] .ba-sav              { display: none !important; }
 /* ── Fix scroll horizontal tabla CL en landscape ── */
 .tw { touch-action: pan-x !important; overflow-x: scroll !important; -webkit-overflow-scrolling: touch; }
 
-/* ── Menú ⋮ como dropdown anclado debajo del botón (todos los tamaños) ── */
-#tb-menu{position:fixed;inset:0;z-index:9999;}
-#tb-menu.tb-hidden{display:none;}
-#tb-menu-backdrop{position:absolute;inset:0;background:transparent;}
-#tb-menu-sheet{
-  position:absolute;top:54px;right:8px;left:auto;bottom:auto;
-  width:min(280px,calc(100vw - 16px));max-height:calc(100vh - 70px);
-  background:#121d1d;border:1px solid var(--border2);
-  border-radius:14px;
-  padding:8px;
-  box-shadow:0 12px 36px rgba(0,0,0,.55);
-  display:flex;flex-direction:column;gap:4px;
-  overflow-y:auto;
-  transform:translateY(-10px);opacity:0;
-  transform-origin:top right;
-  transition:transform .16s ease,opacity .16s ease;
-}
-#tb-menu.tb-open #tb-menu-sheet{transform:translateY(0);opacity:1;}
-html.light #tb-menu-sheet{background:#ffffff;}
-#tb-menu-grip{display:none;}
-#tb-menu-head{font-family:var(--sans);font-weight:700;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:2px 4px 6px;}
-#tb-menu-sheet button,#tb-menu-sheet a{
-  width:100%;box-sizing:border-box;text-align:left;
-  padding:12px;border-radius:10px;
-  background:transparent;border:none;
-  color:var(--text);font-size:.92rem;font-family:inherit;
-  cursor:pointer;display:flex;align-items:center;gap:12px;
-  text-decoration:none;min-height:48px;transition:background .12s;
-}
-#tb-menu-sheet button:active,#tb-menu-sheet a:active{background:var(--border);}
-@media(hover:hover){#tb-menu-sheet button:hover,#tb-menu-sheet a:hover{background:var(--border);}}
-#tb-menu-sheet svg{flex-shrink:0;color:var(--text3);}
-/* Vencer reglas heredadas del topbar (#btn-cfg/#btn-srch eran botones-ícono
-   34x34 centrados): dentro del menú deben ser filas alineadas como el resto */
-#tb-menu-sheet #btn-cfg,#tb-menu-sheet #btn-srch{
-  width:100%;height:auto;
-  justify-content:flex-start;
-  font-size:inherit;
-}
-#tb-menu-sheet .tb-menu-danger{color:var(--red);margin-top:4px;border-top:1px solid var(--border);border-radius:0 0 10px 10px;}
-#tb-menu-sheet .tb-menu-danger svg{color:var(--red);}
 
 /* ── Primera columna sticky en tabla CL ── */
 .tw table th:first-child,.tw table td:first-child{position:sticky;left:0;z-index:2;background:var(--surface2);}
@@ -585,11 +542,6 @@ html.light #tb-menu-sheet{background:#ffffff;}
     <div id="tabs-wrap"></div>
     <div class="tb-spacer"></div>
     <button id="btn-nl" onclick="abrirModalLote()">+ Lote</button>
-<button id="btn-more" title="Más opciones" style="flex-shrink:0;background:var(--bg3);border:1px solid var(--border2);color:var(--text3);font-size:22px;width:34px;height:34px;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center;letter-spacing:0;line-height:1" onclick="event.stopPropagation();toggleMenu()">⋮</button><div id="tb-menu" class="tb-hidden"><div id="tb-menu-backdrop" onclick="cerrarMenu()"></div><div id="tb-menu-sheet" role="menu" aria-label="Menú"><div id="tb-menu-grip"></div><div id="tb-menu-head">Menú</div><button id="btn-srch" onclick="cerrarMenu();abrirBusqueda()" role="menuitem"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> Buscar lote</button>
-    <button id="btn-cfg" onclick="cerrarMenu();abrirCfg()" role="menuitem"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Configuración</button>
-    <a href="home.html" onclick="cerrarMenu()" role="menuitem"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Inicio</a>
-    <button id="btn-theme" onclick="cerrarMenu();toggleTheme()" role="menuitem"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg> Cambiar tema</button>
-    <button id="btn-logout" onclick="cerrarMenu();import('./firebase-init.js').then(m=>m.cerrarSesion())" role="menuitem" class="tb-menu-danger"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg> Salir</button></div></div>
   </div>
   <div class="coord-banner">
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg> Vista Coordinadora — Solo lectura · Exportar disponible
@@ -644,21 +596,6 @@ html.light #tb-menu-sheet{background:#ffffff;}
   </div>
 </div></div>
 
-
-<!-- MODAL CONFIG INDUCTORAS — incluye clave de coordinadora --><!-- MODAL CONFIG INDUCTORAS -->
-<div class="mo" id="mo-cfg">
-<div class="md">
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
-    <span style="font-size:26px;line-height:1;flex-shrink:0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
-    <h2 style="margin:0">Configuración</h2>
-    <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+Cjxzdmcgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDUyMiA2MTMiIHZlcnNpb249IjEuMSIKICAgICB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgICAgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiCiAgICAgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIKICAgICBzdHlsZT0iZmlsbC1ydWxlOmV2ZW5vZGQ7Y2xpcC1ydWxlOmV2ZW5vZGQ7c3Ryb2tlLWxpbmVqb2luOnJvdW5kO3N0cm9rZS1taXRlcmxpbWl0OjI7Ij4KICAgIDwhLS0gQUdST0ZBQ0lMIOKAlCBJc290aXBvIChzw61tYm9sbyBzaW4gdGV4dG8pIC0tPgogICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSwtMzk4MC40ODY2NjcsLTEyNzQuNDQzMzMzKSI+CiAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoOC4zMzMzMzMsMCwwLDguMzMzMzMzLDAsMCkiPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDQ3Ny42NTg5LDE5MS44NjM4KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtMTAuODA5TDAsMC41NTlDNy42MjksLTMuNTAxIDE1LjA4LC02LjQyNCAyMS45OTQsLTguNTMzQzE0LjEwNywtMTAuODA5IDYuODQ2LC0xMS4zNjggMCwtMTAuODA5IiBzdHlsZT0iZmlsbDpyZ2IoMjE1LDIyMywzNCk7ZmlsbC1ydWxlOm5vbnplcm87Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSw1NDAuMjcyMiwxNzkuOTEwNCkiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsMTYuOTU2TDAsMS40MjZDLTIwLjcyNSwwIC00MC42MDcsNC4wOTcgLTU0LjU5LDExLjY0N0MtMjYuNjc4LDguNTMxIC01LjIwOSwxNC44NjUgMCwxNi45NTYiIHN0eWxlPSJmaWxsOnJnYigxNjEsMjA1LDU4KTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDQ3OC44NzM4LDIwMi40MTk1KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtOC41NTlDLTAuNDAxLC04LjUwOCAtMC44MjMsLTguNDU2IC0xLjIxNSwtOC4zOTVMLTEuMjE1LC0yLjY3NkMxMy43NzIsLTIuMzg2IDI1LjAxNiwwLjg4NSAzMC4wNzksMi41MTJDMzIuMjEsMS41NDggMzQuNDk5LDAuNjAxIDM2Ljk3NywtMC4zMDZDMzguNDIzLC0wLjg0OSAzOS44ODcsLTEuMzU0IDQxLjM4MSwtMS44MTNDNDQuNjY2LC0yLjg2MSA0OC4yMzIsLTMuODI4IDUyLjA3NiwtNC42ODJDMzYuNzk3LC05LjA4OSAxOC44ODYsLTExLjA3MSAwLC04LjU1OSIgc3R5bGU9ImZpbGw6cmdiKDAsMTc3LDEyMyk7ZmlsbC1ydWxlOm5vbnplcm87Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSw0NzcuNjU4OSwyMTYuMDI1NykiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsLTE0LjUwNkwwLC0xMC45MjlDMCwtOC4wOTYgMS40MzMsLTUuNjYxIDMuODg1LC00LjIzOUwxMS4yMjgsMEMxNC4xMDcsLTIuNTQzIDIwLjcxMSwtNS45MTQgMjcuMzM4LC05LjM2NEMxMS4wMTMsLTE0LjI3NSAwLjcsLTE0LjQ2NCAwLC0xNC41MDYiIHN0eWxlPSJmaWxsOnJnYig5LDE0NCwxMTkpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNTA1LjEyMjgsMjAwLjE4MjcpIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDI1LjIxM0MyLjQ1NSwyNi42MzUgNS4yNjgsMjYuNjM1IDcuNzIxLDI1LjIxM0wzMS4zMDgsMTEuNjA0QzMzLjc2LDEwLjE4MiAzNS4xNDksNy43NDcgMzUuMTQ5LDQuOTE0TDM1LjE0OSwtMS40MjJDMzAuODI1LC0wLjkzOCA5LjYsMi4xNDYgLTEzLjM1NiwxNy42N0wwLDI1LjIxM1oiIHN0eWxlPSJmaWxsOnJnYig4LDEyOCwxMzEpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNTM2LjMwNDQsMTY2LjYyMDIpIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDAuOTgxTC0yMy41NzEsLTEyLjYyOEMtMjYuMDIzLC0xNC4wNCAtMjguODM5LC0xNC4wNCAtMzEuMjg5LC0xMi42MjhMLTU0Ljg3MywwLjk4MUMtNTcuMzI2LDIuNDA4IC01OC42NDYsNC44MzIgLTU4LjY0Niw3LjY3TC01OC42NDYsMTEuNTMyQy00OS45NjcsMTEuNDY3IC00My41NzgsMTIuMjUzIC0zMy4xOSwxNS4wMjFDLTExLjc2Myw5LjE2NiAzLjk2OCwxMS4xMjMgMy45NjgsMTEuMTIzTDMuOTY4LDcuNjdDMy45NjgsNC44MzIgMi40NjYsMi40MDggMCwwLjk4MSIgc3R5bGU9ImZpbGw6cmdiKDIwOSwyMTEsMjEyKTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+" alt="Agrofacil" style="height:32px;object-fit:contain;margin-left:auto">
-  </div>
-  <div id="ind-cfg-rows"></div>
-  <div class="ma">
-    <button class="btn-cancel" onclick="cerrarMo('mo-cfg')">Cancelar</button>
-    <button class="btn-ok2" onclick="guardarCfg()">Guardar</button>
-  </div>
-</div></div>
 
 <!-- MODAL DICTAMINAR -->
 <div class="mo" id="mo-dict">
@@ -765,7 +702,7 @@ function guardarCfg(){
     ind.unidad=document.getElementById('ci-uni-'+i).value.trim();
   });
   localStorage.setItem(CFG_KEY,JSON.stringify(cfg));
-  cerrarMo('mo-cfg');poblarSelectInd();mostrarToast('✔ Inductoras guardadas');
+  poblarSelectInd();mostrarToast('✔ Inductoras guardadas');
   if(loteActivo)renderLote();
 }
 function renderCfgPanel(){
@@ -1032,7 +969,6 @@ function mostrarVacio(){
 // ════════════════════════════════════════════════════════
 // BLOQUE JS 7 — MODALES
 // abrirModalLote(): abre formulario de nuevo lote.
-// abrirCfg(): abre configuración de inductoras + clave.
 // cerrarMo(id): cierra modal por ID.
 // confirmarLote(): crea el lote desde el formulario.
 // ════════════════════════════════════════════════════════
@@ -1046,7 +982,6 @@ function abrirModalLote(){
   document.getElementById('mo-lote').classList.add('show');
   setTimeout(()=>document.getElementById('ml-prod').focus(),120);
 }
-function abrirCfg(){renderCfgPanel();document.getElementById('mo-cfg').classList.add('show');}
 function cerrarMo(id){document.getElementById(id).classList.remove('show');}
 
 // ── BUSCADOR DE LOTES ──
@@ -2899,7 +2834,7 @@ if(lotes.length){
 
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&document.getElementById('mo-lote').classList.contains('show'))confirmarLote();
-  if(e.key==='Escape'){cerrarMo('mo-lote');cerrarMo('mo-cfg');}
+  if(e.key==='Escape'){cerrarMo('mo-lote');}
   if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();guardarManual();}
 });
 
@@ -2914,62 +2849,6 @@ function aplicarTema(t){document.documentElement.classList.toggle('light',t==='l
 function toggleTheme(){const n=document.documentElement.classList.contains('light')?'dark':'light';localStorage.setItem('theme',n);aplicarTema(n);}
 aplicarTema(localStorage.getItem('theme')||'dark');
 
-// ── Cerrar menú ⋮ con tecla Escape (el backdrop del sheet maneja el click-fuera) ──
-document.addEventListener('keydown', function(e){
-  if(e.key === 'Escape'){
-    const menu = document.getElementById('tb-menu');
-    if(menu && !menu.classList.contains('tb-hidden')){
-      cerrarMenu();
-    }
-  }
-});
-// ── Menú ⋮ como dropdown (movido al <body> para escapar del stacking
-//    context del topbar con backdrop-filter) ──
-function abrirMenu(){
-  const menu = document.getElementById('tb-menu');
-  if(!menu) return;
-  if(menu.parentElement !== document.body){
-    document.body.appendChild(menu);
-  }
-  menu.classList.remove('tb-hidden');
-  // forzar reflow para que la transición de entrada se dispare
-  void menu.offsetWidth;
-  menu.classList.add('tb-open');
-}
-function cerrarMenu(){
-  const menu = document.getElementById('tb-menu');
-  if(!menu) return;
-  menu.classList.remove('tb-open');
-  const sheet = document.getElementById('tb-menu-sheet');
-  const finish = ()=>{ menu.classList.add('tb-hidden'); };
-  if(sheet){
-    let done = false;
-    const onEnd = ()=>{ if(done) return; done = true; sheet.removeEventListener('transitionend', onEnd); finish(); };
-    sheet.addEventListener('transitionend', onEnd);
-    setTimeout(onEnd, 320); // respaldo si transitionend no dispara
-  } else {
-    finish();
-  }
-}
-function toggleMenu(){
-  const menu = document.getElementById('tb-menu');
-  if(!menu) return;
-  if(menu.classList.contains('tb-hidden')){ abrirMenu(); }
-  else { cerrarMenu(); }
-}
-(function(){
-  function moverMenu(){
-    const menu = document.getElementById('tb-menu');
-    if(menu && menu.parentElement !== document.body){
-      document.body.appendChild(menu);
-    }
-  }
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', moverMenu);
-  } else {
-    moverMenu();
-  }
-})();
 // ── Online/offline indicator ──
 function updateConn(){
   const d=document.getElementById('conn-dot');
