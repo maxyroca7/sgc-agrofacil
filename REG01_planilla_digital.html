@@ -535,11 +535,13 @@ html.light #tb-menu-sheet{background:#ffffff;}
   window.USER_ROL = '';
   // Empresa dinámica
   getDoc(doc(db,'config','empresa')).then(snap=>{
+    window.EMPRESA_CFG = snap.exists() ? snap.data() : {};
     if(snap.exists()&&snap.data().nombre){
       const el=document.getElementById('tb-empresa-reg');
       if(el){el.textContent=snap.data().nombre;el.classList.add('loaded');}
     }
-  }).catch(()=>{});
+    if(typeof _aplicarEmpresaCfg==='function') _aplicarEmpresaCfg();
+  }).catch(()=>{ window.EMPRESA_CFG={}; });
   authGuard().then(async u => {
     const rol = await getRol(u.uid);
     window.USER_ROL = rol;
@@ -722,6 +724,7 @@ html.light #tb-menu-sheet{background:#ffffff;}
 // Se persiste en localStorage bajo CFG_KEY.
 // ════════════════════════════════════════════════════════
 // ══ CONFIG ══
+window.EMPRESA_CFG = window.EMPRESA_CFG || {};
 const CFG_KEY='reg01_cfg_v1', LOTES_KEY='reg01_lotes_v3';
 let cfg={inductoras:[
   {id:'A',nombre:'DCGY-F200',ref:1.2,tolMin:1.0,tolMax:1.4,unidad:''},
@@ -732,7 +735,18 @@ let cfg={inductoras:[
 ], claveCoord:'1234',
   docCodigo:'SGC-REG01-APP', docVersion:'00',
   docElab:'Maximiliano Roca', docAprob:'Evelin Alcaraz'};
-function cargarCfg(){try{const s=localStorage.getItem(CFG_KEY);if(s){cfg=JSON.parse(s);if(!cfg.inductoras.find(i=>i.id==='E')){cfg.inductoras.push({id:'E',nombre:'LB-6000J',ref:1.2,tolMin:1.0,tolMax:1.4,unidad:''});localStorage.setItem(CFG_KEY,JSON.stringify(cfg));}}}catch(e){}}
+function cargarCfg(){try{const s=localStorage.getItem(CFG_KEY);if(s){cfg=JSON.parse(s);if(!cfg.inductoras.find(i=>i.id==='E')){cfg.inductoras.push({id:'E',nombre:'LB-6000J',ref:1.2,tolMin:1.0,tolMax:1.4,unidad:''});localStorage.setItem(CFG_KEY,JSON.stringify(cfg));}}}catch(e){}
+  _aplicarEmpresaCfg();
+}
+function _aplicarEmpresaCfg(){
+  const e=window.EMPRESA_CFG||{};
+  if(e.inductoras&&e.inductoras.length>0) cfg.inductoras=e.inductoras;
+  if(e.claveCoord) cfg.claveCoord=e.claveCoord;
+  if(e.sgc)        cfg.docCodigo=e.sgc;
+  if(e.version)    cfg.docVersion=e.version;
+  if(e.elaborador) cfg.docElab=e.elaborador;
+  if(e.aprobador)  cfg.docAprob=e.aprobador;
+}
 function guardarCfg(){
   // Guardar nombre del RNC
   const nombreRNC=(document.getElementById('ci-rnc').value.trim())||'registro_nc.html';
