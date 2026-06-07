@@ -1,208 +1,249 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Historial de Lotes — SGC Agrofacil</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon"             type="image/png" sizes="32x32" href="/favicon-32.png">
-  <link rel="apple-touch-icon"                               href="/apple-touch-icon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Historial de Lotes — QualityOS</title>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <style>
-    
-    /* ── TEMA DARK (default) ── */
-    :root{--bg:#0c1414;--surface:#111d1d;--surface2:#162020;--border:#1e3030;--accent:#00c896;--accent2:#00a07a;--warn:#f59e0b;--danger:#ef4444;--blue:#3b82f6;--text:#e2ede9;--muted:#7a9e96;--topbar-bg:rgba(17,29,29,.95);}
-    /* ── TEMA LIGHT ── */
-    :root.light{--bg:#f0f5f2;--surface:#ffffff;--surface2:#f7faf8;--border:#cdddd6;--accent:#00906e;--accent2:#006e54;--warn:#d97706;--danger:#dc2626;--blue:#2563eb;--text:#1a2e28;--muted:#4a7068;--topbar-bg:rgba(240,245,242,.96);}
-    *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden;}
+    :root{
+      --bg:#0d141f;--surface:#111c2a;--surface2:#162030;--border:#1e2f42;--border2:#243649;
+      --teal:#2a6a6a;--teal-lit:#3d9090;--green:#00c896;--green2:#22c55e;
+      --warn:#f59e0b;--danger:#ef4444;--blue:#3b82f6;
+      --text:#e7eef6;--muted:#5b6f86;--muted2:#7a8fa8;
+      --topbar-bg:rgba(13,20,31,.92);
+    }
+    :root.light{
+      --bg:#f0f5f2;--surface:#ffffff;--surface2:#f7faf8;--border:#cdddd6;--border2:#b8cec6;
+      --teal:#2a6a6a;--teal-lit:#3d9090;--green:#00906e;--green2:#16a34a;
+      --warn:#d97706;--danger:#dc2626;--blue:#2563eb;
+      --text:#1a2e28;--muted:#4a7068;--muted2:#5a8078;
+      --topbar-bg:rgba(240,245,242,.96);
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    body{font-family:'SF Mono','Fira Code','Cascadia Code',ui-monospace,monospace;background:var(--bg);color:var(--text);min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden;transition:background .2s,color .2s}
+    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 55% 40% at 10% 5%,rgba(42,106,106,.10) 0%,transparent 70%),radial-gradient(ellipse 40% 30% at 90% 95%,rgba(0,200,150,.06) 0%,transparent 70%);pointer-events:none;z-index:0}
+    body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(42,106,106,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(42,106,106,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
     /* TOPBAR */
-    .topbar{background:var(--topbar-bg);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;position:sticky;top:0;z-index:100;}
-    .topbar-left{display:flex;align-items:center;gap:.6rem;}
-    .logo{font-family:'IBM Plex Mono',monospace;font-size:.78rem;font-weight:600;color:var(--accent);letter-spacing:.06em;}
-    .topbar-title{font-size:.75rem;color:var(--muted);}
-    .topbar-right{display:flex;align-items:center;gap:.4rem;}
-    .btn-t{display:flex;align-items:center;gap:.3rem;padding:.28rem .65rem;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--muted);font-size:.72rem;cursor:pointer;transition:all .15s;font-family:'IBM Plex Sans',sans-serif;text-decoration:none;}
-    .btn-t:hover{border-color:var(--accent);color:var(--accent);}
-    .btn-t.danger{border-color:rgba(239,68,68,.3);color:var(--danger);}
-    .btn-t.danger:hover{background:rgba(239,68,68,.08);}
+    .topbar{position:sticky;top:0;z-index:100;background:var(--topbar-bg);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem}
+    .tb-brand{display:flex;align-items:center;gap:.55rem}
+    .tb-logo{height:34px;width:auto;object-fit:contain;flex-shrink:0}
+    .tb-name{font-size:.8rem;font-weight:700;letter-spacing:.06em;color:var(--text)}
+    .tb-name span{color:var(--green)}
+    .tb-empresa{font-size:.6rem;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;opacity:0;transition:opacity .4s}
+    .tb-empresa.loaded{opacity:1}
+    .tb-vsep{width:1px;height:20px;background:var(--border);margin:0 .25rem}
+    .tb-section{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+    .topbar-right{display:flex;align-items:center;gap:.4rem}
+    .btn-t{display:flex;align-items:center;gap:.3rem;padding:.3rem .6rem;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--muted2);font-family:inherit;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .15s;text-decoration:none}
+    .btn-t:hover{border-color:var(--teal-lit);color:var(--teal-lit)}
+    .btn-t.danger{border-color:rgba(239,68,68,.3);color:var(--danger)}
+    .btn-t.danger:hover{background:rgba(239,68,68,.08)}
+
     /* MAIN */
-    main{max-width:1400px;width:100%;margin:0 auto;padding:1.25rem 1.5rem 4rem;flex:1 1 auto;min-width:0;}
+    main{position:relative;z-index:1;max-width:1400px;width:100%;margin:0 auto;padding:1.5rem 1.25rem 4rem;flex:1}
+
     /* BREADCRUMB */
-    .breadcrumb{display:flex;align-items:center;gap:.4rem;font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--muted);margin-bottom:1.25rem;}
-    .bc-sep{color:var(--border);}
-    .bc-link{color:var(--accent);cursor:pointer;text-decoration:none;}
-    .bc-link:hover{text-decoration:underline;}
+    .breadcrumb{display:flex;align-items:center;gap:.4rem;font-size:.66rem;letter-spacing:.08em;color:var(--muted);margin-bottom:1.25rem}
+    .bc-sep{color:var(--border)}
+    .bc-link{color:var(--teal-lit);cursor:pointer;text-decoration:none}
+    .bc-link:hover{color:var(--green)}
+
     /* TABS */
-    .vista-tabs{display:flex;gap:.4rem;margin-bottom:1.25rem;}
-    .vista-tab{padding:.4rem .9rem;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--muted);font-size:.73rem;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all .15s;}
-    .vista-tab.active{border-color:var(--accent);color:var(--accent);background:rgba(0,200,150,.08);}
-    /* KPI */
-    .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem;margin-bottom:1.25rem;}
-    .kpi{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem .9rem;}
-    .kpi .kl{font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.3rem;}
-    .kpi .kv{font-family:'IBM Plex Mono',monospace;font-size:1.4rem;font-weight:600;line-height:1;}
-    .kpi .ks{font-size:.6rem;color:var(--muted);margin-top:.25rem;}
-    .kpi.k-tot .kv{color:var(--text);}
-    .kpi.k-apr .kv{color:#22c55e;}
-    .kpi.k-par .kv{color:var(--warn);}
-    .kpi.k-ret .kv{color:var(--danger);}
+    .vista-tabs{display:flex;gap:.4rem;margin-bottom:1.25rem}
+    .vista-tab{padding:.38rem .9rem;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--muted2);font-family:inherit;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:.35rem;transition:all .15s}
+    .vista-tab.active{border-color:var(--teal-lit);color:var(--green);background:rgba(0,200,150,.07)}
+    .vista-tab:hover:not(.active){border-color:var(--border2);color:var(--text)}
+
+    /* KPIs */
+    .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem;margin-bottom:1.25rem}
+    .kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.8rem .95rem;position:relative;overflow:hidden;transition:border-color .2s}
+    .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kpi-c)}
+    .kpi .kl{font-size:.58rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:.35rem}
+    .kpi .kv{font-size:1.4rem;font-weight:700;line-height:1;color:var(--kpi-c)}
+    .kpi .ks{font-size:.6rem;color:var(--muted);margin-top:.28rem}
+    .k-tot{--kpi-c:var(--text)}.k-apr{--kpi-c:#22c55e}.k-par{--kpi-c:var(--warn)}.k-ret{--kpi-c:var(--danger)}
+
     /* VISTA CLIENTES */
-    .clientes-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;}
-    .clientes-header h2{font-family:'IBM Plex Mono',monospace;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);}
-    .input-buscar{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:.35rem .7rem;color:var(--text);font-size:.75rem;font-family:'IBM Plex Sans',sans-serif;width:200px;transition:border-color .15s;}
-    .input-buscar:focus{outline:none;border-color:var(--accent);}
-    .clientes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.85rem;}
-    .cliente-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.1rem 1rem;cursor:pointer;transition:all .18s;position:relative;overflow:hidden;}
-    .cliente-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--blue);transform:scaleX(0);transform-origin:left;transition:transform .2s;}
-    .cliente-card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.2);}
-    .cliente-card:hover::after{transform:scaleX(1);}
-    .cli-icon{width:36px;height:36px;border-radius:8px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.25);display:flex;align-items:center;justify-content:center;font-size:1rem;margin-bottom:.75rem;}
-    .cli-name{font-size:.9rem;font-weight:600;color:var(--text);margin-bottom:.2rem;}
-    .cli-meta{font-size:.68rem;color:var(--muted);margin-bottom:.75rem;line-height:1.4;}
-    .cli-stats{display:flex;gap:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.65rem;flex-wrap:wrap;}
-    .cli-stat{padding:.15rem .4rem;border-radius:3px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);}
-    .cli-stat.ok{color:#22c55e;border-color:rgba(34,197,94,.25);}
-    .cli-stat.ret{color:var(--danger);border-color:rgba(239,68,68,.25);}
-    .sin-cliente-card{border-style:dashed;}
+    .clientes-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem}
+    .clientes-header h2{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+    .input-buscar{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:.38rem .7rem;color:var(--text);font-family:inherit;font-size:.76rem;width:200px;outline:none;transition:border-color .15s;-webkit-text-fill-color:var(--text);color-scheme:dark}
+    .input-buscar:focus{border-color:var(--teal-lit)}
+    .clientes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.85rem}
+    .cliente-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.1rem 1rem;cursor:pointer;transition:all .18s;position:relative;overflow:hidden}
+    .cliente-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--blue);transform:scaleX(0);transform-origin:left;transition:transform .2s}
+    .cliente-card:hover{border-color:rgba(59,130,246,.4);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.25)}
+    .cliente-card:hover::after{transform:scaleX(1)}
+    .cli-icon{width:36px;height:36px;border-radius:8px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);display:flex;align-items:center;justify-content:center;font-size:1rem;margin-bottom:.75rem}
+    .cli-name{font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:.2rem}
+    .cli-meta{font-size:.66rem;color:var(--muted);margin-bottom:.75rem;line-height:1.5}
+    .cli-stats{display:flex;gap:.4rem;font-size:.62rem;flex-wrap:wrap}
+    .cli-stat{padding:.12rem .38rem;border-radius:3px;background:var(--surface2);border:1px solid var(--border);color:var(--muted)}
+    .cli-stat.ok{color:var(--green2);border-color:rgba(34,197,94,.2)}
+    .cli-stat.ret{color:var(--danger);border-color:rgba(239,68,68,.2)}
+    .sin-cliente-card{border-style:dashed}
+
     /* FILTROS */
-    .filtros-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.9rem 1rem;margin-bottom:1rem;}
-    .filtros-title{font-family:'IBM Plex Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.6rem;}
-    .filtros-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.5rem;align-items:end;}
-    .fg label{display:block;font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.25rem;}
-    .fg input,.fg select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:.38rem .55rem;color:var(--text);font-size:.75rem;font-family:'IBM Plex Sans',sans-serif;}
-    .fg input:focus,.fg select:focus{outline:none;border-color:var(--accent);}
-    .fg input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);}
-    .btn-apl{padding:.38rem .85rem;background:var(--accent);color:#0c1414;border:none;border-radius:5px;font-size:.73rem;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;align-self:end;}
-    .btn-apl:hover{background:var(--accent2);}
-    .btn-clr{padding:.38rem .6rem;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:5px;font-size:.73rem;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;align-self:end;}
-    .btn-clr:hover{color:var(--text);border-color:var(--muted);}
+    .filtros-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.9rem 1rem;margin-bottom:1rem}
+    .filtros-title{font-size:.6rem;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);margin-bottom:.6rem}
+    .filtros-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.5rem;align-items:end}
+    .fg label{display:block;font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.25rem}
+    .fg input,.fg select{width:100%;background:var(--surface2);border:1.5px solid var(--border2);border-radius:5px;padding:.38rem .55rem;color:var(--text);font-family:inherit;font-size:.76rem;outline:none;transition:border-color .15s;-webkit-text-fill-color:var(--text);color-scheme:dark}
+    .fg input:focus,.fg select:focus{border-color:var(--teal-lit)}
+    .fg input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5)}
+    .btn-apl{padding:.38rem .85rem;background:var(--teal);color:var(--text);border:none;border-radius:5px;font-family:inherit;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;align-self:end;transition:background .15s}
+    .btn-apl:hover{background:var(--teal-lit)}
+    .btn-clr{padding:.38rem .6rem;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:5px;font-family:inherit;font-size:.68rem;cursor:pointer;align-self:end;transition:all .15s}
+    .btn-clr:hover{color:var(--text);border-color:var(--muted2)}
+
     /* TABLA */
-    .tabla-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
-    .tabla-hdr{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.4rem;}
-    .tabla-hdr-title{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
-    #lotes-count{font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--accent);font-weight:600;}
-    .btn-xlsx{padding:.28rem .65rem;background:transparent;border:1px solid #22863a;color:#22c55e;border-radius:5px;font-size:.7rem;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;}
-    .btn-xlsx:hover{background:rgba(34,197,94,.08);}
-    .tbl-scroll{overflow-x:auto;}
-    table{width:100%;border-collapse:collapse;}
-    thead th{padding:.5rem .7rem;text-align:left;font-size:.62rem;font-family:'IBM Plex Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;}
-    tbody tr{border-bottom:1px solid rgba(30,48,48,.5);transition:background .1s;cursor:pointer;}
-    tbody tr:hover{background:var(--surface2);}
-    tbody tr:last-child{border-bottom:none;}
-    tbody td{padding:.55rem .7rem;font-size:.77rem;vertical-align:middle;white-space:nowrap;}
-    td.lote-num{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--accent);}
-    td.fecha-c{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--muted);}
-    .badge{display:inline-block;padding:.18rem .45rem;border-radius:4px;font-size:.62rem;font-weight:600;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;text-transform:uppercase;}
-    .b-APR{background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.25);}
-    .b-PAR{background:rgba(245,158,11,.12);color:var(--warn);border:1px solid rgba(245,158,11,.25);}
-    .b-RET{background:rgba(239,68,68,.12);color:var(--danger);border:1px solid rgba(239,68,68,.25);}
-    td.nc-link a{font-size:.67rem;color:var(--muted);text-decoration:none;border:1px solid var(--border);border-radius:3px;padding:.12rem .35rem;font-family:'IBM Plex Mono',monospace;transition:all .15s;}
-    td.nc-link a:hover{color:var(--warn);border-color:var(--warn);}
-    .btn-pdf-row{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:3px;padding:.18rem .4rem;font-size:.65rem;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all .15s;}
-    .btn-pdf-row:hover{border-color:#e2632a;color:#e2632a;}
-    .empty-state{padding:2.5rem 1rem;text-align:center;color:var(--muted);}
-    .empty-state .ei{font-size:2rem;opacity:.35;margin-bottom:.5rem;}
-    .loader-row td{padding:2rem!important;text-align:center;color:var(--muted);font-size:.75rem;}
-    .spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:.3rem;vertical-align:middle;}
-    @keyframes spin{to{transform:rotate(360deg);}}
+    .tabla-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+    .tabla-hdr{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.4rem}
+    .tabla-hdr-title{font-size:.6rem;text-transform:uppercase;letter-spacing:.16em;color:var(--muted)}
+    #lotes-count{font-size:.78rem;color:var(--green);font-weight:700;margin-top:.2rem}
+    .btn-xlsx{padding:.28rem .65rem;background:transparent;border:1px solid rgba(34,197,94,.3);color:var(--green2);border-radius:5px;font-family:inherit;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+    .btn-xlsx:hover{background:rgba(34,197,94,.08)}
+    .tbl-scroll{overflow-x:auto}
+    table{width:100%;border-collapse:collapse}
+    thead th{padding:.5rem .7rem;text-align:left;font-size:.58rem;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap}
+    tbody tr{border-bottom:1px solid rgba(30,47,66,.5);transition:background .1s;cursor:pointer}
+    tbody tr:hover{background:var(--surface2)}
+    tbody tr:last-child{border-bottom:none}
+    tbody td{padding:.55rem .7rem;font-size:.76rem;vertical-align:middle;white-space:nowrap}
+    td.lote-num{font-weight:700;color:var(--green)}
+    td.fecha-c{font-size:.68rem;color:var(--muted)}
+    .badge{display:inline-block;padding:.15rem .42rem;border-radius:4px;font-size:.58rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+    .b-APR{background:rgba(34,197,94,.1);color:var(--green2);border:1px solid rgba(34,197,94,.25)}
+    .b-PAR{background:rgba(245,158,11,.1);color:var(--warn);border:1px solid rgba(245,158,11,.25)}
+    .b-RET{background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.25)}
+    td.nc-link a{font-size:.65rem;color:var(--muted);text-decoration:none;border:1px solid var(--border);border-radius:3px;padding:.1rem .32rem;transition:all .15s}
+    td.nc-link a:hover{color:var(--warn);border-color:var(--warn)}
+    .btn-pdf-row{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:3px;padding:.16rem .38rem;font-family:inherit;font-size:.62rem;cursor:pointer;transition:all .15s}
+    .btn-pdf-row:hover{border-color:#e2632a;color:#e2632a}
+    .empty-state{padding:2.5rem 1rem;text-align:center;color:var(--muted)}
+    .empty-state .ei{font-size:2rem;opacity:.35;margin-bottom:.5rem}
+    .loader-row td{padding:2rem!important;text-align:center;color:var(--muted);font-size:.75rem}
+    .spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;margin-right:.3rem;vertical-align:middle}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
     /* PAGINACION */
-    .paginacion{display:flex;align-items:center;justify-content:center;gap:.35rem;padding:.75rem;border-top:1px solid var(--border);}
-    .pag-btn{padding:.25rem .55rem;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:4px;font-size:.68rem;cursor:pointer;font-family:'IBM Plex Mono',monospace;transition:all .15s;}
-    .pag-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
-    .pag-btn:disabled{opacity:.3;cursor:default;}
-    .pag-btn.act{border-color:var(--accent);color:var(--accent);background:rgba(0,200,150,.08);}
-    .pag-info{font-size:.67rem;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+    .paginacion{display:flex;align-items:center;justify-content:center;gap:.35rem;padding:.75rem;border-top:1px solid var(--border)}
+    .pag-btn{padding:.25rem .55rem;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:4px;font-family:inherit;font-size:.66rem;cursor:pointer;transition:all .15s}
+    .pag-btn:hover:not(:disabled){border-color:var(--teal-lit);color:var(--teal-lit)}
+    .pag-btn:disabled{opacity:.3;cursor:default}
+    .pag-btn.act{border-color:var(--green);color:var(--green);background:rgba(0,200,150,.07)}
+    .pag-info{font-size:.65rem;color:var(--muted)}
+
     /* MODAL */
-    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;align-items:center;justify-content:center;padding:1rem;}
-    .overlay.open{display:flex;}
-    .modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;padding:1.4rem;}
-    .modal-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.1rem;}
-    .m-lote{font-family:'IBM Plex Mono',monospace;font-size:1.05rem;font-weight:600;color:var(--accent);}
-    .modal-close{background:transparent;border:none;color:var(--muted);font-size:1rem;cursor:pointer;}
-    .modal-close:hover{color:var(--text);}
-    .m-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem .7rem;margin-bottom:1rem;}
-    .mf label{font-size:.6rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:block;margin-bottom:.18rem;}
-    .mf span{font-size:.8rem;font-family:'IBM Plex Mono',monospace;}
-    .m-sec{font-family:'IBM Plex Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.5rem;padding-bottom:.35rem;border-bottom:1px solid var(--border);}
-    .pal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:1rem;}
-    .pal-card{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:.5rem .4rem;text-align:center;}
-    .pal-id{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--muted);margin-bottom:.2rem;}
-    .pal-res{font-size:.72rem;font-weight:600;font-family:'IBM Plex Mono',monospace;}
-    .pal-res.OK{color:#22c55e;}.pal-res.NOK{color:var(--danger);}.pal-res.REPRO{color:var(--warn);}
-    .m-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem;padding-top:.85rem;border-top:1px solid var(--border);}
-    .m-btn{flex:1;min-width:110px;padding:.45rem .7rem;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:.72rem;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all .15s;text-align:center;}
-    .m-btn:hover{border-color:var(--accent);color:var(--accent);}
-    .m-btn.pri{background:var(--accent);border-color:var(--accent);color:#0c1414;font-weight:600;}
-    .m-btn.pri:hover{background:var(--accent2);}
-    @media(max-width:640px){.kpi-row{grid-template-columns:repeat(2,1fr);}.clientes-grid{grid-template-columns:repeat(2,1fr);}.filtros-grid{grid-template-columns:1fr 1fr;}.m-grid{grid-template-columns:1fr;}.pal-grid{grid-template-columns:repeat(2,1fr);}.topbar-title{display:none;}}
-    /* ── Branding QualityOS ── */
-    .tb-brand{display:flex;align-items:center;gap:.5rem;flex-shrink:0;}
-    .tb-logo{display:block;flex-shrink:0;}
-    .tb-appname {
-  font-size: 0.88rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--accent);
-  text-transform: none;
-  font-family: 'IBM Plex Sans', sans-serif;
-  white-space: nowrap;
-}
-    .app-footer{margin-top:auto;padding:1.1rem 1rem .9rem;text-align:center;border-top:1px solid var(--border);color:var(--muted);font-size:.70rem;letter-spacing:.04em;user-select:none;}
-    .footer-dot{margin:0 .45em;opacity:.35;}
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;align-items:center;justify-content:center;padding:1rem}
+    .overlay.open{display:flex}
+    .modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;padding:1.4rem;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+    .modal-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.1rem}
+    .m-lote{font-size:1rem;font-weight:700;color:var(--green)}
+    .modal-close{background:transparent;border:none;color:var(--muted);font-size:1rem;cursor:pointer}
+    .modal-close:hover{color:var(--text)}
+    .m-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem .7rem;margin-bottom:1rem}
+    .mf label{font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);display:block;margin-bottom:.18rem}
+    .mf span{font-size:.8rem}
+    .m-sec{font-size:.6rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:.5rem;padding-bottom:.35rem;border-bottom:1px solid var(--border)}
+    .pal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:1rem}
+    .pal-card{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:.5rem .4rem;text-align:center}
+    .pal-id{font-size:.58rem;color:var(--muted);margin-bottom:.2rem}
+    .pal-res{font-size:.72rem;font-weight:700}
+    .pal-res.OK{color:var(--green2)}.pal-res.NOK{color:var(--danger)}.pal-res.REPRO{color:var(--warn)}
+    .m-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem;padding-top:.85rem;border-top:1px solid var(--border)}
+    .m-btn{flex:1;min-width:110px;padding:.48rem .7rem;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted2);font-family:inherit;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;font-weight:600;cursor:pointer;transition:all .15s;text-align:center}
+    .m-btn:hover{border-color:var(--teal-lit);color:var(--teal-lit)}
+    .m-btn.pri{background:var(--teal);border-color:var(--teal);color:var(--text)}
+    .m-btn.pri:hover{background:var(--teal-lit)}
+
+    /* FOOTER */
+    .app-footer{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:.5rem;padding:1rem;border-top:1px solid var(--border);font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);opacity:.5}
+    .status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;animation:pulse 2.4s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
+
+    @media(max-width:700px){.kpi-row{grid-template-columns:repeat(2,1fr)}.clientes-grid{grid-template-columns:repeat(2,1fr)}.filtros-grid{grid-template-columns:1fr 1fr}.m-grid{grid-template-columns:1fr}.pal-grid{grid-template-columns:repeat(2,1fr)}.tb-vsep,.tb-section{display:none}}
   </style>
 </head>
 <body>
+
 <nav class="topbar">
-  <div class="topbar-left">
-    <div class="tb-brand">
-      <img src="/qualityos-topbar.svg" alt="QualityOS" class="tb-logo" width="36" height="36">
-      <span class="tb-appname">QualityOS</span>
+  <div class="tb-brand">
+    <img src="/qualityos-topbar.svg" alt="QualityOS" class="tb-logo">
+    <div>
+      <div class="tb-name">Quality<span>OS</span></div>
+      <div class="tb-empresa" id="tb-empresa">—</div>
     </div>
-    <span style="color:var(--border)">|</span>
-    <span class="topbar-title">Historial de Lotes</span>
+    <div class="tb-vsep"></div>
+    <span class="tb-section">Historial</span>
   </div>
   <div class="topbar-right">
-    <a href="home.html" class="btn-t"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Inicio</a>
-    <button id="btn-theme" onclick="toggleTheme()" title="Cambiar tema" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:.28rem .5rem;font-size:.82rem;cursor:pointer;transition:all .15s;"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></button>
-    <button class="btn-t danger" id="btn-salir"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg> Salir</button>
+    <a href="home.html" class="btn-t">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Inicio
+    </a>
+    <button class="btn-t" id="btn-theme" onclick="toggleTheme()" title="Cambiar tema"></button>
+    <button class="btn-t danger" id="btn-salir">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+      Salir
+    </button>
   </div>
 </nav>
+
 <main>
   <div class="breadcrumb" id="breadcrumb">
     <span id="bc-current" style="color:var(--text)">Historial</span>
   </div>
+
   <div class="kpi-row">
     <div class="kpi k-tot"><div class="kl">Total lotes</div><div class="kv" id="kpi-total">—</div><div class="ks">en período</div></div>
     <div class="kpi k-apr"><div class="kl">Aprobados</div><div class="kv" id="kpi-apr">—</div><div class="ks" id="kpi-apr-p">—</div></div>
     <div class="kpi k-par"><div class="kl">Ap. Parcial</div><div class="kv" id="kpi-par">—</div><div class="ks" id="kpi-par-p">—</div></div>
     <div class="kpi k-ret"><div class="kl">Retenidos</div><div class="kv" id="kpi-ret">—</div><div class="ks" id="kpi-ret-p">—</div></div>
   </div>
+
   <div class="vista-tabs">
-    <button class="vista-tab active" id="tab-cli" onclick="cambiarVista('clientes')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg> Por Cliente</button>
-    <button class="vista-tab" id="tab-tbl" onclick="cambiarVista('tabla')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg> Todos los lotes</button>
+    <button class="vista-tab active" id="tab-cli" onclick="cambiarVista('clientes')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+      Por cliente
+    </button>
+    <button class="vista-tab" id="tab-tbl" onclick="cambiarVista('tabla')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg>
+      Todos los lotes
+    </button>
   </div>
+
   <!-- VISTA CLIENTES -->
   <div id="vista-clientes">
     <div class="clientes-header">
       <h2>Carpetas de clientes</h2>
-      <input type="text" class="input-buscar" id="buscar-cli" placeholder="🔍 buscar cliente..." oninput="filtrarClientes()"/>
+      <input type="text" class="input-buscar" id="buscar-cli" placeholder="Buscar cliente…" oninput="filtrarClientes()"/>
     </div>
     <div class="clientes-grid" id="clientes-grid">
       <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--muted);font-size:.78rem;"><span class="spinner"></span> Cargando...</div>
     </div>
   </div>
+
   <!-- VISTA TABLA -->
-  <div id="vista-tabla" style="display:none;">
+  <div id="vista-tabla" style="display:none">
     <div class="filtros-panel">
-      <div class="filtros-title">🔍 Filtros</div>
+      <div class="filtros-title">Filtros</div>
       <div class="filtros-grid">
         <div class="fg"><label>Fecha desde</label><input type="date" id="f-desde"/></div>
         <div class="fg"><label>Fecha hasta</label><input type="date" id="f-hasta"/></div>
         <div class="fg"><label>Producto</label><input type="text" id="f-prod" placeholder="ej. 2,4D"/></div>
         <div class="fg"><label>Checker</label><input type="text" id="f-checker" placeholder="nombre"/></div>
-        <div class="fg"><label>Dictamen</label><select id="f-dict"><option value="">Todos</option><option value="APROBADO">Aprobado</option><option value="PARCIAL">Ap. Parcial</option><option value="RETENIDO">Retenido</option></select></div>
+        <div class="fg"><label>Dictamen</label>
+          <select id="f-dict">
+            <option value="">Todos</option>
+            <option value="APROBADO">Aprobado</option>
+            <option value="PARCIAL">Ap. Parcial</option>
+            <option value="RETENIDO">Retenido</option>
+          </select>
+        </div>
         <div class="fg"><label>N° Lote</label><input type="text" id="f-nlote" placeholder="parcial"/></div>
         <button class="btn-apl" onclick="aplicarFiltros()">Aplicar</button>
         <button class="btn-clr" onclick="limpiarFiltros()">✕ Limpiar</button>
@@ -210,12 +251,12 @@
     </div>
     <div class="tabla-wrap">
       <div class="tabla-hdr">
-        <div><div class="tabla-hdr-title" id="tabla-ctx">Todos los lotes</div><div id="lotes-count" style="margin-top:.2rem;">—</div></div>
+        <div><div class="tabla-hdr-title" id="tabla-ctx">Todos los lotes</div><div id="lotes-count">—</div></div>
         <button class="btn-xlsx" onclick="exportarXLSX()">↓ Excel</button>
       </div>
       <div class="tbl-scroll">
         <table>
-          <thead><tr><th>#</th><th>Fecha</th><th>N° Lote</th><th>Cliente</th><th>Producto</th><th>Turno</th><th>Checker</th><th>Dictamen</th><th>OK</th><th>NOK/REPRO</th><th>NCs</th><th>PDF</th></tr></thead>
+          <thead><tr><th>#</th><th>Fecha</th><th>N° Lote</th><th>Cliente</th><th>Producto</th><th>Línea</th><th>Checker</th><th>Dictamen</th><th>OK</th><th>NOK/REPRO</th><th>NCs</th><th>PDF</th></tr></thead>
           <tbody id="tbody-lotes"><tr class="loader-row"><td colspan="12"><span class="spinner"></span> Cargando...</td></tr></tbody>
         </table>
       </div>
@@ -223,39 +264,66 @@
     </div>
   </div>
 </main>
+
 <!-- MODAL -->
 <div class="overlay" id="modal-overlay" onclick="cerrarModalClick(event)">
   <div class="modal">
     <div class="modal-hdr">
-      <div><div class="m-lote" id="m-lote">—</div><div style="font-size:.68rem;color:var(--muted);margin-top:.2rem;" id="m-sub">—</div></div>
+      <div><div class="m-lote" id="m-lote">—</div><div style="font-size:.66rem;color:var(--muted);margin-top:.2rem" id="m-sub">—</div></div>
       <button class="modal-close" onclick="cerrarModal()">✕</button>
     </div>
     <div class="m-grid" id="m-campos"></div>
     <div class="m-sec">Pallets</div>
     <div class="pal-grid" id="m-pallets"></div>
     <div class="m-sec">NCs vinculadas</div>
-    <div id="m-nc-list" style="font-size:.75rem;color:var(--muted);min-height:30px;margin-bottom:1rem;">—</div>
+    <div id="m-nc-list" style="font-size:.73rem;color:var(--muted);min-height:30px;margin-bottom:1rem">—</div>
     <div class="m-actions">
-      <button class="m-btn" onclick="irANCs()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg> Ver NCs</button>
+      <button class="m-btn" onclick="irANCs()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg>
+        Ver NCs
+      </button>
       <button class="m-btn pri" onclick="exportarPDFLote()">↓ PDF del lote</button>
-      <button class="m-btn" style="border-color:rgba(239,68,68,.35);color:var(--danger);" onclick="eliminarLoteDefinitivo()">🗑 Eliminar</button>
+      <button class="m-btn" style="border-color:rgba(239,68,68,.35);color:var(--danger)" onclick="eliminarLoteDefinitivo()">🗑 Eliminar</button>
     </div>
   </div>
 </div>
 
+<footer class="app-footer">
+  <span class="status-dot"></span>
+  QualityOS &nbsp;·&nbsp; Historial de Lotes &nbsp;·&nbsp; v2.0
+</footer>
+
+<!-- TEMA -->
+<script>
+  const LUNA='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+  const SOL='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-14.07 1.41 1.41M18.66 18.66l1.41 1.41M2 12h2M20 12h2m-4.34-5.66 1.41-1.41M5.34 18.66l-1.41 1.41"/></svg>';
+  function aplicarTema(t){document.documentElement.classList.toggle('light',t==='light');const b=document.getElementById('btn-theme');if(b)b.innerHTML=t==='light'?LUNA:SOL;}
+  function toggleTheme(){const n=document.documentElement.classList.contains('light')?'dark':'light';localStorage.setItem('theme',n);aplicarTema(n);}
+  aplicarTema(localStorage.getItem('theme')||'dark');
+</script>
+
+<!-- FIREBASE + LÓGICA (100% idéntica a v1) -->
 <script type="module">
   import { auth, db, authGuard, cerrarSesion } from './firebase-init.js';
-  import { collection, onSnapshot, getDocs, where, query, deleteDoc, doc }
+  import { collection, onSnapshot, getDocs, where, query, deleteDoc, doc, getDoc }
     from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
   document.getElementById('btn-salir').addEventListener('click', cerrarSesion);
   await authGuard();
 
-  // ── Estado ───────────────────────────────────────────
+  // ── Empresa dinámica ──
+  try {
+    const snap = await getDoc(doc(db,'config','empresa'));
+    if (snap.exists() && snap.data().nombre) {
+      const el = document.getElementById('tb-empresa');
+      el.textContent = snap.data().nombre;
+      el.classList.add('loaded');
+    }
+  } catch(_) {}
+
   let todosLotes=[], lotesFiltrados=[], clienteActivo=null, loteActual=null, pagina=1;
   const POR_PAG=20;
 
-  // ── Helpers ──────────────────────────────────────────
   function loteTs(l){return l._ts||l.lastModified||(typeof l.id==='number'?l.id:parseInt(l.id)||0);}
   function nd(l){const e=l.estado||'';if(e==='aprobado')return'APROBADO';if(e==='retenido'||e==='reproceso')return'RETENIDO';if(e==='aprobado_parcial')return'PARCIAL';return'OTRO';}
   function fmtF(raw){if(!raw)return'—';try{const d=typeof raw==='number'?new Date(raw):(raw.toDate?raw.toDate():new Date(raw));return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});}catch{return'—';}}
@@ -265,7 +333,6 @@
     const map=new Map();
     fromLS.forEach(l=>{if(l.id!=null)map.set(String(l.id),l);});
     fromFS.forEach(l=>{if(l.id!=null)map.set(String(l.id),l);});
-    // Filtrar lotes archivados (marcados en la app o eliminados de Firestore)
     return[...map.values()].filter(l=>!l._archivadoApp);
   }
   function palRes(p){return p.repro===true?'REPRO':p.indOK===true?'OK':p.indOK===false?'NOK':'PEND';}
@@ -280,7 +347,6 @@
     document.getElementById('kpi-ret').textContent=ret;document.getElementById('kpi-ret-p').textContent=p(ret);
   }
 
-  // ── Cargar lotes via onSnapshot ──────────────────────
   let _hashDone=false;
   function afterLoad(){
     todosLotes.sort((a,b)=>loteTs(b)-loteTs(a));
@@ -290,15 +356,11 @@
     if(document.getElementById('vista-tabla').style.display!=='none')renderTabla();
     if(!_hashDone){_hashDone=true;const h=window.location.hash;if(h.startsWith('#cliente='))seleccionarCliente(decodeURIComponent(h.replace('#cliente=','')));}
   }
-  onSnapshot(collection(db,'lotes'), snap=>{
-    todosLotes=mergeById(snap.docs.map(d=>({id:d.id,...d.data()})),'reg01_lotes_v3');
-    afterLoad();
-  }, ()=>{
-    try{todosLotes=JSON.parse(localStorage.getItem('reg01_lotes_v3')||'[]');}catch{todosLotes=[];}
-    afterLoad();
-  });
 
-  // ── Vista tabs ───────────────────────────────────────
+  onSnapshot(collection(db,'lotes'),snap=>{
+    todosLotes=mergeById(snap.docs.map(d=>({id:d.id,...d.data()})),'reg01_lotes_v3');afterLoad();
+  },()=>{try{todosLotes=JSON.parse(localStorage.getItem('reg01_lotes_v3')||'[]');}catch{todosLotes=[];}afterLoad();});
+
   window.cambiarVista=v=>{
     document.getElementById('vista-clientes').style.display=v==='clientes'?'':'none';
     document.getElementById('vista-tabla').style.display=v==='tabla'?'':'none';
@@ -307,7 +369,6 @@
     if(v==='tabla')renderTabla();
   };
 
-  // ── Vista Clientes ─────────────────────────────────────
   function renderClientes(busqueda=''){
     const mapa={};
     todosLotes.forEach(l=>{const cli=(l.cab?.cliente||'').trim()||'—Sin cliente—';if(!mapa[cli])mapa[cli]=[];mapa[cli].push(l);});
@@ -347,8 +408,8 @@
     actualizarKPIs(lotesFiltrados);
     const displayName=esSin?'Sin asignar':nombre;
     document.getElementById('bc-current').innerHTML=
-      `<span class="bc-link" onclick="volverAClientes()" style="color:var(--accent)">Historial</span>
-       <span style="color:var(--border)"> › </span>
+      `<span class="bc-link" onclick="volverAClientes()">Historial</span>
+       <span class="bc-sep"> › </span>
        <span style="color:var(--text)">${displayName}</span>`;
     document.getElementById('tabla-ctx').textContent=`Cliente: ${displayName}`;
     ['f-desde','f-hasta','f-prod','f-checker','f-nlote'].forEach(id=>document.getElementById(id).value='');
@@ -366,33 +427,26 @@
     cambiarVista('clientes');
   };
 
-  // ── Vista Tabla ─────────────────────────────────────────
   function renderTabla(){
     const ini=(pagina-1)*POR_PAG,pag=lotesFiltrados.slice(ini,ini+POR_PAG);
     document.getElementById('lotes-count').textContent=lotesFiltrados.length?`${lotesFiltrados.length} lote${lotesFiltrados.length!==1?'s':''}`:'0 lotes';
     const tbody=document.getElementById('tbody-lotes');
-    if(!lotesFiltrados.length){
-      tbody.innerHTML=`<tr><td colspan="12"><div class="empty-state"><div class="ei">📭</div><p>Sin lotes con los filtros aplicados.</p></div></td></tr>`;
-      document.getElementById('paginacion').innerHTML='';return;
-    }
+    if(!lotesFiltrados.length){tbody.innerHTML=`<tr><td colspan="12"><div class="empty-state"><div class="ei">📭</div><p>Sin lotes con los filtros aplicados.</p></div></td></tr>`;document.getElementById('paginacion').innerHTML='';return;}
     tbody.innerHTML=pag.map((l,i)=>{
-      const num=ini+i+1;
-      const linea=l.linea||[];
-      const ok=linea.filter(p=>p.indOK===true).length;
-      const nokr=linea.filter(p=>p.indOK===false||p.repro===true).length;
-      const dict=nd(l);const bc=getBadge(dict);
-      const dictLabel=dict==='OTRO'?'—':dict;
+      const num=ini+i+1,linea=l.linea||[];
+      const ok=linea.filter(p=>p.indOK===true).length,nokr=linea.filter(p=>p.indOK===false||p.repro===true).length;
+      const dict=nd(l),bc=getBadge(dict),dictLabel=dict==='OTRO'?'—':dict;
       return`<tr onclick="abrirModal('${l.id}')">
-        <td style="color:var(--muted);font-size:.67rem;">${num}</td>
+        <td style="color:var(--muted);font-size:.65rem">${num}</td>
         <td class="fecha-c">${fmtF(loteTs(l))}</td>
         <td class="lote-num">${l.cab?.lote||'—'}</td>
-        <td style="font-size:.73rem;">${l.cab?.cliente||'—'}</td>
+        <td style="font-size:.73rem">${l.cab?.cliente||'—'}</td>
         <td>${l.cab?.prod||'—'}</td>
-        <td style="font-size:.7rem;color:var(--muted);">${l.cab?.linea||'—'}</td>
+        <td style="font-size:.68rem;color:var(--muted)">${l.cab?.linea||'—'}</td>
         <td>${l.cab?.checker||'—'}</td>
         <td><span class="badge ${bc}">${dictLabel}</span></td>
-        <td style="text-align:center;">${ok||'—'}</td>
-        <td style="text-align:center;color:${nokr?'var(--warn)':'var(--muted)'};">${nokr||'—'}</td>
+        <td style="text-align:center">${ok||'—'}</td>
+        <td style="text-align:center;color:${nokr?'var(--warn)':'var(--muted)'}">${nokr||'—'}</td>
         <td class="nc-link"><a href="registro_nc.html#lote=${encodeURIComponent(l.cab?.lote||'')}" onclick="event.stopPropagation()">NCs</a></td>
         <td><button class="btn-pdf-row" onclick="event.stopPropagation();pdfId('${l.id}')">PDF</button></td>
       </tr>`;
@@ -413,12 +467,7 @@
   }
   window.irPag=n=>{pagina=n;renderTabla();window.scrollTo(0,0);};
 
-  // ── Filtros ───────────────────────────────────────────
-  function baseFiltro(){
-    if(!clienteActivo)return[...todosLotes];
-    const esSin=clienteActivo==='—Sin cliente—';
-    return todosLotes.filter(l=>esSin?!(l.cab?.cliente||'').trim():(l.cab?.cliente||'').trim()===clienteActivo);
-  }
+  function baseFiltro(){if(!clienteActivo)return[...todosLotes];const esSin=clienteActivo==='—Sin cliente—';return todosLotes.filter(l=>esSin?!(l.cab?.cliente||'').trim():(l.cab?.cliente||'').trim()===clienteActivo);}
 
   window.aplicarFiltros=()=>{
     const desde=document.getElementById('f-desde').value,hasta=document.getElementById('f-hasta').value;
@@ -443,7 +492,6 @@
     lotesFiltrados=[...baseFiltro()];pagina=1;actualizarKPIs(lotesFiltrados);renderTabla();
   };
 
-  // ── Modal ───────────────────────────────────────────────
   window.abrirModal=id=>{
     const l=todosLotes.find(x=>String(x.id)===String(id));if(!l)return;loteActual=l;
     const dict=nd(l);
@@ -454,7 +502,7 @@
     const pals=l.linea||[];
     document.getElementById('m-pallets').innerHTML=pals.length
       ?pals.map(p=>{const r=palRes(p);return`<div class="pal-card"><div class="pal-id">P${p.nPal||'—'}</div><div class="pal-res ${r==='PEND'?'':r}">${r}</div></div>`;}).join('')
-      :`<div style="font-size:.72rem;color:var(--muted);">Sin datos de pallets.</div>`;
+      :`<div style="font-size:.72rem;color:var(--muted)">Sin datos de pallets.</div>`;
     cargarNCs(l.cab?.lote);
     document.getElementById('modal-overlay').classList.add('open');
   };
@@ -464,23 +512,19 @@
     try{
       const q=query(collection(db,'nc_records'),where('nLote','==',nLote));
       const s=await getDocs(q);
-      if(s.empty){el.textContent='✓ Sin NCs para este lote.';el.style.color='#22c55e';return;}
+      if(s.empty){el.textContent='✓ Sin NCs para este lote.';el.style.color='var(--green2)';return;}
       el.style.color='var(--muted)';
-      el.innerHTML=s.docs.map(d=>{const n=d.data();return`<div style="display:flex;gap:.4rem;align-items:center;padding:.28rem 0;border-bottom:1px solid var(--border);"><span class="badge ${n.estado==='Finalizado'?'b-APR':'b-PAR'}" style="font-size:.58rem;">${n.estado||'Pendiente'}</span><span style="font-size:.72rem;">${n.tipoDesvio||'—'}</span><span style="font-size:.65rem;color:var(--muted);margin-left:auto;">${n.gravedad||''}</span></div>`;}).join('');
-    }catch{el.innerHTML=`<a href="registro_nc.html" style="color:var(--accent);font-size:.72rem;">Ver Registro NC →</a>`;}
+      el.innerHTML=s.docs.map(d=>{const n=d.data();return`<div style="display:flex;gap:.4rem;align-items:center;padding:.28rem 0;border-bottom:1px solid var(--border)"><span class="badge ${n.estado==='Finalizado'?'b-APR':'b-PAR'}" style="font-size:.56rem">${n.estado||'Pendiente'}</span><span style="font-size:.72rem">${n.tipoDesvio||'—'}</span><span style="font-size:.65rem;color:var(--muted);margin-left:auto">${n.gravedad||''}</span></div>`;}).join('');
+    }catch{el.innerHTML=`<a href="registro_nc.html" style="color:var(--teal-lit);font-size:.72rem">Ver Registro NC →</a>`;}
   }
 
   window.cerrarModalClick=e=>{if(e.target===document.getElementById('modal-overlay'))cerrarModal();};
   window.cerrarModal=()=>{document.getElementById('modal-overlay').classList.remove('open');loteActual=null;};
   window.irANCs=()=>{if(loteActual?.cab?.lote)window.location.href=`registro_nc.html#lote=${encodeURIComponent(loteActual.cab.lote)}`;};
 
-  // ── Export ────────────────────────────────────────────
   window.exportarXLSX=()=>{
     const rows=[['Fecha','N° Lote','Cliente','Producto','Línea','Checker','Dictamen','OK','NOK+REPRO']];
-    lotesFiltrados.forEach(l=>{
-      const p=l.linea||[];const dict=nd(l);
-      rows.push([fmtF(loteTs(l)),l.cab?.lote||'',l.cab?.cliente||'',l.cab?.prod||'',l.cab?.linea||'',l.cab?.checker||'',dict==='OTRO'?'':dict,p.filter(x=>x.indOK===true).length,p.filter(x=>x.indOK===false||x.repro===true).length]);
-    });
+    lotesFiltrados.forEach(l=>{const p=l.linea||[];const dict=nd(l);rows.push([fmtF(loteTs(l)),l.cab?.lote||'',l.cab?.cliente||'',l.cab?.prod||'',l.cab?.linea||'',l.cab?.checker||'',dict==='OTRO'?'':dict,p.filter(x=>x.indOK===true).length,p.filter(x=>x.indOK===false||x.repro===true).length]);});
     const csv=rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
     const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'})),download:`historial_${Date.now()}.csv`});a.click();
   };
@@ -490,25 +534,7 @@
     const pals=(l.linea||[]).map(p=>{const r=palRes(p);return`<tr><td>Pallet ${p.nPal||'—'}</td><td>${r}</td><td>—</td></tr>`;}).join('');
     const dict=nd(l);const bc=dict==='OTRO'?'APROBADO':dict;
     const w=window.open('','_blank');
-    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Lote ${l.cab?.lote}</title>
-    <style>body{font-family:Arial,sans-serif;font-size:11px;padding:20px}h1{font-size:14px;margin-bottom:4px}h2{font-size:11px;margin:14px 0 4px;border-bottom:1px solid #ccc;padding-bottom:3px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:4px 6px;text-align:left}th{background:#f0f0f0;font-size:10px}.row{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:8px}.field label{font-size:9px;color:#666;display:block}.field span{font-weight:600}.badge{padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600}.APROBADO{background:#d1fae5;color:#065f46}.RETENIDO{background:#fee2e2;color:#991b1b}.PARCIAL{background:#fef3c7;color:#92400e}@media print{body{padding:0}}</style>
-    </head><body>
-    <div style="display:flex;justify-content:space-between;align-items:flex-start">
-      <div><div style="font-size:16px;font-weight:700;color:#065f46">AGROFACIL S.A.</div><h1>Control de Calidad — Detalle de Lote</h1>
-      <div style="font-size:9px;color:#666">SGC-REG-01 · Checker: ${l.cab?.checker||'—'} · Fecha: ${fmtF(loteTs(l))}</div></div>
-      <span class="badge ${bc}">${dict==='OTRO'?'EN PROCESO':dict}</span>
-    </div>
-    <h2>Datos del Lote</h2>
-    <div class="row">${[['N° Lote',l.cab?.lote],['Cliente',l.cab?.cliente||'—'],['Producto',l.cab?.prod],['Línea',l.cab?.linea],['Checker',l.cab?.checker],['Peso Min',l.cab?.pesoMin?l.cab.pesoMin+'kg':'—'],['Peso Max',l.cab?.pesoMax?l.cab.pesoMax+'kg':'—']].map(([k,v])=>`<div class="field"><label>${k}</label><span>${v||'—'}</span></div>`).join('')}</div>
-    <h2>Pallets</h2>
-    <table><thead><tr><th>Pallet</th><th>Resultado</th><th>Observaciones</th></tr></thead>
-    <tbody>${pals||'<tr><td colspan="3">Sin datos</td></tr>'}</tbody></table>
-    <div style="margin-top:40px;display:flex;gap:60px">
-      <div style="border-top:1px solid #333;padding-top:4px;width:160px;text-align:center;font-size:9px">Checker de Calidad</div>
-      <div style="border-top:1px solid #333;padding-top:4px;width:160px;text-align:center;font-size:9px">Coordinadora de Calidad</div>
-    </div>
-    <script>window.onload=()=>window.print()<\/script>
-</body></html>`);
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Lote ${l.cab?.lote}</title><style>body{font-family:Arial,sans-serif;font-size:11px;padding:20px}h1{font-size:14px;margin-bottom:4px}h2{font-size:11px;margin:14px 0 4px;border-bottom:1px solid #ccc;padding-bottom:3px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:4px 6px;text-align:left}th{background:#f0f0f0;font-size:10px}.row{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:8px}.field label{font-size:9px;color:#666;display:block}.field span{font-weight:600}.badge{padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600}.APROBADO{background:#d1fae5;color:#065f46}.RETENIDO{background:#fee2e2;color:#991b1b}.PARCIAL{background:#fef3c7;color:#92400e}@media print{body{padding:0}}</style></head><body><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div style="font-size:16px;font-weight:700;color:#065f46">AGROFACIL S.A.</div><h1>Control de Calidad — Detalle de Lote</h1><div style="font-size:9px;color:#666">SGC-REG-01 · Checker: ${l.cab?.checker||'—'} · Fecha: ${fmtF(loteTs(l))}</div></div><span class="badge ${bc}">${dict==='OTRO'?'EN PROCESO':dict}</span></div><h2>Datos del Lote</h2><div class="row">${[['N° Lote',l.cab?.lote],['Cliente',l.cab?.cliente||'—'],['Producto',l.cab?.prod],['Línea',l.cab?.linea],['Checker',l.cab?.checker],['Peso Min',l.cab?.pesoMin?l.cab.pesoMin+'kg':'—'],['Peso Max',l.cab?.pesoMax?l.cab.pesoMax+'kg':'—']].map(([k,v])=>`<div class="field"><label>${k}</label><span>${v||'—'}</span></div>`).join('')}</div><h2>Pallets</h2><table><thead><tr><th>Pallet</th><th>Resultado</th><th>Observaciones</th></tr></thead><tbody>${pals||'<tr><td colspan="3">Sin datos</td></tr>'}</tbody></table><div style="margin-top:40px;display:flex;gap:60px"><div style="border-top:1px solid #333;padding-top:4px;width:160px;text-align:center;font-size:9px">Checker de Calidad</div><div style="border-top:1px solid #333;padding-top:4px;width:160px;text-align:center;font-size:9px">Coordinadora de Calidad</div></div><script>window.onload=()=>window.print()<\/script></body></html>`);
     w.document.close();
   };
 
@@ -520,30 +546,12 @@
     if(!confirm(`⚠ ¿Eliminar definitivamente el lote "${num}"?\nEsta acción lo borra del historial y no se puede deshacer.`))return;
     if(!confirm(`Confirmación final: se eliminará permanentemente de Firestore.`))return;
     try{
-      // Quitar de localStorage ANTES de Firestore para que mergeById no lo restaure
-      try{
-        const arr=JSON.parse(localStorage.getItem('reg01_lotes_v3')||'[]');
-        localStorage.setItem('reg01_lotes_v3',JSON.stringify(arr.filter(l=>String(l.id)!==String(loteActual.id))));
-      }catch{}
+      try{const arr=JSON.parse(localStorage.getItem('reg01_lotes_v3')||'[]');localStorage.setItem('reg01_lotes_v3',JSON.stringify(arr.filter(l=>String(l.id)!==String(loteActual.id))));}catch{}
       await deleteDoc(doc(db,'lotes',String(loteActual.id)));
       cerrarModal();
-    }catch(e){
-      alert('❌ No se pudo eliminar: '+e.message);
-    }
+    }catch(e){alert('❌ No se pudo eliminar: '+e.message);}
   };
+</script>
 
-</script>
-<script>
-function aplicarTema(t){document.documentElement.classList.toggle('light',t==='light');const b=document.getElementById('btn-theme');if(b)b.innerHTML=t==='light'?`<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`:`<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`;}
-function toggleTheme(){const n=document.documentElement.classList.contains('light')?'dark':'light';localStorage.setItem('theme',n);aplicarTema(n);}
-aplicarTema(localStorage.getItem('theme')||'dark');
-</script>
-<footer class="app-footer">
-  <span>Desarrollado por Maximiliano Roca</span>
-  <span class="footer-dot">·</span>
-  <span>QualityOS v1.0</span>
-  <span class="footer-dot">·</span>
-  <span>Agrofacil S.A.</span>
-</footer>
 </body>
 </html>
