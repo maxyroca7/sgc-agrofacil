@@ -375,8 +375,10 @@
   // clave normalizada → array lotes; mapaDisplay → nombre original para mostrar
   const SIN = '—sin cliente—';
   function normCli(raw){ return raw ? raw.trim().toLowerCase() : SIN; }
+  let _mapaDisplay = {}; // scope de módulo para que seleccionarCliente pueda acceder
   function renderClientes(busqueda=''){
-    const mapa={}, mapaDisplay={};
+    const mapa={};
+    const mapaDisplay = _mapaDisplay = {};
     todosLotes.forEach(l=>{
       const raw=(l.cab?.cliente||'').trim();
       const key=normCli(raw);
@@ -417,7 +419,7 @@
     const esSin=nombre===SIN;
     lotesFiltrados=todosLotes.filter(l=>esSin?!(l.cab?.cliente||'').trim():normCli(l.cab?.cliente||'')===nombre);
     actualizarKPIs(lotesFiltrados);
-    const displayName=esSin?'Sin asignar':(mapaDisplay[nombre]||nombre);
+    const displayName=esSin?'Sin asignar':(_mapaDisplay[nombre]||nombre);
     document.getElementById('bc-current').innerHTML=
       `<span class="bc-link" onclick="volverAClientes()">Historial</span>
        <span class="bc-sep"> › </span>

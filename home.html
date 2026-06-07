@@ -99,10 +99,13 @@
     .tb-empresa {
       font-size: .6rem; letter-spacing: .12em;
       color: var(--muted); text-transform: uppercase;
-      margin-left: .1rem;
       opacity: 0; transition: opacity .4s;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 100%;
     }
     .tb-empresa.loaded { opacity: 1; }
+    .tb-brand { min-width: 0; flex-shrink: 1; }
+    .tb-brand > div { min-width: 0; }
 
     .topbar-right { display: flex; align-items: center; gap: .5rem; }
 
@@ -428,7 +431,7 @@
     }
     @media (max-width: 480px) {
       .user-label { display: none; }
-      .tb-empresa { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      /* tb-empresa: ya tiene overflow ellipsis global */
     }
   
     /* Botón Inicio — solo ícono en mobile */
