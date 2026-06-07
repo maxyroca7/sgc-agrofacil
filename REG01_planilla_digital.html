@@ -40,14 +40,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="REG-01">
-<meta name="theme-color" content="#0c1414">
+<meta name="theme-color" content="#0d141f">
 <link rel="icon"             type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon"                               href="/apple-touch-icon.png">
 <!-- iOS: ocultar la barra de dirección al abrir desde pantalla de inicio -->
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>REG-01 · Control de Calidad</title>
 <link rel="manifest" href="manifest.json">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 
@@ -57,25 +57,25 @@
    Para cambiar el tema visual, modificar solo aquí.
    ════════════════════════════════════════════════════════ */
 :root{
-  --bg:#0c1414;--bg2:#121d1d;--bg3:#182424;
-  --border:#243c3c;--border2:#2e5252;
-  --accent:#2e9090;--accent2:#1d6565;
-  --green:#8ab83c;--green-bg:#0b2210;
-  --red:#ef4444;--red-bg:#2d0a0a;
-  --yellow:#f59e0b;--orange:#fb923c;--orange-bg:#431407;
-  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
-  --mono:'JetBrains Mono',monospace;
-  --sans:'Barlow Condensed',sans-serif;
-  --r:6px;--touch:52px;--topbar-bg:rgba(18,29,29,.96);
+  --bg:#0d141f;--bg2:#111c2a;--bg3:#162030;
+  --border:#1e2f42;--border2:#243649;
+  --accent:#3d9090;--accent2:#2a6a6a;
+  --green:#00c896;--green-bg:rgba(0,200,150,.08);
+  --red:#ef4444;--red-bg:rgba(239,68,68,.10);
+  --yellow:#f59e0b;--orange:#fb923c;--orange-bg:rgba(251,146,60,.08);
+  --text:#e7eef6;--text2:#7a8fa8;--text3:#5b6f86;
+  --mono:'SF Mono','Fira Code','Cascadia Code',ui-monospace,monospace;
+  --sans:'SF Mono','Fira Code','Cascadia Code',ui-monospace,monospace;
+  --r:6px;--touch:52px;--topbar-bg:rgba(13,20,31,.92);
 }
 /* ── TEMA LIGHT ── */
 :root.light{
-  --bg:#f0f5f2;--bg2:#ffffff;--bg3:#e8f0ec;
-  --border:#cdddd6;--border2:#b5cfc5;
-  --accent:#2e9090;--accent2:#1d6565;
-  --green:#5d8500;--green-bg:#eef7d8;
-  --red:#dc2626;--red-bg:#fee2e2;
-  --yellow:#b45309;--orange:#c2410c;--orange-bg:#fff7ed;
+  --bg:#f0f5f2;--bg2:#ffffff;--bg3:#f7faf8;
+  --border:#cdddd6;--border2:#b8cec6;
+  --accent:#2a6a6a;--accent2:#1d5555;
+  --green:#00906e;--green-bg:rgba(0,144,110,.08);
+  --red:#dc2626;--red-bg:rgba(220,38,38,.07);
+  --yellow:#d97706;--orange:#c2410c;--orange-bg:rgba(194,65,12,.07);
   --text:#1a2e28;--text2:#4a7068;--text3:#6b9080;--topbar-bg:rgba(240,245,242,.96);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -122,18 +122,14 @@ html,body{overflow:hidden !important;
 .logo{font-family:var(--sans);font-weight:800;font-size:22px;color:var(--accent);letter-spacing:1px;white-space:nowrap}
 .tb-left{display:flex;align-items:center;gap:.5rem;flex-shrink:0;margin-right:8px}
 .tb-brand{display:flex;align-items:center;gap:.5rem;flex-shrink:0;}
-.tb-logo{display:block;flex-shrink:0;}
-.tb-appname {
-  font-size: 0.88rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--accent);
-  text-transform: none;
-  font-family: 'IBM Plex Sans', sans-serif;
-  white-space: nowrap;
-}
-.app-footer{margin-top:auto;padding:1.1rem 1rem .9rem;text-align:center;border-top:1px solid var(--border);color:var(--text2);font-size:.70rem;letter-spacing:.04em;user-select:none;background:var(--bg2);}
-.footer-dot{margin:0 .45em;opacity:.35;}
+.tb-logo{display:block;flex-shrink:0;height:34px;width:auto;object-fit:contain;}
+.tb-name{font-size:.8rem;font-weight:700;letter-spacing:.06em;color:var(--text);line-height:1.1;}
+.tb-name span{color:var(--green);}
+.tb-empresa-reg{font-size:.56rem;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;opacity:0;transition:opacity .4s;white-space:nowrap;}
+.tb-empresa-reg.loaded{opacity:1;}
+.app-footer{margin-top:auto;padding:.8rem 1rem;display:flex;align-items:center;justify-content:center;gap:.5rem;border-top:1px solid var(--border);color:var(--text3);font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;user-select:none;background:var(--bg2);}
+.status-dot-footer{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;animation:pulse-footer 2.4s ease-in-out infinite}
+@keyframes pulse-footer{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
 .tb-sep{color:var(--border2)}
 .tb-title{font-size:.75rem;color:var(--text2);white-space:nowrap}
 #tabs-wrap{display:flex;gap:4px;overflow-x:auto;flex:1 1 0;min-width:0;scrollbar-width:none;padding:6px 0;-webkit-overflow-scrolling:touch}
@@ -537,6 +533,13 @@ html.light #tb-menu-sheet{background:#ffffff;}
   import { pullLotes, escucharLotes } from './sync.js';
   window.USER_NOMBRE = '';
   window.USER_ROL = '';
+  // Empresa dinámica
+  getDoc(doc(db,'config','empresa')).then(snap=>{
+    if(snap.exists()&&snap.data().nombre){
+      const el=document.getElementById('tb-empresa-reg');
+      if(el){el.textContent=snap.data().nombre;el.classList.add('loaded');}
+    }
+  }).catch(()=>{});
   authGuard().then(async u => {
     const rol = await getRol(u.uid);
     window.USER_ROL = rol;
@@ -576,7 +579,7 @@ html.light #tb-menu-sheet{background:#ffffff;}
     </div>
   <div id="print-body" style="display:none"></div>
     <div id="topbar">
-    <div class="tb-left"><div class="tb-brand"><img src="/qualityos-topbar.svg" alt="QualityOS" class="tb-logo" width="36" height="36"><span class="tb-appname">QualityOS</span><span class="conn-dot" id="conn-dot" title="Online"></span></div><span class="tb-sep">|</span><span class="tb-title">REG-01 Digital</span></div>
+    <div class="tb-left"><div class="tb-brand"><img src="/qualityos-topbar.svg" alt="QualityOS" class="tb-logo"><div><div class="tb-name">Quality<span>OS</span></div><div class="tb-empresa-reg" id="tb-empresa-reg">—</div></div><span class="conn-dot" id="conn-dot" title="Online"></span></div><span class="tb-sep">|</span><span class="tb-title">REG-01 Digital</span></div>
     <div id="tabs-wrap"></div>
     <div class="tb-spacer"></div>
     <button id="btn-nl" onclick="abrirModalLote()">+ Lote</button>
