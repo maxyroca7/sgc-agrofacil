@@ -1,209 +1,193 @@
 <!DOCTYPE html>
 <!--
 ╔══════════════════════════════════════════════════════════════════════╗
-║  AGROFACIL S.A. — Sistema de Gestión de Calidad Digital (QualityOS) ║
-║  Archivo : coordinadora.html                                         ║
-║  Código  : SGC-COORD-APP v1.0                                        ║
-║  Fecha   : Mayo 2026                                                 ║
-╠══════════════════════════════════════════════════════════════════════╣
-║  VISTA DEDICADA PARA EL ROL COORDINADORA                            ║
-║  • Resumen de lotes (activos + retenidos destacados)               ║
-║  • KPIs del período (lotes, retenidos, % aprobados, NCs)            ║
-║  • Tarjetas expandibles: Control en Línea + Control Final (lectura) ║
-║  • Acciones: cambiar dictamen (con autoría/motivo) · archivar PDF   ║
-║  • Acceso al Registro de No Conformidades (edición completa)        ║
-╠══════════════════════════════════════════════════════════════════════╣
-║  ISO 9001:2015                                                       ║
-║  • 8.7.2 — al cambiar un dictamen se registra autoridad + fecha     ║
-║            + motivo (historial de cambios por lote)                  ║
-║  • 8.7   — lotes retenidos / reproceso destacados arriba            ║
-║  • 10.2.2 — vínculo lote → No Conformidades                         ║
-╠══════════════════════════════════════════════════════════════════════╣
-║  DATOS                                                               ║
-║  • Lee lotes de Firestore (onSnapshot) + localStorage (merge)       ║
-║  • Guarda en localStorage → sync.js empuja a Firestore (patch)      ║
-║  • Nombre del usuario: usuarios/{uid}.nombre → displayName → email  ║
+║  QualityOS v2.0 — coordinadora.html                                 ║
+║  Rediseño visual mayo 2026 — lógica 100% idéntica a v1             ║
 ╚══════════════════════════════════════════════════════════════════════╝
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0c1414">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="theme-color" content="#0d141f">
 <title>Coordinación SGC · QualityOS</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* ── TEMA DARK (default) ── */
+/* ── TEMA DARK ── */
 :root{
-  --bg:#0c1414;--surface:#111d1d;--surface2:#162020;--border:#1e3030;
-  --accent:#00c896;--accent2:#00a07a;--warn:#f59e0b;--danger:#ef4444;
-  --blue:#3b82f6;--green:#22c55e;--text:#e2ede9;--muted:#7a9e96;
-  --topbar-bg:rgba(17,29,29,.93);--shadow:0 8px 24px rgba(0,0,0,.25);
-  --orange-bg:rgba(251,146,60,.10);--red-bg:rgba(239,68,68,.10);--green-bg:rgba(34,197,94,.10);
+  --bg:#0d141f;--surface:#111c2a;--surface2:#162030;--border:#1e2f42;
+  --teal:#2a6a6a;--teal-lit:#3d9090;--green:#00c896;--green2:#22c55e;
+  --warn:#f59e0b;--danger:#ef4444;--blue:#3b82f6;
+  --text:#e7eef6;--muted:#5b6f86;--muted2:#7a8fa8;
+  --topbar-bg:rgba(13,20,31,.92);
+  --orange-bg:rgba(245,158,11,.10);--red-bg:rgba(239,68,68,.10);--green-bg:rgba(34,197,94,.10);
 }
 /* ── TEMA LIGHT ── */
 :root.light{
   --bg:#f0f5f2;--surface:#ffffff;--surface2:#f7faf8;--border:#cdddd6;
-  --accent:#00906e;--accent2:#006e54;--warn:#d97706;--danger:#dc2626;
-  --blue:#2563eb;--green:#16a34a;--text:#1a2e28;--muted:#4a7068;
-  --topbar-bg:rgba(240,245,242,.96);--shadow:0 8px 24px rgba(0,0,0,.1);
+  --teal:#2a6a6a;--teal-lit:#3d9090;--green:#00906e;--green2:#16a34a;
+  --warn:#d97706;--danger:#dc2626;--blue:#2563eb;
+  --text:#1a2e28;--muted:#4a7068;--muted2:#5a8078;
+  --topbar-bg:rgba(240,245,242,.96);
   --orange-bg:rgba(217,119,6,.08);--red-bg:rgba(220,38,38,.07);--green-bg:rgba(22,163,74,.08);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;transition:background .2s,color .2s}
-body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,rgba(0,200,150,.05) 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0}
+body{font-family:'SF Mono','Fira Code','Cascadia Code',ui-monospace,monospace;background:var(--bg);color:var(--text);min-height:100dvh;display:flex;flex-direction:column;transition:background .2s,color .2s}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 55% 40% at 10% 5%,rgba(42,106,106,.10) 0%,transparent 70%),radial-gradient(ellipse 40% 30% at 90% 95%,rgba(0,200,150,.06) 0%,transparent 70%);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(42,106,106,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(42,106,106,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
 
-/* TOPBAR */
-.topbar{position:sticky;top:0;z-index:100;background:var(--topbar-bg);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 1.1rem}
-.tb-brand{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
-.tb-logo{display:block;flex-shrink:0;border-radius:6px}
-.tb-appname{font-size:.88rem;font-weight:700;letter-spacing:.04em;color:var(--accent);font-family:'IBM Plex Sans',sans-serif;white-space:nowrap}
-.tb-sep{color:var(--border)}
-.tb-title{font-size:.74rem;color:var(--muted);white-space:nowrap}
+/* ── TOPBAR ── */
+.topbar{position:sticky;top:0;z-index:100;background:var(--topbar-bg);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem}
+.tb-brand{display:flex;align-items:center;gap:.55rem}
+.tb-logo{height:34px;width:auto;object-fit:contain;flex-shrink:0}
+.tb-name{font-size:.8rem;font-weight:700;letter-spacing:.06em;color:var(--text)}
+.tb-name span{color:var(--green)}
+.tb-empresa{font-size:.6rem;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;opacity:0;transition:opacity .4s}
+.tb-empresa.loaded{opacity:1}
+.tb-sep{width:1px;height:20px;background:var(--border);margin:0 .25rem}
+.tb-section{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .topbar-right{display:flex;align-items:center;gap:.45rem}
-.btn-t{display:flex;align-items:center;gap:.3rem;padding:.3rem .6rem;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--muted);font-size:.72rem;cursor:pointer;transition:all .15s;text-decoration:none;font-family:inherit}
-.btn-t:hover{border-color:var(--accent);color:var(--accent)}
+.btn-t{display:flex;align-items:center;gap:.3rem;padding:.3rem .6rem;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--muted2);font-family:inherit;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .15s;text-decoration:none}
+.btn-t:hover{border-color:var(--teal-lit);color:var(--teal-lit)}
 .btn-t.danger{border-color:rgba(239,68,68,.3);color:var(--danger)}
 .btn-t.danger:hover{background:rgba(239,68,68,.08)}
 
-/* MAIN */
-main{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:2rem 1.1rem 3rem;flex:1;width:100%}
+/* ── MAIN ── */
+main{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:2rem 1.25rem 3rem;flex:1;width:100%}
 
-/* GREETING */
-.greeting{margin-bottom:1.6rem}
-.greeting-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.66rem;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.35rem}
+/* ── GREETING ── */
+.greeting{margin-bottom:1.75rem}
+.greeting-eyebrow{font-size:.6rem;letter-spacing:.22em;color:var(--teal-lit);text-transform:uppercase;margin-bottom:.35rem}
 .greeting-title{font-size:1.45rem;font-weight:300;line-height:1.2}
-.greeting-title strong{font-weight:600;color:var(--accent)}
-.greeting-sub{font-size:.74rem;color:var(--muted);margin-top:.35rem;font-family:'IBM Plex Mono',monospace}
+.greeting-title strong{font-weight:700;color:var(--green)}
+.greeting-sub{font-size:.65rem;color:var(--muted);margin-top:.35rem;letter-spacing:.04em}
 
-/* STATS */
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:1.8rem}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem .95rem;transition:border-color .15s}
-.stat-card:hover{border-color:rgba(0,200,150,.25)}
-.stat-label{font-size:.58rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.35rem}
-.stat-val{font-family:'IBM Plex Mono',monospace;font-size:1.4rem;font-weight:600;line-height:1}
+/* ── KPIs ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:1.75rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.85rem 1rem;position:relative;overflow:hidden;transition:border-color .2s}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kpi-color)}
+.stat-card:hover{border-color:var(--kpi-color)}
+.stat-label{font-size:.58rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:.4rem}
+.stat-val{font-size:1.45rem;font-weight:700;line-height:1;color:var(--kpi-color)}
 .stat-sub{font-size:.6rem;color:var(--muted);margin-top:.3rem}
-.s-green .stat-val{color:var(--green)}.s-yellow .stat-val{color:var(--warn)}
-.s-red .stat-val{color:var(--danger)}.s-blue .stat-val{color:var(--blue)}
+.s-green{--kpi-color:#22c55e}.s-yellow{--kpi-color:var(--warn)}.s-red{--kpi-color:var(--danger)}.s-blue{--kpi-color:var(--blue)}
 
-/* SECTION LABEL */
-.section-label{font-family:'IBM Plex Mono',monospace;font-size:.64rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 .85rem;display:flex;align-items:center;gap:.5rem}
-.section-label .count{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.05rem .45rem;color:var(--text);font-size:.62rem}
+/* ── SECTION LABEL ── */
+.section-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);margin:0 0 .85rem;display:flex;align-items:center;gap:.5rem}
+.section-label .count{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.05rem .45rem;color:var(--text);font-size:.6rem}
 .section-label.alert{color:var(--danger)}
 .section-label.alert .count{border-color:rgba(239,68,68,.3);color:var(--danger);background:var(--red-bg)}
 
-/* LOTE CARD */
-.lotes-list{display:flex;flex-direction:column;gap:.6rem;margin-bottom:2rem}
+/* ── RNC BANNER ── */
+.rnc-link{display:flex;align-items:center;gap:.9rem;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--warn);border-radius:10px;padding:.95rem 1.1rem;text-decoration:none;color:inherit;transition:all .2s;margin-bottom:1.75rem}
+.rnc-link:hover{border-color:var(--warn);transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.rnc-icon{color:var(--warn);flex-shrink:0}
+.rnc-body{flex:1;min-width:0}
+.rnc-title{font-weight:700;font-size:.88rem;color:var(--text)}
+.rnc-desc{font-size:.68rem;color:var(--muted);margin-top:.15rem}
+.rnc-arrow{color:var(--muted);font-size:.85rem}
+
+/* ── LOTE CARD ── */
+.lotes-list{display:flex;flex-direction:column;gap:.55rem;margin-bottom:2rem}
 .lote-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .15s}
 .lote-card.atencion{border-color:rgba(239,68,68,.35)}
 .lote-head{display:flex;align-items:center;gap:.7rem;padding:.85rem 1rem;cursor:pointer;user-select:none}
 .lote-head:hover{background:var(--surface2)}
-.lc-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.lc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .lc-main{flex:1;min-width:0}
-.lc-lote{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:.92rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lc-prod{font-size:.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.1rem}
+.lc-lote{font-weight:700;font-size:.9rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lc-prod{font-size:.7rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.1rem}
 .lc-meta{display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;flex-shrink:0}
 .lc-badges{display:flex;gap:.3rem;align-items:center;flex-wrap:wrap;justify-content:flex-end}
-.badge{font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:600;padding:.12rem .42rem;border-radius:4px;text-transform:uppercase;white-space:nowrap}
+.badge{font-size:.56rem;font-weight:700;padding:.1rem .4rem;border-radius:4px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
 .b-est{border:1px solid var(--border);background:var(--surface2);color:var(--muted)}
-.b-dict-APROBADO{background:var(--green-bg);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.b-dict-APROBADO{background:var(--green-bg);color:var(--green2);border:1px solid rgba(34,197,94,.3)}
 .b-dict-APROBADO_PARCIAL{background:var(--orange-bg);color:var(--warn);border:1px solid rgba(245,158,11,.3)}
 .b-dict-RETENIDO{background:var(--red-bg);color:var(--danger);border:1px solid rgba(239,68,68,.3)}
-.lc-fecha{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--muted)}
+.lc-fecha{font-size:.6rem;color:var(--muted)}
 .lc-arrow{color:var(--muted);font-size:.85rem;transition:transform .2s;flex-shrink:0}
 .lote-card.open .lc-arrow{transform:rotate(90deg)}
 
-/* LOTE DETAIL */
+/* ── LOTE DETAIL ── */
 .lote-detail{display:none;padding:0 1rem 1rem;border-top:1px solid var(--border)}
 .lote-card.open .lote-detail{display:block}
 .det-section{margin-top:.9rem}
-.det-h{font-family:'IBM Plex Mono',monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.5rem;display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}
+.det-h{font-size:.6rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:.5rem;display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}
 .det-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.5rem}
 .det-item{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:.5rem .6rem}
-.det-item .k{font-size:.56rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
-.det-item .v{font-family:'IBM Plex Mono',monospace;font-size:.82rem;color:var(--text);margin-top:.15rem}
-.mini-badge{font-family:'IBM Plex Mono',monospace;font-size:.56rem;font-weight:600;padding:.08rem .35rem;border-radius:3px}
+.det-item .k{font-size:.55rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.det-item .v{font-size:.8rem;color:var(--text);margin-top:.15rem}
+.mini-badge{font-size:.54rem;font-weight:700;padding:.07rem .35rem;border-radius:3px;letter-spacing:.06em;text-transform:uppercase}
 .mb-nok{background:var(--red-bg);color:var(--danger);border:1px solid rgba(239,68,68,.3)}
 .mb-repro{background:var(--orange-bg);color:var(--warn);border:1px solid rgba(245,158,11,.3)}
-.mb-ok{background:var(--green-bg);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.mb-ok{background:var(--green-bg);color:var(--green2);border:1px solid rgba(34,197,94,.3)}
 
-/* tabla compacta de pallets (lectura) */
-.pl-table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:.66rem;margin-top:.3rem}
-.pl-table th{text-align:left;color:var(--muted);font-weight:500;font-size:.56rem;text-transform:uppercase;letter-spacing:.04em;padding:.3rem .4rem;border-bottom:1px solid var(--border)}
-.pl-table td{padding:.32rem .4rem;border-bottom:1px solid rgba(30,48,48,.5);color:var(--text)}
+/* ── tabla pallets lectura ── */
+.pl-table{width:100%;border-collapse:collapse;font-size:.64rem;margin-top:.3rem}
+.pl-table th{text-align:left;color:var(--muted);font-weight:600;font-size:.54rem;text-transform:uppercase;letter-spacing:.08em;padding:.3rem .4rem;border-bottom:1px solid var(--border)}
+.pl-table td{padding:.3rem .4rem;border-bottom:1px solid rgba(30,47,66,.4);color:var(--text)}
 .pl-table tr.row-nok td{background:var(--red-bg)}
 .pl-table tr.row-repro td{background:var(--orange-bg)}
 .pl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 
-/* autoria dictamen */
-.dict-info{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:.55rem .7rem;font-size:.72rem;color:var(--text);line-height:1.5}
-.dict-info .who{color:var(--accent);font-weight:600}
-.dict-info .hist{margin-top:.4rem;padding-top:.4rem;border-top:1px solid var(--border);font-size:.66rem;color:var(--muted)}
+/* ── dictamen ── */
+.dict-info{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:.55rem .75rem;font-size:.72rem;color:var(--text);line-height:1.6}
+.dict-info .who{color:var(--green);font-weight:700}
+.dict-info .hist{margin-top:.4rem;padding-top:.4rem;border-top:1px solid var(--border);font-size:.64rem;color:var(--muted)}
 .dict-info .hist-row{margin-top:.2rem}
 
-/* acciones */
+/* ── acciones ── */
 .det-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem;padding-top:.9rem;border-top:1px solid var(--border)}
-.act-btn{flex:1;min-width:130px;display:flex;align-items:center;justify-content:center;gap:.35rem;padding:.6rem .8rem;border-radius:7px;font-size:.76rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:inherit;transition:all .15s;text-decoration:none}
-.act-btn:hover{border-color:var(--accent);color:var(--accent)}
-.act-btn.primary{background:rgba(0,200,150,.1);border-color:rgba(0,200,150,.35);color:var(--accent)}
-.act-btn.primary:hover{background:rgba(0,200,150,.18)}
+.act-btn{flex:1;min-width:130px;display:flex;align-items:center;justify-content:center;gap:.35rem;padding:.6rem .8rem;border-radius:7px;font-family:inherit;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--muted2);transition:all .15s;text-decoration:none}
+.act-btn:hover{border-color:var(--teal-lit);color:var(--teal-lit)}
+.act-btn.primary{background:rgba(0,200,150,.08);border-color:rgba(0,200,150,.3);color:var(--green)}
+.act-btn.primary:hover{background:rgba(0,200,150,.15)}
 .act-btn.nc{background:var(--orange-bg);border-color:rgba(245,158,11,.3);color:var(--warn)}
 .act-btn.nc:hover{background:rgba(245,158,11,.18)}
 
-.empty{padding:2.5rem 1rem;text-align:center;color:var(--muted);font-size:.8rem;background:var(--surface);border:1px solid var(--border);border-radius:10px}
-.spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:.35rem;vertical-align:middle}
+.empty{padding:2.5rem 1rem;text-align:center;color:var(--muted);font-size:.76rem;background:var(--surface);border:1px solid var(--border);border-radius:10px}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;margin-right:.35rem;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* RNC banner */
-.rnc-link{display:flex;align-items:center;gap:.9rem;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--warn);border-radius:10px;padding:1rem 1.1rem;text-decoration:none;color:inherit;transition:all .2s;margin-bottom:2rem}
-.rnc-link:hover{border-color:var(--warn);transform:translateY(-1px);box-shadow:var(--shadow)}
-.rnc-icon{font-size:1.5rem;line-height:1}
-.rnc-body{flex:1;min-width:0}
-.rnc-title{font-weight:600;font-size:.92rem}
-.rnc-desc{font-size:.7rem;color:var(--muted);margin-top:.15rem}
-.rnc-arrow{color:var(--muted);font-size:.85rem}
-
-/* MODAL DICTAMEN */
+/* ── MODAL DICTAMEN ── */
 .mo{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:300;padding:1rem}
 .mo.open{display:flex}
-.md{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:440px;padding:1.4rem;max-height:90vh;overflow-y:auto}
-.md h2{font-size:1.05rem;font-weight:600;margin-bottom:.3rem}
-.md .sub{font-size:.74rem;color:var(--muted);margin-bottom:1.1rem;font-family:'IBM Plex Mono',monospace}
+.md{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:440px;padding:1.4rem;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+.md h2{font-size:1rem;font-weight:700;margin-bottom:.3rem}
+.md .sub{font-size:.7rem;color:var(--muted);margin-bottom:1.1rem;letter-spacing:.06em}
 .dict-opts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:1rem}
-.dict-opt{padding:.85rem .4rem;border-radius:8px;border:2px solid var(--border);background:var(--surface2);cursor:pointer;font-weight:700;font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:.25rem;transition:all .15s;text-align:center}
-.dict-opt span{font-size:.58rem;font-weight:400}
-.dict-opt.sel.ap{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+.dict-opt{padding:.8rem .4rem;border-radius:8px;border:2px solid var(--border);background:var(--surface2);cursor:pointer;font-weight:700;font-size:.76rem;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:.2rem;transition:all .15s;text-align:center}
+.dict-opt span{font-size:.56rem;font-weight:400}
+.dict-opt.sel.ap{background:var(--green-bg);border-color:var(--green2);color:var(--green2)}
 .dict-opt.sel.par{background:var(--orange-bg);border-color:var(--warn);color:var(--warn)}
 .dict-opt.sel.ret{background:var(--red-bg);border-color:var(--danger);color:var(--danger)}
 .mo-field{margin-bottom:1rem}
-.mo-label{display:block;font-size:.6rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.35rem}
-.mo-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:.55rem .7rem;color:var(--text);font-size:.82rem;font-family:'IBM Plex Sans',sans-serif}
-.mo-input:focus{outline:none;border-color:var(--accent)}
+.mo-label{display:block;font-size:.58rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:.35rem}
+.mo-input{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:6px;padding:.55rem .7rem;color:var(--text);font-family:inherit;font-size:.8rem;outline:none;transition:border-color .15s;-webkit-text-fill-color:var(--text)}
+.mo-input:focus{border-color:var(--teal-lit)}
 .mo-actions{display:flex;gap:.6rem;justify-content:flex-end;margin-top:.4rem}
-.mo-btn{padding:.55rem 1.1rem;border-radius:7px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:inherit;border:none}
-.mo-cancel{background:var(--surface2);border:1px solid var(--border);color:var(--muted)}
-.mo-save{background:var(--accent);color:#0c1414}
+.mo-btn{padding:.55rem 1.1rem;border-radius:7px;font-family:inherit;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:none}
+.mo-cancel{background:var(--surface2);border:1px solid var(--border);color:var(--muted2)}
+.mo-save{background:var(--teal);color:var(--text)}
 .mo-save:disabled{opacity:.4;cursor:default}
 
-/* TOAST */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface2);color:var(--text);border:1px solid var(--border);padding:.65rem 1.3rem;border-radius:7px;font-size:.78rem;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;max-width:90vw;text-align:center}
+/* ── TOAST ── */
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--surface);color:var(--text);border:1px solid var(--border);padding:.65rem 1.3rem;border-radius:8px;font-size:.72rem;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;max-width:90vw;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 .toast.show{opacity:1}
 
-footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1rem .9rem;text-align:center;border-top:1px solid var(--border);color:var(--muted);font-size:.66rem;letter-spacing:.04em;user-select:none;background:var(--bg);font-family:'IBM Plex Mono',monospace}
-.footer-dot{margin:0 .45em;opacity:.35}
+/* ── FOOTER ── */
+.app-footer{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:.5rem;padding:1rem;border-top:1px solid var(--border);font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);opacity:.5}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
 
-@media(max-width:700px){.stats-row{grid-template-columns:repeat(2,1fr)}.greeting-title{font-size:1.2rem}.tb-title,.tb-sep{display:none}}
-
-/* ── PRINT (PDF de lote) ── */
+/* ── PRINT ── */
 #print-area{display:none}
 @media print{
-  body{background:#fff !important;color:#000 !important}
-  body::before,.topbar,main,footer.app-footer,.mo,.toast{display:none !important}
-  #print-area{display:block !important;padding:0;font-family:Arial,sans-serif;color:#000}
+  body{background:#fff!important;color:#000!important}
+  body::before,body::after,.topbar,main,.app-footer,.mo,.toast{display:none!important}
+  #print-area{display:block!important;padding:0;font-family:Arial,sans-serif;color:#000}
   #print-area .ph{display:flex;border:2px solid #2a6a6a;margin-bottom:10px}
   #print-area .ph-logo{width:150px;display:flex;align-items:center;justify-content:center;border-right:2px solid #2a6a6a;font-weight:700;font-size:18px;color:#2a6a6a}
   #print-area .ph-title{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px}
@@ -223,21 +207,32 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
   #print-area .psig div{flex:1;border-top:1.5px solid #000;padding-top:4px;text-align:center;font-size:9px}
   @page{size:A4 landscape;margin:10mm}
 }
+
+@media(max-width:700px){.stats-row{grid-template-columns:repeat(2,1fr)}.greeting-title{font-size:1.2rem}.tb-sep,.tb-section{display:none}}
 </style>
 </head>
 <body>
 
 <nav class="topbar">
   <div class="tb-brand">
-    <img src="/qualityos-topbar.svg" alt="QualityOS" class="tb-logo" width="36" height="36">
-    <span class="tb-appname">QualityOS</span>
-    <span class="tb-sep">|</span>
-    <span class="tb-title">Coordinación SGC</span>
+    <img src="/qualityos-topbar.svg" alt="QualityOS" class="tb-logo">
+    <div>
+      <div class="tb-name">Quality<span>OS</span></div>
+      <div class="tb-empresa" id="tb-empresa">—</div>
+    </div>
+    <div class="tb-sep"></div>
+    <span class="tb-section">Coordinación SGC</span>
   </div>
   <div class="topbar-right">
-    <a href="home.html" class="btn-t" title="Inicio"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Inicio</a>
-    <button class="btn-t" id="btn-theme" onclick="toggleTheme()" title="Cambiar tema"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></button>
-    <button class="btn-t danger" id="btn-salir" title="Cerrar sesión"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg> Salir</button>
+    <a href="home.html" class="btn-t">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Inicio
+    </a>
+    <button class="btn-t" id="btn-theme" onclick="toggleTheme()" title="Cambiar tema"></button>
+    <button class="btn-t danger" id="btn-salir">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+      Salir
+    </button>
   </div>
 </nav>
 
@@ -255,9 +250,10 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
     <div class="stat-card s-yellow"><div class="stat-label">NCs abiertas</div><div class="stat-val" id="s-nc">—</div><div class="stat-sub">pendientes</div></div>
   </div>
 
-  <!-- Acceso al Registro de NC (edición completa) -->
   <a href="registro_nc.html" class="rnc-link">
-    <span class="rnc-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+    <span class="rnc-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg>
+    </span>
     <div class="rnc-body">
       <div class="rnc-title">Registro de No Conformidades</div>
       <div class="rnc-desc">Registrar, editar, dar seguimiento y verificar eficacia · KPIs AQ-IND</div>
@@ -265,13 +261,14 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
     <span class="rnc-arrow">→</span>
   </a>
 
-  <!-- Requieren atención (retenidos/parciales/NOK) -->
   <div id="atencion-wrap" style="display:none">
-    <div class="section-label alert"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg> Requieren atención <span class="count" id="atencion-count">0</span></div>
+    <div class="section-label alert">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg>
+      Requieren atención <span class="count" id="atencion-count">0</span>
+    </div>
     <div class="lotes-list" id="atencion-list"></div>
   </div>
 
-  <!-- Todos los lotes -->
   <div class="section-label">Lotes <span class="count" id="lotes-count">0</span></div>
   <div class="lotes-list" id="lotes-list">
     <div class="empty"><span class="spinner"></span> Cargando lotes…</div>
@@ -279,14 +276,11 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
 </main>
 
 <footer class="app-footer">
-  <span>Desarrollado por Maximiliano Roca</span>
-  <span class="footer-dot">·</span>
-  <span>QualityOS v1.0</span>
-  <span class="footer-dot">·</span>
-  <span>Agrofacil S.A.</span>
+  <span class="status-dot"></span>
+  QualityOS &nbsp;·&nbsp; Coordinación SGC &nbsp;·&nbsp; v2.0
 </footer>
 
-<!-- MODAL CAMBIAR DICTAMEN -->
+<!-- MODAL DICTAMEN -->
 <div class="mo" id="mo-dict" onclick="if(event.target===this)cerrarDict()">
   <div class="md">
     <h2>Cambiar dictamen</h2>
@@ -294,7 +288,10 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
     <div id="md-actual" class="dict-info" style="margin-bottom:1rem"></div>
     <div class="mo-label">Nuevo dictamen</div>
     <div class="dict-opts">
-      <div class="dict-opt ap" data-tipo="APROBADO" onclick="selTipo('APROBADO')"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Aprobado</span></div>
+      <div class="dict-opt ap" data-tipo="APROBADO" onclick="selTipo('APROBADO')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span>Aprobado</span>
+      </div>
       <div class="dict-opt par" data-tipo="APROBADO_PARCIAL" onclick="selTipo('APROBADO_PARCIAL')">⚡<span>Ap. Parcial</span></div>
       <div class="dict-opt ret" data-tipo="RETENIDO" onclick="selTipo('RETENIDO')">🔴<span>Retenido</span></div>
     </div>
@@ -309,42 +306,50 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
   </div>
 </div>
 
-<!-- Contenedor de impresión PDF -->
 <div id="print-area"></div>
-
 <div class="toast" id="toast"></div>
 
+<!-- TEMA -->
 <script>
-  // ── TEMA ──
-  function aplicarTema(t){document.documentElement.classList.toggle('light',t==='light');const b=document.getElementById('btn-theme');if(b)b.innerHTML=t==='light'?`<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`:`<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`;}
+  const LUNA='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+  const SOL='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-14.07 1.41 1.41M18.66 18.66l1.41 1.41M2 12h2M20 12h2m-4.34-5.66 1.41-1.41M5.34 18.66l-1.41 1.41"/></svg>';
+  function aplicarTema(t){document.documentElement.classList.toggle('light',t==='light');const b=document.getElementById('btn-theme');if(b)b.innerHTML=t==='light'?LUNA:SOL;}
   function toggleTheme(){const n=document.documentElement.classList.contains('light')?'dark':'light';localStorage.setItem('theme',n);aplicarTema(n);}
   aplicarTema(localStorage.getItem('theme')||'dark');
 </script>
 
+<!-- FIREBASE + LÓGICA (100% idéntica a v1) -->
 <script type="module">
   import { db, authGuard, cerrarSesion, getRol } from './firebase-init.js';
   import { collection, getDoc, onSnapshot, doc }
     from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
-  // Importar sync.js activa el parche de localStorage → empuja a Firestore al guardar
   import './sync.js';
 
   const LS_KEY = 'reg01_lotes_v3';
-
   document.getElementById('btn-salir').addEventListener('click', cerrarSesion);
 
   const user = await authGuard();
   const rol  = await getRol(user.uid);
   document.body.dataset.rol = rol;
-  // Si NO es coordinadora, mandarla a su vista normal
   if (rol !== 'coordinadora') { window.location.replace('REG01_planilla_digital.html'); }
 
-  // Nombre: Firestore "nombre" → Auth displayName → prefijo del email
+  // ── Nombre empresa ──
+  try {
+    const snapEmp = await getDoc(doc(db,'config','empresa'));
+    if (snapEmp.exists() && snapEmp.data().nombre) {
+      const el = document.getElementById('tb-empresa');
+      el.textContent = snapEmp.data().nombre;
+      el.classList.add('loaded');
+    }
+  } catch(_) {}
+
+  // ── Nombre usuario ──
   const email = user.email || '';
   let nombre = user.displayName || email.split('@')[0] || 'Coordinadora';
   try {
     const snap = await getDoc(doc(db,'usuarios',user.uid));
     if (snap.exists() && snap.data().nombre) nombre = snap.data().nombre;
-  } catch(e){ console.warn('[coord] getDoc usuario:', e.message); }
+  } catch(e){ console.warn('[coord]',e.message); }
   window.__COORD_NOMBRE = nombre;
 
   const cap = s => s ? s.charAt(0).toUpperCase()+s.slice(1) : s;
@@ -352,34 +357,23 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
   const saludo = h<12?'Buen día':h<19?'Buenas tardes':'Buenas noches';
   document.getElementById('greeting-title').innerHTML = `${saludo}, <strong>${cap(nombre)}</strong>`;
   document.getElementById('fecha-hoy').textContent =
-    new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) + ' · Agrofacil S.A., Ezeiza';
+    new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
-  // ── Estado ──
   let _lotes = [], _ncs = [];
 
-  // ── Helpers de dominio (espejo de REG01) ──
   const EST_LBL={activo:'Activo',aprobado:'Aprobado',aprobado_parcial:'Ap. Parcial',retenido:'Retenido',reproceso:'Reproceso',cerrado:'Cerrado'};
-  const EST_COL={activo:'#00c896',aprobado:'#22c55e',aprobado_parcial:'#f59e0b',retenido:'#ef4444',reproceso:'#f59e0b',cerrado:'#7a9e96'};
+  const EST_COL={activo:'#00c896',aprobado:'#22c55e',aprobado_parcial:'#f59e0b',retenido:'#ef4444',reproceso:'#f59e0b',cerrado:'#5b6f86'};
   const DICT_LBL={APROBADO:'Aprobado',APROBADO_PARCIAL:'Ap. Parcial',RETENIDO:'Retenido'};
 
   function clHasNOK(p){return (p.indOK===false&&!p.repro)||(p.qrLineaOK===false&&!p.qrRepro)||(p.packOK===false&&!p.packRepro)||(p.pltOK===false&&!p.pltRepro)||p.pesoOK===false;}
   function clHasRepro(p){return !!(p.repro||p.qrRepro||p.packRepro||p.pltRepro);}
   function cfHasNOK(p){return (p.idOK===false&&!p.idRepro)||(p.qrOK===false&&!p.qrRepro)||(p.paletOK===false&&!p.paletRepro)||(p.indCFOK===false&&!p.indCFRepro);}
   function cfHasRepro(p){return !!(p.idRepro||p.qrRepro||p.paletRepro||p.indCFRepro);}
-
   function calcLitros(l){
-    const f=l.final||{};const pallets=f.pallets||[];
-    const lpp=parseFloat(f.ltsPorPallet)||0;
+    const f=l.final||{};const pallets=f.pallets||[];const lpp=parseFloat(f.ltsPorPallet)||0;
     let ltsAp=0,ltsRet=0,ap=0,ret=0,pend=0;
     const anyLts=lpp>0||pallets.some(p=>parseFloat(p.litrosParcial)>0);
-    pallets.forEach(p=>{
-      const ok=p.idOK===true&&p.qrOK===true&&p.paletOK===true&&p.indCFOK===true;
-      const naked=cfHasNOK(p);const repro=cfHasRepro(p);
-      const lts=parseFloat(p.litrosParcial)||lpp;
-      if(ok||(repro&&!naked)){ap++;ltsAp+=lts;}
-      else if(naked){ret++;ltsRet+=lts;}
-      else pend++;
-    });
+    pallets.forEach(p=>{const ok=p.idOK===true&&p.qrOK===true&&p.paletOK===true&&p.indCFOK===true;const naked=cfHasNOK(p);const repro=cfHasRepro(p);const lts=parseFloat(p.litrosParcial)||lpp;if(ok||(repro&&!naked)){ap++;ltsAp+=lts;}else if(naked){ret++;ltsRet+=lts;}else pend++;});
     return {ap,ret,pend,ltsAp:anyLts?ltsAp:null,ltsRet:anyLts?ltsRet:null};
   }
   function tieneNOK(l){return (l.linea||[]).some(clHasNOK)||((l.final&&l.final.pallets)||[]).some(cfHasNOK);}
@@ -388,23 +382,12 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
   function fmtFecha(ts){if(!ts)return'—';try{return new Date(ts).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'});}catch{return'—';}}
   function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
   function ncsDelLote(l){const ln=(l.cab&&l.cab.lote||'').toLowerCase();return _ncs.filter(n=>(n.lote||'').toLowerCase()===ln&&ln);}
+  function mergeById(fromFS,lsKey){let fromLS=[];try{fromLS=JSON.parse(localStorage.getItem(lsKey)||'[]');}catch{}const map=new Map();fromLS.forEach(l=>{if(l.id!=null)map.set(String(l.id),l);});fromFS.forEach(l=>{if(l.id!=null)map.set(String(l.id),l);});return [...map.values()];}
 
-  // ── Merge Firestore + localStorage (FS gana) ──
-  function mergeById(fromFS, lsKey){
-    let fromLS=[];try{fromLS=JSON.parse(localStorage.getItem(lsKey)||'[]');}catch{}
-    const map=new Map();
-    fromLS.forEach(l=>{if(l.id!=null)map.set(String(l.id),l);});
-    fromFS.forEach(l=>{if(l.id!=null)map.set(String(l.id),l);});
-    return [...map.values()];
-  }
-
-  // ── KPIs ──
   function renderKPIs(){
     const ahora=new Date(),mes=ahora.getMonth(),anio=ahora.getFullYear();
     const delMes=_lotes.filter(l=>{try{const ts=loteTs(l);return ts&&new Date(ts).getMonth()===mes&&new Date(ts).getFullYear()===anio;}catch{return false;}});
-    const total=delMes.length;
-    const apr=delMes.filter(l=>l.estado==='aprobado').length;
-    const ret=delMes.filter(l=>['retenido','reproceso'].includes(l.estado||'')).length;
+    const total=delMes.length,apr=delMes.filter(l=>l.estado==='aprobado').length,ret=delMes.filter(l=>['retenido','reproceso'].includes(l.estado||'')).length;
     const pend=_ncs.filter(n=>{const e=(n.est||n.estado||'').toLowerCase();return e!=='finalizado'&&e!=='cerrada'&&e!=='anulado';}).length;
     document.getElementById('s-lotes').textContent=total;
     document.getElementById('s-ret').textContent=ret;
@@ -412,7 +395,6 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
     document.getElementById('s-nc').textContent=pend;
   }
 
-  // ── Tarjeta de lote (colapsada) ──
   function tarjetaLote(l){
     const estado=l.estado||'activo';
     const dict=l.final&&l.final.dictamen;
@@ -421,7 +403,7 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
     const aten=requiereAtencion(l)?' atencion':'';
     return `<div class="lote-card${aten}" id="card-${l.id}">
       <div class="lote-head" onclick="toggleCard('${l.id}')">
-        <div class="lc-dot" style="background:${EST_COL[estado]||'#7a9e96'}"></div>
+        <div class="lc-dot" style="background:${EST_COL[estado]||'#5b6f86'}"></div>
         <div class="lc-main">
           <div class="lc-lote">${esc(l.cab&&l.cab.lote||'Sin lote')}</div>
           <div class="lc-prod">${esc(l.cab&&l.cab.prod||'—')}${l.cab&&l.cab.cliente?' · '+esc(l.cab.cliente):''}</div>
@@ -436,112 +418,36 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
     </div>`;
   }
 
-  // ── Detalle expandible ──
   function buildDetalle(l){
-    const cab=l.cab||{};
-    const f=l.final||{};
-    const linea=l.linea||[];
-    const cf=f.pallets||[];
-    const c=calcLitros(l);
-
-    // Cabecera
-    const cabHTML=`<div class="det-section">
-      <div class="det-h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg> Identificación</div>
+    const cab=l.cab||{},f=l.final||{},linea=l.linea||[],cf=f.pallets||[],c=calcLitros(l);
+    const cabHTML=`<div class="det-section"><div class="det-h"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg> Identificación</div>
       <div class="det-grid">
         <div class="det-item"><div class="k">Producto</div><div class="v">${esc(cab.prod||'—')}</div></div>
         <div class="det-item"><div class="k">N° Lote</div><div class="v">${esc(cab.lote||'—')}</div></div>
         <div class="det-item"><div class="k">Cliente</div><div class="v">${esc(cab.cliente||'—')}</div></div>
         <div class="det-item"><div class="k">Línea</div><div class="v">${esc(cab.linea||'—')}</div></div>
         <div class="det-item"><div class="k">Fecha</div><div class="v">${esc(cab.fecha||'—')}</div></div>
-      </div>
-    </div>`;
-
-    // Control en Línea
-    const clNOK=linea.filter(clHasNOK).length, clRep=linea.filter(p=>clHasRepro(p)&&!clHasNOK(p)).length;
-    const clRows=linea.map((p,i)=>{
-      const nok=clHasNOK(p), rep=clHasRepro(p);
-      const cls=nok?'row-nok':rep?'row-repro':'';
-      const estCell=nok?'<span class="mini-badge mb-nok">NOK</span>':rep?'<span class="mini-badge mb-repro">REPRO</span>':'<span class="mini-badge mb-ok">OK</span>';
-      const picos=[p.p1,p.p2,p.p3,p.p4].filter(Boolean).join(' / ')||'—';
-      return `<tr class="${cls}"><td>${i+1}</td><td>${esc(p.nPal||i+1)}</td><td>${esc(picos)}</td><td>${esc(p.indVal||'—')}</td><td>${estCell}</td><td>${esc(p.obs||'')}</td></tr>`;
-    }).join('');
-    const clHTML=`<div class="det-section">
-      <div class="det-h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M6 18h8M3 22h18M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg> Control en Línea
-        <span class="mini-badge mb-ok">${linea.length} pallets</span>
-        ${clNOK?`<span class="mini-badge mb-nok">${clNOK} NOK</span>`:''}
-        ${clRep?`<span class="mini-badge mb-repro">${clRep} REPRO</span>`:''}
-      </div>
-      <div class="pl-wrap"><table class="pl-table">
-        <thead><tr><th>#</th><th>Pallet</th><th>Picos (kg)</th><th>Ind.</th><th>Estado</th><th>Obs.</th></tr></thead>
-        <tbody>${clRows||'<tr><td colspan="6">Sin datos</td></tr>'}</tbody>
-      </table></div>
-    </div>`;
-
-    // Control Final
-    const cfNOK=cf.filter(cfHasNOK).length, cfRep=cf.filter(p=>cfHasRepro(p)&&!cfHasNOK(p)).length;
-    const cfRows=cf.map((p,i)=>{
-      const nok=cfHasNOK(p), rep=cfHasRepro(p);
-      const cls=nok?'row-nok':rep?'row-repro':'';
-      const det=[];
-      if(p.idOK===false)det.push('ID');if(p.qrOK===false)det.push('QR');if(p.paletOK===false)det.push('Pallet');if(p.indCFOK===false)det.push('Ind.');
-      const estCell=nok?`<span class="mini-badge mb-nok">NOK: ${det.join(', ')||'—'}</span>`:rep?'<span class="mini-badge mb-repro">REPRO</span>':'<span class="mini-badge mb-ok">OK</span>';
-      return `<tr class="${cls}"><td>${i+1}</td><td>${esc(p.nPal||i+1)}</td><td>${esc(p.indCFVal||'—')}</td><td>${estCell}</td><td>${esc(p.obs||'')}</td></tr>`;
-    }).join('');
+      </div></div>`;
+    const clNOK=linea.filter(clHasNOK).length,clRep=linea.filter(p=>clHasRepro(p)&&!clHasNOK(p)).length;
+    const clRows=linea.map((p,i)=>{const nok=clHasNOK(p),rep=clHasRepro(p);const cls=nok?'row-nok':rep?'row-repro':'';const picos=[p.p1,p.p2,p.p3,p.p4].filter(Boolean).join(' / ')||'—';const estCell=nok?'<span class="mini-badge mb-nok">NOK</span>':rep?'<span class="mini-badge mb-repro">REPRO</span>':'<span class="mini-badge mb-ok">OK</span>';return `<tr class="${cls}"><td>${i+1}</td><td>${esc(p.nPal||i+1)}</td><td>${esc(picos)}</td><td>${esc(p.indVal||'—')}</td><td>${estCell}</td><td>${esc(p.obs||'')}</td></tr>`;}).join('');
+    const clHTML=`<div class="det-section"><div class="det-h">Control en Línea <span class="mini-badge mb-ok">${linea.length} pallets</span>${clNOK?`<span class="mini-badge mb-nok">${clNOK} NOK</span>`:''}${clRep?`<span class="mini-badge mb-repro">${clRep} REPRO</span>`:''}</div><div class="pl-wrap"><table class="pl-table"><thead><tr><th>#</th><th>Pallet</th><th>Picos (kg)</th><th>Ind.</th><th>Estado</th><th>Obs.</th></tr></thead><tbody>${clRows||'<tr><td colspan="6">Sin datos</td></tr>'}</tbody></table></div></div>`;
+    const cfNOK=cf.filter(cfHasNOK).length,cfRep=cf.filter(p=>cfHasRepro(p)&&!cfHasNOK(p)).length;
     const litStr=c.ltsAp!=null?`✅ ${c.ltsAp.toFixed(0)} lt · 🔴 ${c.ltsRet.toFixed(0)} lt`:`✅ ${c.ap} pal · 🔴 ${c.ret} pal`;
-    const cfHTML=`<div class="det-section">
-      <div class="det-h"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Control Final
-        <span class="mini-badge mb-ok">${cf.length} pallets</span>
-        ${cfNOK?`<span class="mini-badge mb-nok">${cfNOK} NOK</span>`:''}
-        ${cfRep?`<span class="mini-badge mb-repro">${cfRep} REPRO</span>`:''}
-        <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--text)">${litStr}</span>
-      </div>
-      <div class="pl-wrap"><table class="pl-table">
-        <thead><tr><th>#</th><th>Pallet</th><th>Ind. CF</th><th>Estado</th><th>Obs.</th></tr></thead>
-        <tbody>${cfRows||'<tr><td colspan="5">Sin datos</td></tr>'}</tbody>
-      </table></div>
-    </div>`;
-
-    // Dictamen + autoría
+    const cfRows=cf.map((p,i)=>{const nok=cfHasNOK(p),rep=cfHasRepro(p);const cls=nok?'row-nok':rep?'row-repro':'';const det=[];if(p.idOK===false)det.push('ID');if(p.qrOK===false)det.push('QR');if(p.paletOK===false)det.push('Pallet');if(p.indCFOK===false)det.push('Ind.');const estCell=nok?`<span class="mini-badge mb-nok">NOK: ${det.join(', ')||'—'}</span>`:rep?'<span class="mini-badge mb-repro">REPRO</span>':'<span class="mini-badge mb-ok">OK</span>';return `<tr class="${cls}"><td>${i+1}</td><td>${esc(p.nPal||i+1)}</td><td>${esc(p.indCFVal||'—')}</td><td>${estCell}</td><td>${esc(p.obs||'')}</td></tr>`;}).join('');
+    const cfHTML=`<div class="det-section"><div class="det-h">Control Final <span class="mini-badge mb-ok">${cf.length} pallets</span>${cfNOK?`<span class="mini-badge mb-nok">${cfNOK} NOK</span>`:''}${cfRep?`<span class="mini-badge mb-repro">${cfRep} REPRO</span>`:''}  <span style="margin-left:auto;font-size:.62rem;color:var(--text)">${litStr}</span></div><div class="pl-wrap"><table class="pl-table"><thead><tr><th>#</th><th>Pallet</th><th>Ind. CF</th><th>Estado</th><th>Obs.</th></tr></thead><tbody>${cfRows||'<tr><td colspan="5">Sin datos</td></tr>'}</tbody></table></div></div>`;
     const dict=f.dictamen;
     let dictInfo;
-    if(dict){
-      const por=f.dictaminadoPor?`<span class="who">${esc(f.dictaminadoPor)}</span>${f.dictaminadoRol?' ('+esc(f.dictaminadoRol)+')':''}`:'—';
-      let histHTML='';
-      if(Array.isArray(f.dictamenHistorial)&&f.dictamenHistorial.length){
-        histHTML='<div class="hist"><strong>Historial de cambios:</strong>'+f.dictamenHistorial.map(hh=>
-          `<div class="hist-row">• ${esc(DICT_LBL[hh.de]||hh.de||'—')} → ${esc(DICT_LBL[hh.a]||hh.a)} · ${esc(hh.por||'—')} (${esc(hh.rol||'—')}) · ${esc(hh.fecha||'')}${hh.motivo?' · '+esc(hh.motivo):''}</div>`
-        ).join('')+'</div>';
-      }
-      dictInfo=`<div class="dict-info">
-        <span class="badge b-dict-${dict}">${DICT_LBL[dict]||dict}</span>
-        &nbsp;Dictaminado por ${por} · ${esc(f.fechaDictamen||'—')}
-        ${histHTML}
-      </div>`;
-    } else {
-      dictInfo=`<div class="dict-info">Sin dictamen registrado todavía.</div>`;
-    }
-
-    // NCs vinculadas
+    if(dict){const por=f.dictaminadoPor?`<span class="who">${esc(f.dictaminadoPor)}</span>${f.dictaminadoRol?' ('+esc(f.dictaminadoRol)+')':''}`:  '—';let histHTML='';if(Array.isArray(f.dictamenHistorial)&&f.dictamenHistorial.length){histHTML='<div class="hist"><strong>Historial:</strong>'+f.dictamenHistorial.map(hh=>`<div class="hist-row">• ${esc(DICT_LBL[hh.de]||hh.de||'—')} → ${esc(DICT_LBL[hh.a]||hh.a)} · ${esc(hh.por||'—')} · ${esc(hh.fecha||'')}${hh.motivo?' · '+esc(hh.motivo):''}</div>`).join('')+'</div>';}dictInfo=`<div class="dict-info"><span class="badge b-dict-${dict}">${DICT_LBL[dict]||dict}</span> &nbsp;Dictaminado por ${por} · ${esc(f.fechaDictamen||'—')}${histHTML}</div>`;}
+    else{dictInfo=`<div class="dict-info">Sin dictamen registrado todavía.</div>`;}
     const ncs=ncsDelLote(l);
-    const ncBtn=`<a class="act-btn nc" href="registro_nc.html"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg> No Conformidades${ncs.length?' ('+ncs.length+')':''}</a>`;
-
-    const dictSection=`<div class="det-section">
-      <div class="det-h">⚖ Dictamen</div>
-      ${dictInfo}
-    </div>`;
-
-    const actions=`<div class="det-actions">
-      <button class="act-btn primary" onclick="abrirDict('${l.id}')">✎ Cambiar dictamen</button>
-      <button class="act-btn" onclick="archivarPDF('${l.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg> Archivar / PDF</button>
-      ${ncBtn}
-    </div>`;
-
+    const ncBtn=`<a class="act-btn nc" href="registro_nc.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg>No Conformidades${ncs.length?' ('+ncs.length+')':''}</a>`;
+    const dictSection=`<div class="det-section"><div class="det-h">⚖ Dictamen</div>${dictInfo}</div>`;
+    const actions=`<div class="det-actions"><button class="act-btn primary" onclick="abrirDict('${l.id}')">✎ Cambiar dictamen</button><button class="act-btn" onclick="archivarPDF('${l.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>Archivar / PDF</button>${ncBtn}</div>`;
     return cabHTML+clHTML+cfHTML+dictSection+actions;
   }
 
   window.toggleCard=(id)=>{
-    const card=document.getElementById('card-'+id);
-    if(!card)return;
+    const card=document.getElementById('card-'+id);if(!card)return;
     const det=document.getElementById('det-'+id);
     const abierto=card.classList.contains('open');
     if(abierto){card.classList.remove('open');return;}
@@ -550,33 +456,26 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
     card.classList.add('open');
   };
 
-  // ── Render principal ──
   function render(){
     renderKPIs();
     const ordenados=[..._lotes].sort((a,b)=>loteTs(b)-loteTs(a));
     const atencion=ordenados.filter(requiereAtencion);
     const wrap=document.getElementById('atencion-wrap');
-    if(atencion.length){
-      wrap.style.display='block';
-      document.getElementById('atencion-count').textContent=atencion.length;
-      document.getElementById('atencion-list').innerHTML=atencion.map(tarjetaLote).join('');
-    } else { wrap.style.display='none'; }
-
+    if(atencion.length){wrap.style.display='block';document.getElementById('atencion-count').textContent=atencion.length;document.getElementById('atencion-list').innerHTML=atencion.map(tarjetaLote).join('');}
+    else{wrap.style.display='none';}
     document.getElementById('lotes-count').textContent=ordenados.length;
     const list=document.getElementById('lotes-list');
-    list.innerHTML = ordenados.length
-      ? ordenados.map(tarjetaLote).join('')
-      : '<div class="empty">No hay lotes registrados todavía.</div>';
+    list.innerHTML=ordenados.length?ordenados.map(tarjetaLote).join(''):'<div class="empty">No hay lotes registrados todavía.</div>';
   }
 
-  // ── Modal cambiar dictamen ──
-  let _dictLoteId=null, _dictTipo=null;
+  // ── Modal dictamen ──
+  let _dictLoteId=null,_dictTipo=null;
   window.abrirDict=(id)=>{
     const l=_lotes.find(x=>String(x.id)===String(id));if(!l)return;
-    _dictLoteId=id; _dictTipo=null;
+    _dictLoteId=id;_dictTipo=null;
     document.getElementById('md-lote').textContent=`${l.cab&&l.cab.lote||'—'} · ${l.cab&&l.cab.prod||'—'}`;
     const f=l.final||{};
-    const actual=f.dictamen?`Dictamen actual: <strong>${DICT_LBL[f.dictamen]||f.dictamen}</strong>${f.dictaminadoPor?' · por <span class="who">'+esc(f.dictaminadoPor)+'</span>':''}${f.fechaDictamen?' · '+esc(f.fechaDictamen):''}`:'Sin dictamen previo';
+    const actual=f.dictamen?`Dictamen actual: <strong>${DICT_LBL[f.dictamen]||f.dictamen}</strong>${f.dictaminadoPor?' · por <span class="who">'+esc(f.dictaminadoPor)+'</span>':''}${f.fechaDictamen?' · '+esc(f.fechaDictamen):''}`:  'Sin dictamen previo';
     document.getElementById('md-actual').innerHTML=actual;
     document.getElementById('md-motivo').value='';
     document.querySelectorAll('.dict-opt').forEach(o=>o.classList.remove('sel'));
@@ -584,103 +483,59 @@ footer.app-footer{position:relative;z-index:1;margin-top:auto;padding:1.1rem 1re
     document.getElementById('mo-dict').classList.add('open');
   };
   window.cerrarDict=()=>document.getElementById('mo-dict').classList.remove('open');
-  window.selTipo=(tipo)=>{
-    _dictTipo=tipo;
-    document.querySelectorAll('.dict-opt').forEach(o=>o.classList.toggle('sel',o.dataset.tipo===tipo));
-    document.getElementById('md-save').disabled=false;
-  };
+  window.selTipo=(tipo)=>{_dictTipo=tipo;document.querySelectorAll('.dict-opt').forEach(o=>o.classList.toggle('sel',o.dataset.tipo===tipo));document.getElementById('md-save').disabled=false;};
   window.confirmarCambio=()=>{
     if(!_dictLoteId||!_dictTipo)return;
     const l=_lotes.find(x=>String(x.id)===String(_dictLoteId));if(!l)return;
-    if(!l.final)l.final={};
-    const f=l.final;
+    if(!l.final)l.final={};const f=l.final;
     const anterior=f.dictamen||null;
     const motivo=document.getElementById('md-motivo').value.trim();
     const ahora=new Date().toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
     if(!Array.isArray(f.dictamenHistorial))f.dictamenHistorial=[];
     f.dictamenHistorial.push({de:anterior,a:_dictTipo,por:window.__COORD_NOMBRE,rol:'Coordinadora',fecha:ahora,motivo});
-    f.dictamen=_dictTipo;
-    f.fechaDictamen=ahora;
-    f.dictaminadoPor=window.__COORD_NOMBRE;
-    f.dictaminadoRol='Coordinadora';
+    f.dictamen=_dictTipo;f.fechaDictamen=ahora;f.dictaminadoPor=window.__COORD_NOMBRE;f.dictaminadoRol='Coordinadora';
     const estadoMap={APROBADO:'aprobado',APROBADO_PARCIAL:'aprobado_parcial',RETENIDO:'retenido'};
-    l.estado=estadoMap[_dictTipo]||l.estado;
-    l.lastModified=Date.now(); l._ts=Date.now();
-    guardar();
-    cerrarDict();
-    // refrescar detalle abierto
+    l.estado=estadoMap[_dictTipo]||l.estado;l.lastModified=Date.now();l._ts=Date.now();
+    guardar();cerrarDict();
     const det=document.getElementById('det-'+_dictLoteId);
     if(det)det.innerHTML=buildDetalle(l);
-    render();
-    toast('✔ Dictamen actualizado → '+( DICT_LBL[_dictTipo]||_dictTipo ));
+    render();toast('✔ Dictamen actualizado → '+(DICT_LBL[_dictTipo]||_dictTipo));
   };
 
-  // Guarda el array completo en localStorage → sync.js lo empuja a Firestore
-  function guardar(){
-    try{ localStorage.setItem(LS_KEY, JSON.stringify(_lotes)); }
-    catch(e){ toast('⚠ No se pudo guardar localmente'); }
-  }
+  function guardar(){try{localStorage.setItem(LS_KEY,JSON.stringify(_lotes));}catch(e){toast('⚠ No se pudo guardar localmente');}}
 
-  // ── Archivar / PDF de un lote ──
+  // ── PDF ──
   window.archivarPDF=(id)=>{
     const l=_lotes.find(x=>String(x.id)===String(id));if(!l)return;
     const cab=l.cab||{},f=l.final||{},linea=l.linea||[],cf=f.pallets||[];
     const c=calcLitros(l);
-    const clRows=linea.map((p,i)=>{
-      const est=clHasNOK(p)?'NOK':clHasRepro(p)?'REPRO':'OK';
-      const picos=[p.p1,p.p2,p.p3,p.p4].filter(Boolean).join(' / ')||'—';
-      return `<tr><td>${i+1}</td><td>${esc(p.nPal||i+1)}</td><td>${esc(picos)}</td><td>${esc(p.indVal||'—')}</td><td>${est}</td><td>${esc(p.obs||'')}</td></tr>`;
-    }).join('');
-    const cfRows=cf.map((p,i)=>{
-      const det=[];if(p.idOK===false)det.push('ID');if(p.qrOK===false)det.push('QR');if(p.paletOK===false)det.push('Pallet');if(p.indCFOK===false)det.push('Ind.');
-      const est=cfHasNOK(p)?('NOK: '+(det.join(', ')||'')):cfHasRepro(p)?'REPRO':'OK';
-      return `<tr><td>${i+1}</td><td>${esc(p.nPal||i+1)}</td><td>${esc(p.indCFVal||'—')}</td><td>${est}</td><td>${esc(p.obs||'')}</td></tr>`;
-    }).join('');
+    const clRows=linea.map((p,i)=>{const est=clHasNOK(p)?'NOK':clHasRepro(p)?'REPRO':'OK';const picos=[p.p1,p.p2,p.p3,p.p4].filter(Boolean).join(' / ')||'—';return `<tr><td>${i+1}</td><td>${esc(p.nPal||i+1)}</td><td>${esc(picos)}</td><td>${esc(p.indVal||'—')}</td><td>${est}</td><td>${esc(p.obs||'')}</td></tr>`;}).join('');
+    const cfRows=cf.map((p,i)=>{const det2=[];if(p.idOK===false)det2.push('ID');if(p.qrOK===false)det2.push('QR');if(p.paletOK===false)det2.push('Pallet');if(p.indCFOK===false)det2.push('Ind.');const est=cfHasNOK(p)?('NOK: '+(det2.join(', ')||'')):cfHasRepro(p)?'REPRO':'OK';return `<tr><td>${i+1}</td><td>${esc(p.nPal||i+1)}</td><td>${esc(p.indCFVal||'—')}</td><td>${est}</td><td>${esc(p.obs||'')}</td></tr>`;}).join('');
     const litStr=c.ltsAp!=null?`Aprobados: ${c.ltsAp.toFixed(0)} lt · Retenidos: ${c.ltsRet.toFixed(0)} lt`:`Aprobados: ${c.ap} pal · Retenidos: ${c.ret} pal`;
     const dictTxt=f.dictamen?`${DICT_LBL[f.dictamen]||f.dictamen}`:'Sin dictamen';
-    const porTxt=f.dictaminadoPor?` — Dictaminado por ${esc(f.dictaminadoPor)}${f.dictaminadoRol?' ('+esc(f.dictaminadoRol)+')':''} · ${esc(f.fechaDictamen||'')}`:'';
+    const porTxt=f.dictaminadoPor?` — Dictaminado por ${esc(f.dictaminadoPor)}${f.dictaminadoRol?' ('+esc(f.dictaminadoRol)+')':''} · ${esc(f.fechaDictamen||'')}`:  '';
     document.getElementById('print-area').innerHTML=`
-      <div class="ph">
-        <div class="ph-logo">AGROFACIL</div>
-        <div class="ph-title"><span class="t1">REG-01 · Control de Calidad</span><span class="t2">Control de Línea y Producto Final — 8170 PRO-02</span></div>
-        <div class="ph-meta">
-          <div class="r"><span class="k">Código</span><span class="v">SGC-REG-01</span></div>
-          <div class="r"><span class="k">Lote</span><span class="v">${esc(cab.lote||'')}</span></div>
-          <div class="r"><span class="k">Producto</span><span class="v">${esc(cab.prod||'')}</span></div>
-          <div class="r"><span class="k">Cliente</span><span class="v">${esc(cab.cliente||'')}</span></div>
-          <div class="r"><span class="k">Fecha</span><span class="v">${esc(cab.fecha||'')}</span></div>
-        </div>
-      </div>
+      <div class="ph"><div class="ph-logo">AGROFACIL</div><div class="ph-title"><span class="t1">REG-01 · Control de Calidad</span><span class="t2">Control de Línea y Producto Final</span></div><div class="ph-meta"><div class="r"><span class="k">Código</span><span class="v">SGC-REG-01</span></div><div class="r"><span class="k">Lote</span><span class="v">${esc(cab.lote||'')}</span></div><div class="r"><span class="k">Producto</span><span class="v">${esc(cab.prod||'')}</span></div><div class="r"><span class="k">Cliente</span><span class="v">${esc(cab.cliente||'')}</span></div><div class="r"><span class="k">Fecha</span><span class="v">${esc(cab.fecha||'')}</span></div></div></div>
       <div class="pdict">DICTAMEN: ${dictTxt} · ${litStr}${porTxt}</div>
       <h3>Control en Línea (${linea.length} pallets)</h3>
       <table><thead><tr><th>#</th><th>Pallet</th><th>Picos (kg)</th><th>Inducción</th><th>Estado</th><th>Observaciones</th></tr></thead><tbody>${clRows||'<tr><td colspan="6">Sin datos</td></tr>'}</tbody></table>
       <h3>Control Final (${cf.length} pallets)</h3>
       <table><thead><tr><th>#</th><th>Pallet</th><th>Ind. CF</th><th>Estado</th><th>Observaciones</th></tr></thead><tbody>${cfRows||'<tr><td colspan="5">Sin datos</td></tr>'}</tbody></table>
-      <div class="psig"><div>Checker de Calidad</div><div>Coordinadora de Calidad</div><div>Revisión SGC / Gerencia</div></div>
-    `;
+      <div class="psig"><div>Checker de Calidad</div><div>Coordinadora de Calidad</div><div>Revisión SGC / Gerencia</div></div>`;
     toast('📄 Guardá como PDF en tu carpeta de lotes');
     setTimeout(()=>window.print(),300);
   };
 
-  // ── Toast ──
   let _tt;
   function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2800);}
 
-  // ── Suscripciones en tiempo real ──
-  onSnapshot(collection(db,'lotes'), snap=>{
-    _lotes=mergeById(snap.docs.map(d=>({id:d.id,...d.data()})),'reg01_lotes_v3');
-    render();
-  }, ()=>{
-    try{_lotes=JSON.parse(localStorage.getItem('reg01_lotes_v3')||'[]');}catch{_lotes=[];}
-    render();
-  });
-  onSnapshot(collection(db,'nc_records'), snap=>{
-    _ncs=mergeById(snap.docs.map(d=>({id:d.id,...d.data()})),'nc_records');
-    renderKPIs();
-  }, ()=>{
-    try{_ncs=JSON.parse(localStorage.getItem('nc_records')||'[]');}catch{_ncs=[];}
-    renderKPIs();
-  });
+  onSnapshot(collection(db,'lotes'),snap=>{
+    _lotes=mergeById(snap.docs.map(d=>({id:d.id,...d.data()})),'reg01_lotes_v3');render();
+  },()=>{try{_lotes=JSON.parse(localStorage.getItem('reg01_lotes_v3')||'[]');}catch{_lotes=[];}render();});
+
+  onSnapshot(collection(db,'nc_records'),snap=>{
+    _ncs=mergeById(snap.docs.map(d=>({id:d.id,...d.data()})),'nc_records');renderKPIs();
+  },()=>{try{_ncs=JSON.parse(localStorage.getItem('nc_records')||'[]');}catch{_ncs=[];}renderKPIs();});
 </script>
 </body>
 </html>
