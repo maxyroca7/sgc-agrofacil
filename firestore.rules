@@ -15,7 +15,7 @@ service cloud.firestore {
 
     // config/empresa — lectura pública (necesario antes del login)
     match /config/empresa {
-      allow read: true;
+      allow read: if true;
       allow write: if false;
     }
 
