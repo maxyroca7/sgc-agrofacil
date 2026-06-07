@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function hasRole(role) {
+      return request.auth != null
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+           .data.rol == role
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+           .data.activo == true;
+    }
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // config/empresa — solo lectura para usuarios autenticados
+    match /config/{doc} {
+      allow read: if isAuth();
+      allow write: if false;
+    }
+
+    // usuarios — cada uno lee solo el propio documento
+    match /usuarios/{uid} {
+      allow read: if request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // lotes — checkers escriben, todos leen
+    match /lotes/{id} {
+      allow read:   if isAuth();
+      allow create: if hasRole('checker');
+      allow update: if hasRole('checker') || hasRole('coordinadora');
+      allow delete: if false;
+    }
+
+    // nc/registro — acceso total a usuarios autenticados
+    match /nc/{doc} {
+      allow read, write: if isAuth();
+    }
+  }
+}
