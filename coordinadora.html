@@ -23,6 +23,7 @@
   --text:#e7eef6;--muted:#5b6f86;--muted2:#7a8fa8;
   --topbar-bg:rgba(13,20,31,.92);
   --orange-bg:rgba(245,158,11,.10);--red-bg:rgba(239,68,68,.10);--green-bg:rgba(34,197,94,.10);
+  --mono:'SF Mono','Fira Code','Cascadia Code',ui-monospace,monospace;
 }
 /* ── TEMA LIGHT ── */
 :root.light{
@@ -183,29 +184,25 @@ main{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:2rem 1.2
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
 
 /* ── PRINT ── */
-#print-area{display:none}
+#print-header,#print-body{display:none}
 @media print{
-  body{background:#fff!important;color:#000!important}
-  body::before,body::after,.topbar,main,.app-footer,.mo,.toast{display:none!important}
-  #print-area{display:block!important;padding:0;font-family:Arial,sans-serif;color:#000}
-  #print-area .ph{display:flex;border:2px solid #2a6a6a;margin-bottom:10px}
-  #print-area .ph-logo{width:150px;display:flex;align-items:center;justify-content:center;border-right:2px solid #2a6a6a;font-weight:700;font-size:18px;color:#2a6a6a}
-  #print-area .ph-title{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px}
-  #print-area .ph-title .t1{font-size:13px;font-weight:700;text-transform:uppercase}
-  #print-area .ph-title .t2{font-size:10px;color:#555}
-  #print-area .ph-meta{width:210px;border-left:2px solid #2a6a6a;font-size:9px}
-  #print-area .ph-meta .r{display:flex;border-bottom:1px solid #ccc}
-  #print-area .ph-meta .r:last-child{border-bottom:none}
-  #print-area .ph-meta .k{width:70px;padding:3px 5px;background:#f0f0f0;font-weight:700;border-right:1px solid #ccc}
-  #print-area .ph-meta .v{padding:3px 5px;flex:1}
-  #print-area h3{font-size:11px;background:#e0e0e0;padding:4px 6px;margin:10px 0 5px;text-transform:uppercase}
-  #print-area table{width:100%;border-collapse:collapse;font-size:8.5px;margin-bottom:8px}
-  #print-area th{background:#2a6a6a;color:#fff;padding:3px 4px;border:1px solid #1e5530;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  #print-area td{border:1px solid #ccc;padding:2px 4px}
-  #print-area .pdict{font-size:11px;font-weight:700;padding:6px 8px;border:2px solid #2a6a6a;margin:8px 0}
-  #print-area .psig{display:flex;gap:24px;margin-top:24px}
-  #print-area .psig div{flex:1;border-top:1.5px solid #000;padding-top:4px;text-align:center;font-size:9px}
-  @page{size:A4 landscape;margin:10mm}
+  html,body{overflow:visible!important;height:auto!important;width:auto!important;position:static!important}
+  body{background:#fff!important;color:#000!important;font-size:9px}
+  body::before,body::after,.topbar,nav,main,.app-footer,.mo,.toast,footer{display:none!important}
+  #print-header{display:block!important}
+  #print-body{display:block!important;overflow:visible!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  .card{border:1px solid #ccc!important;background:#fff!important;page-break-inside:avoid;margin-bottom:8px}
+  .tw{overflow:visible!important;width:100%!important}
+  .lt,.ft{min-width:unset!important;font-size:6px!important;table-layout:fixed!important;width:100%!important}
+  .lt th,.ft th{background:#2a6a6a!important;color:#fff!important;padding:1px 2px!important;font-size:6px!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .lt td,.ft td{padding:1px 2px!important;border:1px solid #ccc!important;overflow:hidden;word-break:break-word}
+  .ind-cell{gap:1px!important}
+  .sem{width:7px!important;height:7px!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .pal-vacio{display:none!important}
+  #print-body thead{display:table-header-group}
+  #print-body tr{break-inside:avoid}
+  #print-footer{position:fixed;bottom:0;left:0;right:0;text-align:center;font-size:7.5px;color:#888;font-family:Arial,sans-serif;padding:4px 0;border-top:1px solid #ddd}
+  @page{size:A4 landscape;margin:8mm}
 }
 
 @media(max-width:700px){.stats-row{grid-template-columns:repeat(2,1fr)}.greeting-title{font-size:1.2rem}.tb-sep,.tb-section{display:none}}
@@ -282,6 +279,15 @@ main{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:2rem 1.2
   <span class="status-dot"></span>
   QUALITYOS &nbsp;·&nbsp; M.E. ROCA &nbsp;·&nbsp; V2.0
 </footer>
+
+<div id="print-header" style="display:none">
+  <div style="display:flex;align-items:stretch;border:2px solid #2a6a6a;margin-bottom:8px;font-family:Arial,sans-serif">
+    <div style="width:200px;display:flex;align-items:center;justify-content:center;border-right:2px solid #2a6a6a;padding:10px 16px;background:#fff"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+Cjxzdmcgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDI0MDMgNjEzIiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHhtbDpzcGFjZT0icHJlc2VydmUiIHhtbG5zOnNlcmlmPSJodHRwOi8vd3d3LnNlcmlmLmNvbS8iIHN0eWxlPSJmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtzdHJva2UtbGluZWpvaW46cm91bmQ7c3Ryb2tlLW1pdGVybGltaXQ6MjsiPgogICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSwtMzk4MC40ODY2NjcsLTEyNzQuNDQzMzMzKSI+CiAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoOC4zMzMzMzMsMCwwLDguMzMzMzMzLDAsMCkiPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDU3NS4yNjM0LDIwMS4wMjk0KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtMjIuNjY1TC0yLjMzOCwtNi4xNzVMMi4zMzYsLTYuMTc1TDAsLTIyLjY2NVpNLTMuMzE0LC0wLjAzM0wtNC44NDgsOS41OEwtMTEuNDE3LDkuNThMLTQuMzA3LC0zMi4yNDVMNC4zNzIsLTMyLjI0NUwxMS4zODEsOS41OEw0Ljc0OCw5LjU4TDMuMjcyLC0wLjAzM0wtMy4zMTQsLTAuMDMzWiIgc3R5bGU9ImZpbGw6cmdiKDgsMTI4LDEzMSk7ZmlsbC1ydWxlOm5vbnplcm87Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSw2MDAuOTk3OCwxNjguMzE3NykiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsNDIuODI3Qy0yLjc4MSw0Mi44MjcgLTUuMTQ2LDQxLjg0OCAtNy4wOTMsMzkuODg5Qy05LjA0LDM3LjkzMSAtMTAuMDEzLDM1LjU4MyAtMTAuMDEzLDMyLjg0NkwtMTAuMDEzLDEwLjAxNEMtMTAuMDEzLDcuMjMyIC05LjAzNCw0Ljg2OCAtNy4wNzUsMi45MkMtNS4xMTcsMC45NzMgLTIuNzU5LDAgMCwwQzIuNzgyLDAgNS4xNDEsMC45NzkgNy4wNzcsMi45MzdDOS4wMTQsNC44OTYgOS45ODEsNy4yNTUgOS45ODEsMTAuMDE0TDkuOTgxLDE0Ljc4N0wzLjQzOCwxNC43ODdMMy40MzgsOS44OEMzLjQzOCw4Ljg3OSAzLjA4Myw4LjAyMiAyLjM3MSw3LjMxQzEuNjU4LDYuNTk4IDAuODAyLDYuMjQyIC0wLjE5OSw2LjI0MkMtMS4yMDEsNi4yNDIgLTIuMDUzLDYuNTk4IC0yLjc1Myw3LjMxQy0zLjQ1NCw4LjAyMiAtMy44MDUsOC44NzkgLTMuODA1LDkuODhMLTMuODA1LDMyLjc3OUMtMy44MDUsMzMuNzggLTMuNDU0LDM0LjYzMSAtMi43NTMsMzUuMzMzQy0yLjA1MywzNi4wMzMgLTEuMjAxLDM2LjM4NSAtMC4xOTksMzYuMzg1QzAuODAyLDM2LjM4NSAxLjY1OCwzNi4wMzQgMi4zNzEsMzUuMzM2QzMuMDgzLDM0LjYzNyAzLjQzOCwzMy43ODggMy40MzgsMzIuNzg5TDMuNDM4LDI0LjU2N0wtMC4wNjYsMjQuNTY3TC0wLjA2NiwxOC4yMjVMOS45ODEsMTguMjI1TDkuOTgxLDMyLjg0NkM5Ljk4MSwzNS42MjggOS4wMDIsMzcuOTg2IDcuMDQ0LDM5LjkyMkM1LjA4Niw0MS44NTggMi43MzgsNDIuODI3IDAsNDIuODI3IiBzdHlsZT0iZmlsbDpyZ2IoOCwxMjgsMTMxKTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDYzMC4xNzE2LDIwMC41Mjg0KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtMjEuNjYzQzAsLTI0LjA4OCAtMS4yMDEsLTI1LjMwMiAtMy42MDUsLTI1LjMwMkwtNy40MSwtMjUuMzAyTC03LjQxLC0xMS45MTZMLTMuNjA1LC0xMS45MTZDLTIuNjA0LC0xMS45MTYgLTEuNzUyLC0xMi4yNzEgLTEuMDUyLC0xMi45ODRDLTAuMzUxLC0xMy42OTYgMCwtMTQuNTUzIDAsLTE1LjU1NUwwLC0yMS42NjNaTS0zLjc3MiwtMzEuNzQ0Qy0wLjI1NiwtMzEuNzQ0IDIuMzI1LC0zMC43NzYgMy45NzMsLTI4Ljg0QzUuNDE4LC0yNy4xNDkgNi4xNDIsLTI0Ljc5IDYuMTQyLC0yMS43NjNMNi4xNDIsLTE1LjY4OEM2LjE0MiwtMTIuNzI4IDUuMDE4LC0xMC4yMjUgMi43NzEsLTguMTc4TDcuNDQzLDEwLjA4MUwwLjYyMSwxMC4wODFMLTMuMjA1LC01LjY3NEwtNy40MSwtNS42NzRMLTcuNDEsMTAuMDgxTC0xMy43MTksMTAuMDgxTC0xMy43MTksLTMxLjc0NEwtMy43NzIsLTMxLjc0NFoiIHN0eWxlPSJmaWxsOnJnYig4LDEyOCwxMzEpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNjU1LjM3MjgsMjAxLjIzMSkiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsLTIzLjFDMCwtMjQuMTAxIC0wLjM1LC0yNC45NTMgLTEuMDUxLC0yNS42NTRDLTEuNzUyLC0yNi4zNTQgLTIuNjAzLC0yNi43MDUgLTMuNjA0LC0yNi43MDVDLTQuNjA1LC0yNi43MDUgLTUuNDYzLC0yNi4zNTQgLTYuMTc1LC0yNS42NTRDLTYuODg3LC0yNC45NTMgLTcuMjQyLC0yNC4xMDEgLTcuMjQyLC0yMy4xTC03LjI0MiwtMC4yMDJDLTcuMjQyLDAuNzk5IC02Ljg4NywxLjY1MSAtNi4xNzUsMi4zNTJDLTUuNDYzLDMuMDUzIC00LjYwNSwzLjQwNCAtMy42MDQsMy40MDRDLTIuNjAzLDMuNDA0IC0xLjc1MiwzLjA1MyAtMS4wNTEsMi4zNTJDLTAuMzUsMS42NTEgMCwwLjc5OSAwLC0wLjIwMkwwLC0yMy4xWk0tMy40MzgsLTMyLjk4Qy0wLjY1NiwtMzIuOTggMS43MDksLTMyLjAwMSAzLjY1NSwtMzAuMDQzQzUuNjA0LC0yOC4wODQgNi41NzYsLTI1LjcyNSA2LjU3NiwtMjIuOTY3TDYuNTc2LC0wLjEzNEM2LjU3NiwyLjY0NyA1LjU5OCw1LjAxMiAzLjY0LDYuOTU5QzEuNjgxLDguOTA3IC0wLjY3OCw5Ljg4IC0zLjQzOCw5Ljg4Qy02LjIyLDkuODggLTguNTc3LDguOTAxIC0xMC41MTQsNi45NDNDLTEyLjQ1LDQuOTg1IC0xMy40MTgsMi42MjYgLTEzLjQxOCwtMC4xMzRMLTEzLjQxOCwtMjIuOTY3Qy0xMy40MTgsLTI1Ljc0NyAtMTIuNDM4LC0yOC4xMTIgLTEwLjQ4LC0zMC4wNkMtOC41MjIsLTMyLjAwNyAtNi4xNzUsLTMyLjk4IC0zLjQzOCwtMzIuOTgiIHN0eWxlPSJmaWxsOnJnYig4LDEyOCwxMzEpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNjczLjc5ODYsMTY4Ljc1MTUpIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDQxLjg1OEwtNi4zMDksNDEuODU4TC02LjMwOSwwTDExLjY0OCwwTDExLjY0OCw2LjM0MUwwLDYuMzQxTDAsMTcuNzU3TDguNTExLDE3Ljc1N0w4LjUxMSwyNC4xTDAsMjQuMUwwLDQxLjg1OFoiIHN0eWxlPSJmaWxsOnJnYigxNjEsMjA1LDU4KTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDY5NS45Mjk0LDIwMS4wMjk0KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtMjIuNjY1TC0yLjMzNywtNi4xNzVMMi4zMzYsLTYuMTc1TDAsLTIyLjY2NVpNLTMuMzE1LC0wLjAzM0wtNC44NDcsOS41OEwtMTEuNDE2LDkuNThMLTQuMzA2LC0zMi4yNDVMNC4zNzIsLTMyLjI0NUwxMS4zODIsOS41OEw0Ljc0OCw5LjU4TDMuMjcyLC0wLjAzM0wtMy4zMTUsLTAuMDMzWiIgc3R5bGU9ImZpbGw6cmdiKDE2MSwyMDUsNTgpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNzIxLjY2NDgsMTY4LjMxNzcpIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDQyLjgyN0MtMi43ODIsNDIuODI3IC01LjE0Niw0MS44NTMgLTcuMDk0LDM5LjkwNUMtOS4wNCwzNy45NTkgLTEwLjAxNCwzNS42MDUgLTEwLjAxNCwzMi44NDZMLTEwLjAxNCwxMC4wMTRDLTEwLjAxNCw3LjIzMiAtOS4wMzQsNC44NjggLTcuMDc2LDIuOTJDLTUuMTE4LDAuOTczIC0yLjc1OSwwIDAsMEMyLjc4MSwwIDUuMTQxLDAuOTc5IDcuMDc3LDIuOTM3QzkuMDEzLDQuODk2IDkuOTgsNy4yNTUgOS45OCwxMC4wMTRMOS45OCwxNC43ODdMMy40MzgsMTQuNzg3TDMuNDM4LDkuODhDMy40MzgsOC44NzkgMy4wODIsOC4wMjIgMi4zNyw3LjMxQzEuNjU3LDYuNTk4IDAuODAyLDYuMjQyIC0wLjE5OSw2LjI0MkMtMS4yMDEsNi4yNDIgLTIuMDUzLDYuNTk4IC0yLjc1Myw3LjMxQy0zLjQ1NSw4LjAyMiAtMy44MDUsOC44NzkgLTMuODA1LDkuODhMLTMuODA1LDMyLjc3OUMtMy44MDUsMzMuNzggLTMuNDU1LDM0LjYzMSAtMi43NTMsMzUuMzMzQy0yLjA1MywzNi4wMzMgLTEuMjAxLDM2LjM4NSAtMC4xOTksMzYuMzg1QzAuODAyLDM2LjM4NSAxLjY1NywzNi4wMzMgMi4zNywzNS4zMzNDMy4wODIsMzQuNjMxIDMuNDM4LDMzLjc4IDMuNDM4LDMyLjc3OUwzLjQzOCwyNy4wMDVMOS45OCwyNy4wMDVMOS45OCwzMi44NDZDOS45OCwzNS42MjggOS4wMDIsMzcuOTg2IDcuMDQzLDM5LjkyMkM1LjA4NSw0MS44NTggMi43MzcsNDIuODI3IDAsNDIuODI3IiBzdHlsZT0iZmlsbDpyZ2IoMTYxLDIwNSw1OCk7ZmlsbC1ydWxlOm5vbnplcm87Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoLTEsMCwwLDEsMTQ3OS45NDYsLTIxNS44ODUpIj4KICAgICAgICAgICAgICAgIDxyZWN0IHg9IjczNi44MTgiIHk9IjM4NC42NyIgd2lkdGg9IjYuMzEiIGhlaWdodD0iNDEuODI1IiBzdHlsZT0iZmlsbDpyZ2IoMTYxLDIwNSw1OCk7Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSw3NjUuOTU5NywxNjguNzg0NSkiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsNDEuODI1TC0xNy4xOSw0MS44MjVMLTE3LjE5LDBMLTEwLjg4MiwwTC0xMC44ODIsMzUuNTVMMCwzNS41NUwwLDQxLjgyNVoiIHN0eWxlPSJmaWxsOnJnYigxNjEsMjA1LDU4KTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDQ3Ny42NTg5LDE5MS44NjM4KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtMTAuODA5TDAsMC41NTlDNy42MjksLTMuNTAxIDE1LjA4LC02LjQyNCAyMS45OTQsLTguNTMzQzE0LjEwNywtMTAuODA5IDYuODQ2LC0xMS4zNjggMCwtMTAuODA5IiBzdHlsZT0iZmlsbDpyZ2IoMjE1LDIyMywzNCk7ZmlsbC1ydWxlOm5vbnplcm87Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSw1NDAuMjcyMiwxNzkuOTEwNCkiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsMTYuOTU2TDAsMS40MjZDLTIwLjcyNSwwIC00MC42MDcsNC4wOTcgLTU0LjU5LDExLjY0N0MtMjYuNjc4LDguNTMxIC01LjIwOSwxNC44NjUgMCwxNi45NTYiIHN0eWxlPSJmaWxsOnJnYigxNjEsMjA1LDU4KTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgICAgICA8ZyB0cmFuc2Zvcm09Im1hdHJpeCgxLDAsMCwxLDQ3OC44NzM4LDIwMi40MTk1KSI+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMCwtOC41NTlDLTAuNDAxLC04LjUwOCAtMC44MjMsLTguNDU2IC0xLjIxNSwtOC4zOTVMLTEuMjE1LC0yLjY3NkMxMy43NzIsLTIuMzg2IDI1LjAxNiwwLjg4NSAzMC4wNzksMi41MTJDMzIuMjEsMS41NDggMzQuNDk5LDAuNjAxIDM2Ljk3NywtMC4zMDZDMzguNDIzLC0wLjg0OSAzOS44ODcsLTEuMzU0IDQxLjM4MSwtMS44MTNDNDQuNjY2LC0yLjg2MSA0OC4yMzIsLTMuODI4IDUyLjA3NiwtNC42ODJDMzYuNzk3LC05LjA4OSAxOC44ODYsLTExLjA3MSAwLC04LjU1OSIgc3R5bGU9ImZpbGw6cmdiKDAsMTc3LDEyMyk7ZmlsbC1ydWxlOm5vbnplcm87Ii8+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSwwLDAsMSw0NzcuNjU4OSwyMTYuMDI1NykiPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTAsLTE0LjUwNkwwLC0xMC45MjlDMCwtOC4wOTYgMS40MzMsLTUuNjYxIDMuODg1LC00LjIzOUwxMS4yMjgsMEMxNC4xMDcsLTIuNTQzIDIwLjcxMSwtNS45MTQgMjcuMzM4LC05LjM2NEMxMS4wMTMsLTE0LjI3NSAwLjcsLTE0LjQ2NCAwLC0xNC41MDYiIHN0eWxlPSJmaWxsOnJnYig5LDE0NCwxMTkpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNTA1LjEyMjgsMjAwLjE4MjcpIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDI1LjIxM0MyLjQ1NSwyNi42MzUgNS4yNjgsMjYuNjM1IDcuNzIxLDI1LjIxM0wzMS4zMDgsMTEuNjA0QzMzLjc2LDEwLjE4MiAzNS4xNDksNy43NDcgMzUuMTQ5LDQuOTE0TDM1LjE0OSwtMS40MjJDMzAuODI1LC0wLjkzOCA5LjYsMi4xNDYgLTEzLjM1NiwxNy42N0wwLDI1LjIxM1oiIHN0eWxlPSJmaWxsOnJnYig4LDEyOCwxMzEpO2ZpbGwtcnVsZTpub256ZXJvOyIvPgogICAgICAgICAgICA8L2c+CiAgICAgICAgICAgIDxnIHRyYW5zZm9ybT0ibWF0cml4KDEsMCwwLDEsNTM2LjMwNDQsMTY2LjYyMDIpIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik0wLDAuOTgxTC0yMy41NzEsLTEyLjYyOEMtMjYuMDIzLC0xNC4wNCAtMjguODM5LC0xNC4wNCAtMzEuMjg5LC0xMi42MjhMLTU0Ljg3MywwLjk4MUMtNTcuMzI2LDIuNDA4IC01OC42NDYsNC44MzIgLTU4LjY0Niw3LjY3TC01OC42NDYsMTEuNTMyQy00OS45NjcsMTEuNDY3IC00My41NzgsMTIuMjUzIC0zMy4xOSwxNS4wMjFDLTExLjc2Myw5LjE2NiAzLjk2OCwxMS4xMjMgMy45NjgsMTEuMTIzTDMuOTY4LDcuNjdDMy45NjgsNC44MzIgMi40NjYsMi40MDggMCwwLjk4MSIgc3R5bGU9ImZpbGw6cmdiKDIwOSwyMTEsMjEyKTtmaWxsLXJ1bGU6bm9uemVybzsiLz4KICAgICAgICAgICAgPC9nPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+Cg==" alt="Agrofacil" style="height:60px;max-width:160px;object-fit:contain"></div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px"><span style="font-size:13px;font-weight:700;text-transform:uppercase">REG-01 · Control de Calidad</span><span style="font-size:10px;color:#555">Control de Línea y Producto Final — 8170 PRO-02</span></div>
+    <div style="width:200px;border-left:2px solid #2a6a6a;font-size:10px" id="print-meta"></div>
+  </div>
+</div>
+<div id="print-body" style="display:none"></div>
 
 <!-- MODAL DICTAMEN -->
 <div class="mo" id="mo-dict" obody{font-family:'SF Mono','Fira Code','Cascadia Code',ui-monospace,monospace;background:var(--bg);color:var(--text);min-height:100dvh;display:flex;flex-direction:column;transition:background .2s,color .2s}
@@ -574,6 +580,8 @@ main{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:2rem 1.2
   import { collection, getDoc, onSnapshot, doc }
     from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
   import './sync.js';
+  import { CFG_DEFAULT, aplicarEmpresaCfg } from './cfg-loader.js';
+  import { buildPrintBody } from './print-lote.js';
 
   const LS_KEY = 'reg01_lotes_v3';
   document.getElementById('btn-salir').addEventListener('click', cerrarSesion);
@@ -583,13 +591,18 @@ main{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:2rem 1.2
   document.body.dataset.rol = rol;
   if (rol !== 'coordinadora') { window.location.replace('REG01_planilla_digital.html'); }
 
-  // ── Nombre empresa ──
+  // ── Nombre empresa + cfg ──
+  let cfg = { ...CFG_DEFAULT };
   try {
     const snapEmp = await getDoc(doc(db,'config','empresa'));
-    if (snapEmp.exists() && snapEmp.data().nombre) {
-      const el = document.getElementById('tb-empresa');
-      el.textContent = snapEmp.data().nombre;
-      el.classList.add('loaded');
+    if (snapEmp.exists()) {
+      const d = snapEmp.data();
+      if (d.nombre) {
+        const el = document.getElementById('tb-empresa');
+        el.textContent = d.nombre;
+        el.classList.add('loaded');
+      }
+      cfg = aplicarEmpresaCfg(cfg, d);
     }
   } catch(_) {}
 
@@ -755,25 +768,22 @@ main{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:2rem 1.2
   function guardar(){try{localStorage.setItem(LS_KEY,JSON.stringify(_lotes));}catch(e){toast('⚠ No se pudo guardar localmente');}}
 
   // ── PDF ──
-  window.archivarPDF=(id)=>{
-    const l=_lotes.find(x=>String(x.id)===String(id));if(!l)return;
-    const cab=l.cab||{},f=l.final||{},linea=l.linea||[],cf=f.pallets||[];
-    const c=calcLitros(l);
-    const clRows=linea.map((p,i)=>{const est=clHasNOK(p)?'NOK':clHasRepro(p)?'REPRO':'OK';const picos=[p.p1,p.p2,p.p3,p.p4].filter(Boolean).join(' / ')||'—';return `<tr><td>${i+1}</td><td>${esc(p.nPal||i+1)}</td><td>${esc(picos)}</td><td>${esc(p.indVal||'—')}</td><td>${est}</td><td>${esc(p.obs||'')}</td></tr>`;}).join('');
-    const cfRows=cf.map((p,i)=>{const det2=[];if(p.idOK===false)det2.push('ID');if(p.qrOK===false)det2.push('QR');if(p.paletOK===false)det2.push('Pallet');if(p.indCFOK===false)det2.push('Ind.');const est=cfHasNOK(p)?('NOK: '+(det2.join(', ')||'')):cfHasRepro(p)?'REPRO':'OK';return `<tr><td>${i+1}</td><td>${esc(p.nPal||i+1)}</td><td>${esc(p.indCFVal||'—')}</td><td>${est}</td><td>${esc(p.obs||'')}</td></tr>`;}).join('');
-    const litStr=c.ltsAp!=null?`Aprobados: ${c.ltsAp.toFixed(0)} lt · Retenidos: ${c.ltsRet.toFixed(0)} lt`:`Aprobados: ${c.ap} pal · Retenidos: ${c.ret} pal`;
-    const dictTxt=f.dictamen?`${DICT_LBL[f.dictamen]||f.dictamen}`:'Sin dictamen';
-    const porTxt=f.dictaminadoPor?` — Dictaminado por ${esc(f.dictaminadoPor)}${f.dictaminadoRol?' ('+esc(f.dictaminadoRol)+')':''} · ${esc(f.fechaDictamen||'')}`:  '';
-    document.getElementById('print-area').innerHTML=`
-      <div class="ph"><div class="ph-logo">AGROFACIL</div><div class="ph-title"><span class="t1">REG-01 · Control de Calidad</span><span class="t2">Control de Línea y Producto Final</span></div><div class="ph-meta"><div class="r"><span class="k">Código</span><span class="v">SGC-REG-01</span></div><div class="r"><span class="k">Lote</span><span class="v">${esc(cab.lote||'')}</span></div><div class="r"><span class="k">Producto</span><span class="v">${esc(cab.prod||'')}</span></div><div class="r"><span class="k">Cliente</span><span class="v">${esc(cab.cliente||'')}</span></div><div class="r"><span class="k">Fecha</span><span class="v">${esc(cab.fecha||'')}</span></div></div></div>
-      <div class="pdict">DICTAMEN: ${dictTxt} · ${litStr}${porTxt}</div>
-      <h3>Control en Línea (${linea.length} pallets)</h3>
-      <table><thead><tr><th>#</th><th>Pallet</th><th>Picos (kg)</th><th>Inducción</th><th>Estado</th><th>Observaciones</th></tr></thead><tbody>${clRows||'<tr><td colspan="6">Sin datos</td></tr>'}</tbody></table>
-      <h3>Control Final (${cf.length} pallets)</h3>
-      <table><thead><tr><th>#</th><th>Pallet</th><th>Ind. CF</th><th>Estado</th><th>Observaciones</th></tr></thead><tbody>${cfRows||'<tr><td colspan="5">Sin datos</td></tr>'}</tbody></table>
-      <div class="psig"><div>Checker de Calidad</div><div>Coordinadora de Calidad</div><div>Revisión SGC / Gerencia</div></div>`;
-    toast('📄 Guardá como PDF en tu carpeta de lotes');
-    setTimeout(()=>window.print(),300);
+  window.archivarPDF = (id) => {
+    const l = _lotes.find(x => String(x.id) === String(id)); if (!l) return;
+    setTimeout(() => {
+      const safeL = { ...l, cab: l.cab||{}, linea: l.linea||[], final: {pallets:[], ...(l.final||{})}, hallazgos: l.hallazgos||[] };
+      const pb = document.getElementById('print-body');
+      if (pb) pb.innerHTML = buildPrintBody(safeL, cfg);
+      const meta = document.getElementById('print-meta');
+      if (meta) {
+        const rows=[['Código',cfg.docCodigo||'SGC-REG01-APP'],['Versión',cfg.docVersion||'00'],['Lote',safeL.cab.lote||''],['Fecha',safeL.cab.fecha||''],['Elab.',cfg.docElab||'Maximiliano Roca'],['Aprob.',cfg.docAprob||'Evelin Alcaraz']];
+        meta.innerHTML=rows.map(([k,v])=>`<div style="display:flex;border-bottom:1px solid #ccc"><span style="width:58px;padding:3px 5px;background:#f0f0f0;font-weight:700;border-right:1px solid #ccc">${k}</span><span style="padding:3px 5px;flex:1">${v}</span></div>`).join('');
+      }
+      toast('📄 Guardá como PDF en tu carpeta de lotes');
+      window.print();
+      const _cp = () => { if (pb) pb.innerHTML = ''; window.removeEventListener('afterprint', _cp); };
+      window.addEventListener('afterprint', _cp);
+    }, 400);
   };
 
   let _tt;
