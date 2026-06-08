@@ -127,9 +127,6 @@ html,body{overflow:hidden !important;
 .tb-name span{color:var(--green);}
 .tb-empresa-reg{font-size:.56rem;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;opacity:0;transition:opacity .4s;white-space:nowrap;}
 .tb-empresa-reg.loaded{opacity:1;}
-.app-footer{margin-top:auto;padding:.8rem 1rem;display:flex;align-items:center;justify-content:center;gap:.5rem;border-top:1px solid var(--border);color:var(--text3);font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;user-select:none;background:var(--bg2);}
-.status-dot-footer{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;animation:pulse-footer 2.4s ease-in-out infinite}
-@keyframes pulse-footer{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
 .tb-sep{color:var(--border2)}
 .tb-title{font-size:.75rem;color:var(--text2);white-space:nowrap}
 #tabs-wrap{display:flex;gap:4px;overflow-x:auto;flex:1 1 0;min-width:0;scrollbar-width:none;padding:6px 0;-webkit-overflow-scrolling:touch}
@@ -2857,9 +2854,5 @@ aplicarTema(localStorage.getItem('theme')||'dark');
 
 
 </script>
-<footer class="app-footer">
-  <span class="status-dot-footer"></span>
-  QUALITYOS &nbsp;·&nbsp; M.E. ROCA &nbsp;·&nbsp; V2.0
-</footer>
 </body>
 </html>
