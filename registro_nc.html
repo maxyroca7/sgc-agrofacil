@@ -1120,17 +1120,45 @@ idbGet('rows',saved=>{
     try{
       rows=JSON.parse(saved);
       document.getElementById('saveMsg').textContent='✅ Datos restaurados — '+rows.length+' registro/s';
+      render();
+      verificarImportPendiente();
     }catch(e){
       rows=[];
-      document.getElementById('saveMsg').textContent='Registro vacío — listo para cargar NCs del mes.';
+      render();
+      verificarImportPendiente();
     }
   } else {
-    rows=[];
-    document.getElementById('saveMsg').textContent='Registro vacío — listo para cargar NCs del mes.';
+    // IndexedDB vacío — intentar hidratar desde Firestore antes de mostrar vacío
+    document.getElementById('saveMsg').textContent='Cargando desde nube...';
+    import('./firebase-init.js').then(({db})=>{
+      import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js').then(({doc,getDoc})=>{
+        getDoc(doc(db,'nc','registro')).then(snap=>{
+          if(snap.exists()&&Array.isArray(snap.data().rows)&&snap.data().rows.length>0){
+            rows=snap.data().rows;
+            // Poblar IndexedDB para próximas cargas offline
+            idbSet('rows',JSON.stringify(rows),()=>{});
+            document.getElementById('saveMsg').textContent='✅ Datos restaurados desde nube — '+rows.length+' registro/s';
+          } else {
+            rows=[];
+            document.getElementById('saveMsg').textContent='Registro vacío — listo para cargar NCs del mes.';
+          }
+          render();
+          verificarImportPendiente();
+        }).catch(err=>{
+          console.warn('[nc] Error leyendo nc/registro desde Firestore:',err.message);
+          rows=[];
+          document.getElementById('saveMsg').textContent='Registro vacío — listo para cargar NCs del mes.';
+          render();
+          verificarImportPendiente();
+        });
+      });
+    }).catch(()=>{
+      rows=[];
+      document.getElementById('saveMsg').textContent='Registro vacío — listo para cargar NCs del mes.';
+      render();
+      verificarImportPendiente();
+    });
   }
-  render();
-  // Verificar si hay NC pendientes del REG-01
-  verificarImportPendiente();
 });
 
 // ════════════════════════════════════════════
