@@ -1,12 +1,10 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v30
-//  Cambio v30: + coordinadora.html · FIX paths de íconos a raíz
-//              (estaban en /icons/ inexistente → addAll fallaba entero
-//               y no se precacheaba NADA → PWA rota offline)
-//  Cambio v29: Vista Coordinadora — banner, CSS solo-lectura, body.dataset.rol
+//  sw.js — Agrofacil SGC · v31
+//  Cambio v31: + cfg-loader.js · + print-lote.js
+//              Fuerza invalidación de caché v30
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v30';
+const CACHE_NAME = 'agrofacil-v31';
 
 const ASSETS = [
   '/login.html',
@@ -17,6 +15,8 @@ const ASSETS = [
   '/historial.html',
   '/firebase-init.js',
   '/sync.js',
+  '/cfg-loader.js',
+  '/print-lote.js',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
