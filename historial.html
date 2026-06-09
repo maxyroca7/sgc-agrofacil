@@ -174,7 +174,7 @@
     @media print{
       html,body{overflow:visible!important;height:auto!important;width:auto!important;position:static!important}
       body{background:#fff!important;color:#000!important;font-size:9px}
-      body::before,body::after,.topbar,nav,main,.app-footer,.toast,footer{display:none!important}
+      body::before,body::after,.topbar,nav,main,.app-footer,.toast,footer,.overlay,.modal{display:none!important}
       #print-header{display:block!important}
       #print-body{display:block!important;overflow:visible!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
       .card{border:1px solid #ccc!important;background:#fff!important;page-break-inside:avoid;margin-bottom:8px}
@@ -581,6 +581,8 @@
 
   window.pdfId=id=>{
     const l=todosLotes.find(x=>String(x.id)===String(id));if(!l)return;
+    // Cerrar modal antes de imprimir para que no interfiera con @media print
+    document.getElementById('modal-overlay').classList.remove('open');
     setTimeout(()=>{
       const safeL={...l,cab:l.cab||{},linea:l.linea||[],final:{pallets:[],...(l.final||{})},hallazgos:l.hallazgos||[]};
       const pb=document.getElementById('print-body');
