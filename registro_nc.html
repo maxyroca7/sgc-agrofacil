@@ -1094,13 +1094,11 @@ idbGet('rows',saved=>{
     // IndexedDB vacío — intentar hidratar desde Firestore antes de mostrar vacío
     document.getElementById('saveMsg').textContent='Cargando desde nube...';
     import('./firebase-init.js').then(({db})=>{
-      import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js').then(({collection, getDocs})=>{
-        getDocs(collection(db,'nc_records')).then(snap=>{
-          if(!snap.empty){
-            rows = [];
-            snap.forEach(d => rows.push(d.data()));
-            rows.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
-            idbSet('rows', JSON.stringify(rows), ()=>{});
+      import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js').then(({doc, getDoc})=>{
+        getDoc(doc(db,'nc','registro')).then(snap=>{
+          if(snap.exists()&&Array.isArray(snap.data().rows)&&snap.data().rows.length>0){
+            rows=snap.data().rows;
+            idbSet('rows',JSON.stringify(rows),()=>{});
             document.getElementById('saveMsg').textContent='✅ Datos restaurados desde nube — '+rows.length+' registro/s';
           } else {
             rows=[];
@@ -1109,7 +1107,7 @@ idbGet('rows',saved=>{
           render();
           verificarImportPendiente();
         }).catch(err=>{
-          console.warn('[nc] Error leyendo nc_records:',err.message);
+          console.warn('[nc] Error leyendo nc/registro:',err.message);
           rows=[];
           document.getElementById('saveMsg').textContent='Registro vacío — listo para cargar NCs del mes.';
           render();
