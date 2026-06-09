@@ -473,16 +473,7 @@ html.coordinadora #tBody select { pointer-events:none; opacity:.6; }
       <div class="kpi-val" id="kpi4">—</div>
       <div class="kpi-sub">meta: &gt; 90%</div>
     </div>
-    <div class="kpi-card warn" id="kpi5-card">
-      <div class="kpi-label">AQ-IND-05 · Pallets pendientes reproceso</div>
-      <div class="kpi-val" id="kpi5">—</div>
-      <div class="kpi-sub" id="kpi5-sub">pallets sin cerrar</div>
-    </div>
-    <div class="kpi-card mid" id="kpi6-card">
-      <div class="kpi-label">AQ-IND-06 · Carga estimada (HH)</div>
-      <div class="kpi-val" id="kpi6">—</div>
-      <div class="kpi-sub" id="kpi6-sub">horas·hombre pendientes</div>
-    </div>
+
   </div>
 
   <div class="sev-bar">
@@ -530,7 +521,6 @@ html.coordinadora #tBody select { pointer-events:none; opacity:.6; }
         <th class="c2">N° Lote</th>
         <th class="c3">Producto</th>
         <th class="c4">Tipo de Desvío<br><span class="kpi-tag">AQ-IND-03</span></th>
-        <th class="c5">Gravedad</th>
         <th class="c5b">Detección<br><span class="kpi-tag">EXCEL</span></th>
         <th class="c6">Descripción de la NC</th>
         <th class="c7">Litros NC<br><span class="kpi-tag">AQ-IND-02</span></th>
@@ -539,8 +529,6 @@ html.coordinadora #tBody select { pointer-events:none; opacity:.6; }
         <th class="c10">Plazo<br>Reproceso<br><span class="kpi-tag">AQ-IND-04</span></th>
         <th class="c11">Estado<br><span class="kpi-tag">AQ-IND-01/04</span></th>
         <th class="c12">Fecha<br>Cierre<br><span class="kpi-tag">AQ-IND-04</span></th>
-        <th class="c13">Pallets<br>NC<br><span class="kpi-tag">AQ-IND-05/06</span></th>
-        <th class="c14">Responsable<br><span class="kpi-tag">ISO 10.2.2</span></th>
         <th class="c15">Verif.<br>Eficacia<br><span class="kpi-tag">ISO 10.2.2</span></th>
       </tr>
     </thead>
@@ -567,22 +555,12 @@ html.coordinadora #tBody select { pointer-events:none; opacity:.6; }
     </div>
     <strong>Campos obligatorios ISO 9001:2015 cláusula 10.2.2:</strong>
     <div class="legend-row">
-      <span>📋 <strong>Responsable</strong> — persona que ejecuta la acción correctiva</span>
       <span>✅ <strong>Verif. Eficacia</strong> — confirma que la acción eliminó la causa · <span class="badge b-efok">Eficaz</span> <span class="badge b-efno">No eficaz</span> <span class="badge b-efpend">Pendiente</span></span>
     </div>
     <strong>Criterio de registro (una NC por lote · evento · tipo de desvío):</strong>
     <div class="legend-row">
       <span>Si en un mismo lote hay dos tipos de desvío distintos → dos filas separadas</span>
       <span>Si el desvío ocurrió en otro turno o fue detectado en otra fecha → nueva NC</span>
-    </div>
-    <strong>Estimación horas·hombre (AQ-IND-06):</strong>
-    <div class="legend-row">
-      <span>⏱ Inducción débil → <strong>20 min/pallet</strong></span>
-      <span>⏱ Pérdida por inducción → <strong>20 min/pallet</strong></span>
-      <span>⏱ Pérdida (bidón/es pinchados) → <strong>20 min/pallet</strong></span>
-      <span>⏱ Palét chocado → <strong>20 min/pallet</strong></span>
-      <span>⏱ Bidón/es por inducción → <strong>5 min/bidón</strong> (trabajo puntual)</span>
-      <span style="color:#888">Otros tipos → 30 min (genérico)</span>
     </div>
     <strong>Estados:</strong>
     <div class="legend-row">
@@ -811,14 +789,6 @@ function render(){
     });
     tdT.appendChild(sT);
 
-    const tdG=mkTdEl(tr,'c5','Gravedad');
-    const sG=mkSelect(SEVS.map(s=>({v:s,l:s||'—'})),r.sev,e=>{
-      rows[i].sev=e.target.value; renderSevBadge(tdG,rows[i].sev); scheduleSave(); updateKPIs();
-    });
-    tdG.appendChild(sG);
-    tdG.appendChild(document.createElement('span'));
-    renderSevBadge(tdG,r.sev);
-
     const DETEC_OPTS = ['','CONTROL LÍNEA','CONTROL FINAL','CONTROL INGRESO'];
     const tdD=mkTdEl(tr,'c5b','Detección');
     const sD=mkSelect(DETEC_OPTS.map(s=>({v:s,l:s||'—'})),r.detec,e=>{
@@ -841,9 +811,6 @@ function render(){
     renderEstBadge(tdE,r.est);
 
     mkInp(tr,'c12','date',r.cierre, v=>{rows[i].cierre=v; scheduleSave();updateKPIs();},'Fecha Cierre');
-    mkInp(tr,'c13','number',r.pallets,v=>{rows[i].pallets=v; scheduleSave();updateKPIs();},'Pallets NC');
-    mkInp(tr,'c14','text',r.resp,    v=>{rows[i].resp=v;    scheduleSave();},'Responsable');
-
     const tdEf=mkTdEl(tr,'c15','Verif. Eficacia');
     const sEf=mkSelect(EFICACIA.map(s=>({v:s,l:s})),r.eficacia,e=>{
       rows[i].eficacia=e.target.value; renderEfBadge(tdEf,rows[i].eficacia); scheduleSave();
@@ -921,7 +888,7 @@ function autoCalcPlazo(i){
 // AQ-IND-03: tipo con más ocurrencias (mode)
 // AQ-IND-04: % finalizados dentro del plazo
 // AQ-IND-05: suma pallets en estado Pendiente/En proceso
-// AQ-IND-06: suma(pallets × MINS[tipo]) / 60
+// KPI5/KPI6 (pallets reproceso y HH) movidos a panel coordinadora
 // Reglas HH: Bidón/es por inducción=10min | resto=30min
 // ════════════════════════════════════════════
 function updateKPIs(){
@@ -949,55 +916,6 @@ function updateKPIs(){
   document.getElementById('sev-mod').textContent =a.filter(r=>r.sev==='Moderado').length;
   document.getElementById('sev-crit').textContent=a.filter(r=>r.sev==='Crítico').length;
 
-  // KPI5 — Pallets pendientes de reproceso
-  // KPI6 — Horas·hombre estimadas
-  // Reglas: Pérdida por inducción → 30 min/pallet | Inducción débil → 10 min/pallet
-  // Solo filas con estado Pendiente o En proceso y con pallets > 0
-  // Reglas HH corregidas:
-  // Bidón/es por inducción = trabajo puntual por bidón → 10 min
-  // Todo lo demás (inducción débil, pérdida, pallet chocado, pinchado) → 30 min por pallet
-  const MINS = {
-    'Bidón/es por inducción':       5,
-    'Pérdida por inducción':        20,
-    'Inducción débil':              20,
-    'Pérdida (bidón/es pinchados)': 20,
-    'Palét chocado':                20,
-  };
-  const pendientes = a.filter(r => r.est === 'Pendiente' || r.est === 'En proceso');
-  let totalPallets = 0, totalMins = 0;
-  pendientes.forEach(r => {
-    const p = parseInt(r.pallets) || 0;
-    if(p > 0){
-      totalPallets += p;
-      const mins = MINS[r.tipo] !== undefined ? MINS[r.tipo] : 30; // default 30 min si tipo no mapeado
-      totalMins += p * mins;
-    }
-  });
-  const k5 = document.getElementById('kpi5');
-  const k5s = document.getElementById('kpi5-sub');
-  const k5c = document.getElementById('kpi5-card');
-  if(totalPallets > 0){
-    k5.textContent = totalPallets;
-    k5s.textContent = pendientes.filter(r=>(parseInt(r.pallets)||0)>0).length + ' NC con pallets cargados';
-    k5c.className = 'kpi-card' + (totalPallets >= 10 ? ' warn' : ' mid');
-  } else {
-    k5.textContent = '—';
-    k5s.textContent = 'sin pallets cargados';
-    k5c.className = 'kpi-card';
-  }
-  const k6 = document.getElementById('kpi6');
-  const k6s = document.getElementById('kpi6-sub');
-  const k6c = document.getElementById('kpi6-card');
-  if(totalMins > 0){
-    const hh = (totalMins / 60).toFixed(1);
-    k6.textContent = hh + ' h';
-    k6s.textContent = totalMins + ' min · 20min: ind.débil/pérdida/chocado · 5min: bidón/es';
-    k6c.className = 'kpi-card' + (totalMins >= 120 ? ' warn' : ' mid');
-  } else {
-    k6.textContent = '—';
-    k6s.textContent = '20 min: ind.débil / pérdida / chocado  ·  5 min: bidón/es por inducción';
-    k6c.className = 'kpi-card';
-  }
 }
 
 
