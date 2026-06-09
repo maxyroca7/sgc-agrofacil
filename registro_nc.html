@@ -300,33 +300,35 @@ select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px
     background:transparent !important;
   }
   /* Hacer las celdas más compactas en impresión */
-  td { padding:2px 3px !important; font-size:8.5px !important; color:#000 !important; background:#fff !important; border:1px solid #ccc !important; overflow:visible !important; white-space:normal !important; word-break:break-word !important; }
-  th { font-size:8px; padding:4px 3px; background:#2a6a6a !important; color:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  td { padding:1px 2px !important; font-size:8px !important; color:#000 !important; background:#fff !important; border:1px solid #ccc !important; overflow:visible !important; white-space:normal !important; word-break:break-word !important; }
+  th { font-size:7.5px; padding:3px 2px; background:#2a6a6a !important; color:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   /* Ocultar todos los inputs y selects — mostrar el valor via data-val */
   select, input { display:none !important; }
-  td[data-val]::after { content: attr(data-val); font-size:8.5px; color:#000; }
+  td[data-val]::after { content: attr(data-val); font-size:8px; color:#000; }
+  /* No mostrar placeholder de fecha vacía */
+  td[data-val=""]::after { content: ""; }
   /* Detección abreviada */
-  .c5b[data-detec="CONTROL LÍNEA"]::after  { content: "C.LÍNEA"; font-size:8px; }
-  .c5b[data-detec="CONTROL FINAL"]::after  { content: "C.FINAL"; font-size:8px; }
-  .c5b[data-detec="CONTROL INGRESO"]::after { content: "C.ING."; font-size:8px; }
+  .c5b[data-detec="CONTROL LÍNEA"]::after  { content: "C.LÍNEA"; font-size:7.5px; }
+  .c5b[data-detec="CONTROL FINAL"]::after  { content: "C.FINAL"; font-size:7.5px; }
+  .c5b[data-detec="CONTROL INGRESO"]::after { content: "C.ING."; font-size:7.5px; }
   /* Ocultar Acción Correctiva en print */
   .c9 { display:none !important; }
-  /* Columnas rebalanceadas A4 landscape 277mm útil aprox */
+  /* Columnas rebalanceadas A4 landscape */
   .c0 {width:14px !important; display:table-cell !important;}
-  .c1 {width:38px}   /* Fecha det. DD/MM/YY */
-  .c2 {width:62px}   /* N° Lote */
-  .c3 {width:68px}   /* Producto */
-  .c4 {width:105px}  /* Tipo de Desvío */
+  .c1 {width:44px}   /* Fecha det. DD/MM/YY */
+  .c2 {width:60px}   /* N° Lote */
+  .c3 {width:65px}   /* Producto */
+  .c4 {width:100px}  /* Tipo de Desvío */
   .c5b{width:34px}   /* Detección */
-  .c6 {width:200px}  /* Descripción — columna más ancha */
-  .c7 {width:28px}   /* Litros NC */
-  .c8 {width:28px}   /* Litros Tot. */
-  .c10{width:36px}   /* Plazo DD/MM/YY */
-  .c11{width:48px}   /* Estado */
-  .c12{width:36px}   /* Fecha cierre DD/MM/YY */
-  .c15{width:38px; text-align:center} /* Verif. Eficacia */
-  .badge { font-size:7.5px; padding:1px 4px; }
-  .sev-badge { font-size:7.5px; }
+  .c6 {width:195px}  /* Descripción */
+  .c7 {width:26px}   /* Litros NC */
+  .c8 {width:26px}   /* Litros Tot. */
+  .c10{width:44px}   /* Plazo DD/MM/YY */
+  .c11{width:46px}   /* Estado */
+  .c12{width:44px}   /* Fecha cierre DD/MM/YY */
+  .c15{width:36px; text-align:center} /* Verif. Eficacia */
+  .badge { font-size:7px; padding:1px 3px; }
+  .sev-badge { font-size:7px; }
   @page { size: A4 landscape; margin: 8mm; }
   /* Header de impresión: logo+título a la izquierda, codificación arriba a la derecha */
   #doc-header-print {
@@ -1053,8 +1055,9 @@ function showToast(msg){
 
 /* ── Conversión de fechas para impresión ── */
 function fmtDate(iso){
-  if(!iso) return '';
+  if(!iso||iso.length<8) return '';
   const [y,m,d]=iso.split('-');
+  if(!y||!m||!d) return '';
   return d+'/'+m+'/'+y.slice(2); // DD/MM/YY
 }
 // Fechas en print: data-val ya las muestra (input oculto via CSS)
@@ -1094,10 +1097,11 @@ idbGet('rows',saved=>{
     // IndexedDB vacío — intentar hidratar desde Firestore antes de mostrar vacío
     document.getElementById('saveMsg').textContent='Cargando desde nube...';
     import('./firebase-init.js').then(({db})=>{
-      import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js').then(({doc, getDoc})=>{
+      import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js').then(({doc,getDoc})=>{
         getDoc(doc(db,'nc','registro')).then(snap=>{
           if(snap.exists()&&Array.isArray(snap.data().rows)&&snap.data().rows.length>0){
             rows=snap.data().rows;
+            // Poblar IndexedDB para próximas cargas offline
             idbSet('rows',JSON.stringify(rows),()=>{});
             document.getElementById('saveMsg').textContent='✅ Datos restaurados desde nube — '+rows.length+' registro/s';
           } else {
@@ -1107,7 +1111,7 @@ idbGet('rows',saved=>{
           render();
           verificarImportPendiente();
         }).catch(err=>{
-          console.warn('[nc] Error leyendo nc/registro:',err.message);
+          console.warn('[nc] Error leyendo nc/registro desde Firestore:',err.message);
           rows=[];
           document.getElementById('saveMsg').textContent='Registro vacío — listo para cargar NCs del mes.';
           render();
