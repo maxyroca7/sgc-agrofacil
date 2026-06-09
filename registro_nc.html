@@ -311,20 +311,20 @@ select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px
   .c5b[data-detec="CONTROL INGRESO"]::after { content: "C.ING."; font-size:8px; }
   /* Ocultar Acción Correctiva en print */
   .c9 { display:none !important; }
-  /* Columnas ajustadas para hoja A4 apaisada — sin c9 hay más espacio */
-  .c0 {width:16px !important; display:table-cell !important;}
-  .c1 {width:48px}
-  .c2 {width:55px}
-  .c3 {width:75px}
-  .c4 {width:115px}
-  .c5b{width:36px}
-  .c6 {width:190px}
-  .c7 {width:32px}
-  .c8 {width:34px}
-  .c10{width:42px}
-  .c11{width:52px}
-  .c12{width:42px}
-  .c15{width:42px; text-align:center}
+  /* Columnas rebalanceadas A4 landscape 277mm útil aprox */
+  .c0 {width:14px !important; display:table-cell !important;}
+  .c1 {width:38px}   /* Fecha det. DD/MM/YY */
+  .c2 {width:62px}   /* N° Lote */
+  .c3 {width:68px}   /* Producto */
+  .c4 {width:105px}  /* Tipo de Desvío */
+  .c5b{width:34px}   /* Detección */
+  .c6 {width:200px}  /* Descripción — columna más ancha */
+  .c7 {width:28px}   /* Litros NC */
+  .c8 {width:28px}   /* Litros Tot. */
+  .c10{width:36px}   /* Plazo DD/MM/YY */
+  .c11{width:48px}   /* Estado */
+  .c12{width:36px}   /* Fecha cierre DD/MM/YY */
+  .c15{width:38px; text-align:center} /* Verif. Eficacia */
   .badge { font-size:7.5px; padding:1px 4px; }
   .sev-badge { font-size:7.5px; }
   @page { size: A4 landscape; margin: 8mm; }
@@ -890,10 +890,13 @@ function mkTdEl(tr,cls,label){ const el=document.createElement('td');el.classNam
 function mkTd(tr,cls,text,center){ const el=document.createElement('td');el.className=cls;el.textContent=text;if(center)el.style.textAlign='center';tr.appendChild(el);return el; }
 function mkInp(tr,cls,type,val,cb,label){
   const el=mkTdEl(tr,cls,label);
-  el.dataset.val = val||'';
+  el.dataset.val = type==='date' ? fmtDate(val||'') : (val||'');
   const inp=document.createElement('input');inp.type=type;inp.value=val||'';
   if(type==='number'){inp.min=0;inp.step='any';}
-  inp.oninput=e=>{el.dataset.val=e.target.value; cb(e.target.value);};
+  inp.oninput=e=>{
+    el.dataset.val = type==='date' ? fmtDate(e.target.value) : e.target.value;
+    cb(e.target.value);
+  };
   el.appendChild(inp);
 }
 function mkSelect(opts,val,cb){
@@ -1052,22 +1055,19 @@ function showToast(msg){
 function fmtDate(iso){
   if(!iso) return '';
   const [y,m,d]=iso.split('-');
-  return d+'/'+m+'/'+y;
+  return d+'/'+m+'/'+y.slice(2); // DD/MM/YY
 }
+// Fechas en print: data-val ya las muestra (input oculto via CSS)
+// beforeprint/afterprint solo necesario para compatibilidad edge cases
 window.addEventListener('beforeprint',()=>{
+  // Actualizar data-val de fechas con formato corto
   document.querySelectorAll('input[type="date"]').forEach(inp=>{
-    const span=document.createElement('span');
-    span.className='print-date';
-    span.textContent=fmtDate(inp.value);
-    inp.style.display='none';
-    inp.parentNode.insertBefore(span,inp.nextSibling);
+    const td=inp.closest('td');
+    if(td) td.dataset.val=fmtDate(inp.value);
   });
 });
 window.addEventListener('afterprint',()=>{
-  document.querySelectorAll('.print-date').forEach(s=>s.remove());
-  document.querySelectorAll('input[type="date"]').forEach(inp=>{
-    inp.style.display='';
-  });
+  // Restaurar data-val con formato completo no es necesario — render() se encarga
 });
 
 // ── Período dinámico ──
