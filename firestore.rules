@@ -9,6 +9,9 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/usuarios/$(request.auth.uid))
            .data.activo == true;
     }
+    function isDeveloper() {
+      return hasRole('desarrollador');
+    }
     function isAuth() {
       return request.auth != null;
     }
@@ -16,7 +19,7 @@ service cloud.firestore {
     // config/empresa — lectura pública (necesario antes del login)
     match /config/empresa {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isDeveloper();
     }
 
     // config/* — resto solo lectura para usuarios autenticados
@@ -25,18 +28,18 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // usuarios — cada uno lee solo el propio documento
+    // usuarios — cada uno lee el propio; desarrollador lee y escribe todos
     match /usuarios/{uid} {
-      allow read: if request.auth.uid == uid;
-      allow write: if false;
+      allow read:  if request.auth.uid == uid || isDeveloper();
+      allow write: if isDeveloper();
     }
 
-    // lotes — checkers escriben, todos leen
+    // lotes — checkers y desarrollador escriben, todos leen
     match /lotes/{id} {
       allow read:   if isAuth();
-      allow create: if hasRole('checker');
-      allow update: if hasRole('checker') || hasRole('coordinadora');
-      allow delete: if false;
+      allow create: if hasRole('checker') || isDeveloper();
+      allow update: if hasRole('checker') || hasRole('coordinadora') || isDeveloper();
+      allow delete: if isDeveloper();
     }
 
     // nc/registro — acceso total a usuarios autenticados

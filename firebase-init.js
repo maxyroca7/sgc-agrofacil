@@ -31,19 +31,26 @@ export const db = initializeFirestore(app, {
 
 // ─── Auth Guard ───────────────────────────
 // Llama a esto en cada página protegida.
-// Si no hay sesión activa → redirige a login.html
-export function authGuard() {
+// rolesPermitidos (opcional): si se provee, verifica que el rol del usuario esté incluido.
+// Si el rol no está en la lista → redirige a home.html sin mostrar contenido.
+export function authGuard(rolesPermitidos = []) {
   return new Promise((resolve) => {
-    const unsub = onAuthStateChanged(auth, (user) => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
       unsub();
-      if (user) {
-        // Mostrar email del checker en topbar si existe el elemento
-        const el = document.getElementById('checker-email');
-        if (el) el.textContent = user.email.split('@')[0];
-        resolve(user);
-      } else {
+      if (!user) {
         window.location.replace('./login.html');
+        return;
       }
+      const el = document.getElementById('checker-email');
+      if (el) el.textContent = user.email.split('@')[0];
+      if (rolesPermitidos.length > 0) {
+        const rol = await getRol(user.uid);
+        if (!rolesPermitidos.includes(rol)) {
+          window.location.replace('./home.html');
+          return;
+        }
+      }
+      resolve(user);
     });
   });
 }

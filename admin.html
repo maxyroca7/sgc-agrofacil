@@ -375,6 +375,7 @@
     <img src="/qualityos-topbar.svg" alt="QualityOS" class="tb-logo">
     <span class="tb-name">Quality<span>OS</span></span>
     <span class="tb-badge">Admin</span>
+    <span id="tb-user-info" style="font-size:.6rem;color:var(--muted);margin-left:.75rem;letter-spacing:.05em;"></span>
   </div>
   <button class="tb-save" id="btn-guardar" onclick="guardarTodo()">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -449,6 +450,23 @@
           <label>URL del logo (Firebase Storage)</label>
           <input type="text" id="f-logo" placeholder="https://storage.googleapis.com/...">
           <div class="field-hint">Dejá vacío si no hay logo cargado</div>
+        </div>
+      </div>
+
+      <!-- Purga remota -->
+      <div style="margin-top:2rem;max-width:440px;">
+        <div style="font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:.6rem;">Época de datos (dataEpoch)</div>
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem;">
+          <input type="number" id="inp-epoch" readonly
+            style="background:var(--surface2);border:1.5px solid var(--border2);border-radius:7px;color:var(--text);font-family:inherit;font-size:.82rem;padding:.55rem .75rem;width:100px;outline:none;-webkit-text-fill-color:var(--text);color-scheme:dark;opacity:.7;cursor:default;">
+          <button id="btn-purga"
+            style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:var(--danger);border-radius:7px;font-family:inherit;font-size:.68rem;font-weight:700;letter-spacing:.08em;padding:.5rem 1rem;cursor:pointer;transition:background .15s;"
+            onmouseover="this.style.background='rgba(239,68,68,.22)'" onmouseout="this.style.background='rgba(239,68,68,.12)'">
+            ⚠️ Forzar purga remota de lotes locales
+          </button>
+        </div>
+        <div style="font-size:.6rem;color:var(--muted);line-height:1.6;">
+          Al incrementar este número, todos los dispositivos borrarán sus lotes locales en la próxima apertura y descargarán los datos de Firestore. Los datos en Firestore NO se tocan.
         </div>
       </div>
     </div>
@@ -531,12 +549,10 @@
      FIREBASE
 ══════════════════════════════════════════════════════ -->
 <script type="module">
-  import { auth, db } from './firebase-init.js';
+  import { auth, db, authGuard, getRol } from './firebase-init.js';
   import {
     doc, getDoc, setDoc, collection, getDocs, updateDoc, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
-  import { onAuthStateChanged }
-    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 
   // ── Estado local ──────────────────────────────────────
   let productos  = [];
@@ -635,6 +651,7 @@
       document.getElementById('f-aprobador').value  = d.aprobador   || '';
       document.getElementById('f-claveCoord').value = d.claveCoord  || '';
       document.getElementById('f-logo').value       = d.logoUrl     || '';
+      document.getElementById('inp-epoch').value    = d.dataEpoch != null ? d.dataEpoch : 0;
       productos  = d.productos  || [];
       lineas     = d.lineas     || [];
       inductoras = d.inductoras || [];
@@ -663,6 +680,7 @@
         aprobador:  document.getElementById('f-aprobador').value.trim(),
         claveCoord: document.getElementById('f-claveCoord').value.trim(),
         logoUrl:    document.getElementById('f-logo').value.trim() || null,
+        dataEpoch:  Number(document.getElementById('inp-epoch').value || 0),
         productos:  productos.filter(p => p.id || p.nombre),
         lineas:     lineas.filter(l => l.id || l.nombre),
         inductoras: inductoras.filter(ind => ind.id || ind.nombre),
@@ -703,8 +721,10 @@
             <div class="u-email">${esc(u.email || uid)}</div>
           </div>
           <select class="u-rol-select" data-uid="${uid}" onchange="cambiarRol('${uid}', this.value)">
-            <option value="checker"       ${u.rol==='checker'?'selected':''}>Checker</option>
-            <option value="coordinadora"  ${u.rol==='coordinadora'?'selected':''}>Coordinadora</option>
+            <option value="checker"        ${u.rol==='checker'?'selected':''}>Checker</option>
+            <option value="coordinadora"   ${u.rol==='coordinadora'?'selected':''}>Coordinadora</option>
+            <option value="administrativa" ${u.rol==='administrativa'?'selected':''}>Administrativa</option>
+            <option value="desarrollador"  ${u.rol==='desarrollador'?'selected':''}>Desarrollador</option>
           </select>
           <label class="u-toggle" title="${activo ? 'Activo' : 'Inactivo'}">
             <input type="checkbox" ${activo ? 'checked' : ''} onchange="toggleActivo('${uid}', this.checked)">
@@ -732,12 +752,41 @@
   };
 
   // ══════════════════════════════════════════════════════
-  // INIT
+  // INIT — solo rol desarrollador puede entrar
   // ══════════════════════════════════════════════════════
-  onAuthStateChanged(auth, async user => {
-    if (!user) { window.location.replace('./login.html'); return; }
-    currentUser = user;
-    await cargarEmpresa();
+  const user = await authGuard(['desarrollador']);
+  currentUser = user;
+
+  // Mostrar nombre y rol en topbar
+  try {
+    const uSnap = await getDoc(doc(db, 'usuarios', user.uid));
+    const uData = uSnap.exists() ? uSnap.data() : {};
+    const nombre = uData.nombre || user.displayName || user.email.split('@')[0];
+    document.getElementById('tb-user-info').textContent = nombre + ' · desarrollador';
+  } catch(_) {
+    document.getElementById('tb-user-info').textContent = user.email.split('@')[0] + ' · desarrollador';
+  }
+
+  await cargarEmpresa();
+
+  // ── Purga remota (dataEpoch) ──
+  document.getElementById('btn-purga').addEventListener('click', async () => {
+    const actual = Number(document.getElementById('inp-epoch').value || 0);
+    const nuevo  = actual + 1;
+    const ok = confirm(
+      `Esto borrará los lotes locales de TODOS los dispositivos en su próxima apertura.\n` +
+      `Los datos en Firestore NO se tocan.\n\n` +
+      `Época actual: ${actual} → nueva época: ${nuevo}\n\n` +
+      `¿Continuar?`
+    );
+    if (!ok) return;
+    try {
+      await updateDoc(doc(db, 'config', 'empresa'), { dataEpoch: nuevo });
+      document.getElementById('inp-epoch').value = nuevo;
+      toast(`✓ Purga programada. Época actualizada a ${nuevo}.`);
+    } catch(e) {
+      toast('Error al actualizar época: ' + e.message, 'err');
+    }
   });
 
 </script>

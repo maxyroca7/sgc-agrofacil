@@ -505,6 +505,28 @@ body[data-rol="coordinadora"] .ba-sav              { display: none !important; }
     }
     window.__aplicarEmpresaCfg();
   }).catch(()=>{ window.EMPRESA_CFG={}; });
+  // ── Purga remota por época (dataEpoch) ──
+  const EPOCH_KEY = 'reg01_data_epoch';
+  function chequearDataEpoch(cfg) {
+    try {
+      const epochServer = Number(cfg?.dataEpoch || 0);
+      const epochLocal  = Number(localStorage.getItem(EPOCH_KEY) || 0);
+      if (epochServer > epochLocal) {
+        console.warn(`[dataEpoch] Purga remota: local=${epochLocal} → server=${epochServer}`);
+        localStorage.removeItem('reg01_lotes_v3');
+        localStorage.removeItem('reg01_nc_pendientes');
+        localStorage.setItem(EPOCH_KEY, String(epochServer));
+        return true;
+      }
+      if (!localStorage.getItem(EPOCH_KEY)) {
+        localStorage.setItem(EPOCH_KEY, String(epochServer));
+      }
+    } catch(e) {
+      console.error('[dataEpoch] Error en chequeo de época', e);
+    }
+    return false;
+  }
+
   authGuard().then(async u => {
     const rol = await getRol(u.uid);
     window.USER_ROL = rol;
@@ -516,6 +538,7 @@ body[data-rol="coordinadora"] .ba-sav              { display: none !important; }
     document.body.dataset.rol = rol;
     if (rol === 'coordinadora') document.documentElement.classList.add('coordinadora');
     console.log('[REG01] rol aplicado:', rol, '| usuario:', nombre);
+    chequearDataEpoch(window.EMPRESA_CFG || {});
     await pullLotes();
     cargarLotes();
     renderTabs();

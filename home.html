@@ -255,9 +255,10 @@
     }
     .modulo-card:hover::after { transform: scaleX(1); }
 
-    .mc-reg01 { --card-color: var(--green); }
-    .mc-nc    { --card-color: var(--warn); }
-    .mc-hist  { --card-color: var(--blue); }
+    .mc-reg01  { --card-color: var(--green); }
+    .mc-nc     { --card-color: var(--warn); }
+    .mc-hist   { --card-color: var(--blue); }
+    .mc-admin  { --card-color: var(--muted2); }
 
     .card-icon { font-size: 1.6rem; margin-bottom: .9rem; display: block; line-height: 1; }
     .card-code {
@@ -523,7 +524,7 @@
       </div>
     </a>
 
-    <a href="registro_nc.html" class="modulo-card mc-nc">
+    <a href="registro_nc.html" class="modulo-card mc-nc" id="card-nc">
       <span class="card-icon">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
@@ -539,7 +540,7 @@
       </div>
     </a>
 
-    <a href="historial.html" class="modulo-card mc-hist">
+    <a href="historial.html" class="modulo-card mc-hist" id="card-hist">
       <span class="card-icon">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>
@@ -550,6 +551,23 @@
       <div class="card-desc">Carpetas por cliente, búsqueda por fecha y producto. Trazabilidad REG-01 ↔ NC. PDF por lote.</div>
       <div class="card-footer">
         <div class="card-stat">Clientes: <span id="n-clientes">—</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <a href="admin.html" class="modulo-card mc-admin" id="card-admin" style="display:none">
+      <span class="card-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+          <path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 7.76a6 6 0 0 0 0 8.49"/>
+        </svg>
+      </span>
+      <div class="card-code">ADMIN</div>
+      <div class="card-title">Administración</div>
+      <div class="card-desc">Configuración de empresa, productos, líneas, inductoras y usuarios del sistema.</div>
+      <div class="card-footer">
+        <div class="card-stat">Acceso: <span>Desarrollador</span></div>
         <span class="card-arrow">→</span>
       </div>
     </a>
@@ -646,7 +664,27 @@
   } catch (e) { console.warn('[home] usuario:', e.message); }
 
   document.getElementById('user-initials').textContent = nombre.slice(0,2).toUpperCase();
-  document.getElementById('user-name').textContent     = rol === 'coordinadora' ? 'Coordinación SGC' : 'Checker';
+  const LABEL_ROL = {
+    checker:        'Checker',
+    coordinadora:   'Coordinación SGC',
+    administrativa: 'Administrativa',
+    desarrollador:  'Desarrollador',
+  };
+  document.getElementById('user-name').textContent = LABEL_ROL[rol] || 'Usuario';
+
+  /* ── Módulos visibles por rol ── */
+  const MODULOS_POR_ROL = {
+    checker:        ['reg01', 'nc'],
+    coordinadora:   ['reg01', 'hist'],
+    administrativa: ['nc'],
+    desarrollador:  ['reg01', 'nc', 'hist', 'admin'],
+  };
+  const visibles = MODULOS_POR_ROL[rol] || ['reg01', 'nc', 'hist'];
+  const todas = ['reg01', 'nc', 'hist', 'admin'];
+  todas.forEach(id => {
+    const el = document.getElementById('card-' + id);
+    if (el) el.style.display = visibles.includes(id) ? '' : 'none';
+  });
 
   /* ── Nombre empresa desde config/empresa ── */
   try {
@@ -769,7 +807,13 @@
   window.abrirPerfil = () => {
     document.getElementById('p-nombre').value = nombre;
     document.getElementById('p-email').value  = email;
-    document.getElementById('p-rol').value    = rol === 'coordinadora' ? 'Coordinadora SGC' : 'Checker de Calidad';
+    const LABEL_ROL_PERFIL = {
+      checker:        'Checker de Calidad',
+      coordinadora:   'Coordinadora SGC',
+      administrativa: 'Administrativa',
+      desarrollador:  'Desarrollador',
+    };
+    document.getElementById('p-rol').value = LABEL_ROL_PERFIL[rol] || rol;
     document.getElementById('p-avatar').textContent = nombre.slice(0,2).toUpperCase();
     document.getElementById('p-toast').style.display = 'none';
     document.getElementById('p-guardar').disabled = false;

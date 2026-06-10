@@ -1,10 +1,10 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v31
-//  Cambio v31: + cfg-loader.js · + print-lote.js
-//              Fuerza invalidación de caché v30
+//  sw.js — Agrofacil SGC · v32
+//  Cambio v32: roles completos + admin protegido + dataEpoch
+//              Fuerza invalidación de caché v31
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v31';
+const CACHE_NAME = 'agrofacil-v32';
 
 const ASSETS = [
   '/login.html',
