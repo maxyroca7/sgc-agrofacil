@@ -604,10 +604,6 @@
   import {
     doc, getDoc, setDoc, collection, getDocs, updateDoc, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
-  import { initializeApp, deleteApp }
-    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword }
-    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 
   // ── Estado local ──────────────────────────────────────
   let productos  = [];
@@ -843,6 +839,8 @@
     btn.textContent = 'Creando…';
 
     // App secundaria para no cerrar la sesión del desarrollador
+    const { initializeApp, deleteApp } = await import("https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js");
+    const { getAuth, createUserWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js");
     const secApp = initializeApp(FIREBASE_CONFIG, 'admin-create-' + Date.now());
     const secAuth = getAuth(secApp);
     try {
