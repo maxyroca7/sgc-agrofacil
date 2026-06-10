@@ -10,7 +10,7 @@ import { initializeFirestore, persistentLocalCache, getDoc, doc }
                                  from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
 // ─── Config ───────────────────────────────
-const FIREBASE_CONFIG = {
+export const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyDHDOmhtDFGXDGzyCFo_5wDgJwwBYnDlO4",
   authDomain:        "sgc-agrofacil.firebaseapp.com",
   projectId:         "sgc-agrofacil",

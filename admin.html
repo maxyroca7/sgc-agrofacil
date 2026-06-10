@@ -371,11 +371,15 @@
 
 <!-- TOPBAR -->
 <nav class="topbar">
-  <div class="tb-brand">
-    <img src="/qualityos-topbar.svg" alt="QualityOS" class="tb-logo">
-    <span class="tb-name">Quality<span>OS</span></span>
-    <span class="tb-badge">Admin</span>
-    <span id="tb-user-info" style="font-size:.6rem;color:var(--muted);margin-left:.75rem;letter-spacing:.05em;"></span>
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <a href="home.html" style="text-decoration:none;color:inherit;display:flex;">
+      <div class="tb-brand">
+        <img src="/qualityos-topbar.svg" alt="QualityOS" class="tb-logo">
+        <span class="tb-name">Quality<span>OS</span></span>
+        <span class="tb-badge">Admin</span>
+      </div>
+    </a>
+    <span id="tb-user-info" style="font-size:.6rem;color:var(--muted);letter-spacing:.05em;"></span>
   </div>
   <button class="tb-save" id="btn-guardar" onclick="guardarTodo()">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -529,6 +533,53 @@
     <!-- ── USUARIOS ── -->
     <div class="panel" id="panel-usuarios">
       <div class="panel-title">Usuarios registrados</div>
+
+      <!-- Botón crear -->
+      <div style="margin-bottom:1rem;">
+        <button class="btn-add" onclick="toggleFormNuevoUsuario()">+ Crear usuario</button>
+      </div>
+
+      <!-- Formulario nuevo usuario (colapsable) -->
+      <div id="form-nuevo-usuario" style="display:none;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:1.25rem;margin-bottom:1.5rem;max-width:480px;">
+        <div style="font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;">Nuevo usuario</div>
+        <div class="form-grid single" style="gap:.7rem;">
+          <div class="field">
+            <label>Nombre</label>
+            <input type="text" id="nu-nombre" placeholder="Ej: María González" maxlength="60">
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="nu-email" placeholder="usuario@empresa.com">
+          </div>
+          <div class="field">
+            <label>Contraseña inicial</label>
+            <input type="password" id="nu-pass" placeholder="Mínimo 6 caracteres">
+          </div>
+          <div class="field">
+            <label>Rol</label>
+            <select id="nu-rol">
+              <option value="checker">Checker</option>
+              <option value="coordinadora">Coordinadora</option>
+              <option value="administrativa">Administrativa</option>
+              <option value="desarrollador">Desarrollador</option>
+            </select>
+          </div>
+        </div>
+        <div id="nu-error" style="display:none;margin-top:.75rem;font-size:.7rem;color:var(--danger);padding:.4rem .7rem;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:6px;"></div>
+        <div style="display:flex;gap:.75rem;margin-top:1rem;">
+          <button id="btn-crear-usuario"
+            style="background:var(--teal);color:var(--text);border:none;border-radius:7px;font-family:inherit;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.5rem 1.1rem;cursor:pointer;transition:background .15s;"
+            onmouseover="this.style.background='var(--teal-lit)'" onmouseout="this.style.background='var(--teal)'"
+            onclick="crearUsuario()">
+            Crear usuario
+          </button>
+          <button onclick="toggleFormNuevoUsuario()"
+            style="background:transparent;border:1px solid var(--border2);color:var(--muted2);border-radius:7px;font-family:inherit;font-size:.68rem;padding:.5rem 1rem;cursor:pointer;">
+            Cancelar
+          </button>
+        </div>
+      </div>
+
       <div class="users-list" id="usuarios-list">
         <div class="empty-row"><span class="spinner"></span> Cargando...</div>
       </div>
@@ -549,10 +600,14 @@
      FIREBASE
 ══════════════════════════════════════════════════════ -->
 <script type="module">
-  import { auth, db, authGuard, getRol } from './firebase-init.js';
+  import { auth, db, authGuard, getRol, FIREBASE_CONFIG } from './firebase-init.js';
   import {
     doc, getDoc, setDoc, collection, getDocs, updateDoc, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+  import { initializeApp, deleteApp }
+    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword }
+    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 
   // ── Estado local ──────────────────────────────────────
   let productos  = [];
@@ -749,6 +804,72 @@
       await updateDoc(doc(db, 'usuarios', uid), { activo });
       toast(activo ? '✓ Usuario activado' : '✓ Usuario desactivado');
     } catch(e) { toast('Error: ' + e.message, 'err'); }
+  };
+
+  // ══════════════════════════════════════════════════════
+  // CREAR USUARIO
+  // ══════════════════════════════════════════════════════
+  window.toggleFormNuevoUsuario = function() {
+    const el = document.getElementById('form-nuevo-usuario');
+    const visible = el.style.display !== 'none';
+    el.style.display = visible ? 'none' : 'block';
+    if (!visible) {
+      document.getElementById('nu-nombre').value = '';
+      document.getElementById('nu-email').value  = '';
+      document.getElementById('nu-pass').value   = '';
+      document.getElementById('nu-rol').value    = 'checker';
+      document.getElementById('nu-error').style.display = 'none';
+      setTimeout(() => document.getElementById('nu-nombre').focus(), 60);
+    }
+  };
+
+  window.crearUsuario = async function() {
+    const nombre = document.getElementById('nu-nombre').value.trim();
+    const email  = document.getElementById('nu-email').value.trim();
+    const pass   = document.getElementById('nu-pass').value;
+    const rol    = document.getElementById('nu-rol').value;
+    const errEl  = document.getElementById('nu-error');
+
+    errEl.style.display = 'none';
+    if (!nombre || !email || !pass) {
+      errEl.textContent = 'Completá todos los campos.'; errEl.style.display = 'block'; return;
+    }
+    if (pass.length < 6) {
+      errEl.textContent = 'La contraseña debe tener al menos 6 caracteres.'; errEl.style.display = 'block'; return;
+    }
+
+    const btn = document.getElementById('btn-crear-usuario');
+    btn.disabled = true;
+    btn.textContent = 'Creando…';
+
+    // App secundaria para no cerrar la sesión del desarrollador
+    const secApp = initializeApp(FIREBASE_CONFIG, 'admin-create-' + Date.now());
+    const secAuth = getAuth(secApp);
+    try {
+      const cred = await createUserWithEmailAndPassword(secAuth, email, pass);
+      const uid  = cred.user.uid;
+      await setDoc(doc(db, 'usuarios', uid), {
+        nombre, email, rol, activo: true, createdAt: serverTimestamp()
+      });
+      await secAuth.signOut();
+      await deleteApp(secApp);
+
+      document.getElementById('form-nuevo-usuario').style.display = 'none';
+      toast(`✓ Usuario "${nombre}" creado correctamente`);
+      await cargarUsuarios();
+    } catch(e) {
+      await deleteApp(secApp).catch(() => {});
+      const MSGS = {
+        'auth/email-already-in-use': 'El email ya está registrado.',
+        'auth/invalid-email':        'Email inválido.',
+        'auth/weak-password':        'Contraseña demasiado débil.',
+      };
+      errEl.textContent = MSGS[e.code] || e.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.disabled    = false;
+      btn.textContent = 'Crear usuario';
+    }
   };
 
   // ══════════════════════════════════════════════════════
