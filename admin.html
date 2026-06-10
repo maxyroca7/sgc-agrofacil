@@ -416,6 +416,10 @@
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       <span>Usuarios</span>
     </button>
+    <button class="tab-btn" onclick="setTab('modulos')" id="tab-modulos">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Módulos por rol</span>
+    </button>
   </aside>
 
   <!-- CONTENIDO -->
@@ -531,6 +535,25 @@
     </div>
 
     <!-- ── USUARIOS ── -->
+    <!-- ── MÓDULOS POR ROL ── -->
+    <div class="panel" id="panel-modulos">
+      <div class="panel-title">Módulos visibles por rol</div>
+      <div style="font-size:.62rem;color:var(--muted);line-height:1.7;margin-bottom:1.2rem;max-width:560px;">
+        Definí qué módulos ve cada rol en su pantalla de inicio. Los cambios se aplican
+        al tocar <b>Guardar todo</b> y cada usuario los ve al recargar su home.
+        La matriz se guarda en <code style="font-size:.58rem">config/empresa.rolesModulos</code>.
+      </div>
+      <div style="overflow-x:auto;">
+        <table id="matriz-roles" style="border-collapse:collapse;font-size:.68rem;min-width:560px;">
+          <!-- renderMatrizRoles() la construye -->
+        </table>
+      </div>
+      <div style="font-size:.58rem;color:var(--muted);margin-top:.9rem;line-height:1.6;">
+        🔒 Desarrollador × Admin está bloqueado: el implementador nunca puede quedarse sin acceso a este panel.<br>
+        ℹ️ El rol coordinadora accede al Panel de Coordinación a través de su card de REG-01 (re-ruteo automático).
+      </div>
+    </div>
+
     <div class="panel" id="panel-usuarios">
       <div class="panel-title">Usuarios registrados</div>
 
@@ -604,6 +627,7 @@
   import {
     doc, getDoc, setDoc, collection, getDocs, updateDoc, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+  import { DEFAULT_ROLES_CONFIG, getRolesConfig } from './roles.js';
 
   // ── Estado local ──────────────────────────────────────
   let productos  = [];
@@ -690,6 +714,53 @@
   // ══════════════════════════════════════════════════════
   // CARGAR desde Firestore
   // ══════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════
+  // MÓDULOS POR ROL — matriz dinámica (config/empresa.rolesModulos)
+  // ══════════════════════════════════════════════════════
+  const MODULOS_DEF = [
+    { id:'reg01',        label:'REG-01 Planilla' },
+    { id:'registro_nc',  label:'Registro NC' },
+    { id:'historial',    label:'Historial' },
+    { id:'coordinacion', label:'Panel Coordinación' },
+    { id:'capa',         label:'CAPA' },
+    { id:'dashboard',    label:'Dashboard' },
+    { id:'admin',        label:'Admin' },
+  ];
+  const ROLES_DEF = ['checker', 'coordinadora', 'administrativa', 'desarrollador'];
+  let rolesModulosData = null;   // matriz cargada de Firestore (null = usar defaults)
+
+  function renderMatrizRoles() {
+    const cfg = getRolesConfig({ rolesModulos: rolesModulosData });
+    const tbl = document.getElementById('matriz-roles');
+    if (!tbl) return;
+    const cellStyle = 'padding:.55rem .8rem;border:1px solid var(--border2);text-align:center;';
+    const headStyle = cellStyle + 'background:var(--surface2);font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-size:.58rem;color:var(--muted);';
+    let html = '<tr><th style="' + headStyle + 'text-align:left;">Rol</th>' +
+      MODULOS_DEF.map(m => '<th style="' + headStyle + '">' + m.label + '</th>').join('') + '</tr>';
+    for (const rol of ROLES_DEF) {
+      const mods = cfg[rol] || [];
+      html += '<tr><td style="' + cellStyle + 'text-align:left;font-weight:700;">' + rol + '</td>';
+      for (const m of MODULOS_DEF) {
+        const checked = mods.includes(m.id) ? 'checked' : '';
+        const locked  = (rol === 'desarrollador' && m.id === 'admin') ? 'checked disabled' : '';
+        html += '<td style="' + cellStyle + '"><input type="checkbox" data-rol="' + rol +
+                '" data-mod="' + m.id + '" ' + (locked || checked) + '></td>';
+      }
+      html += '</tr>';
+    }
+    tbl.innerHTML = html;
+  }
+
+  function leerMatrizRoles() {
+    const out = {};
+    for (const rol of ROLES_DEF) out[rol] = [];
+    document.querySelectorAll('#matriz-roles input[type="checkbox"]').forEach(cb => {
+      if (cb.checked) out[cb.dataset.rol].push(cb.dataset.mod);
+    });
+    if (!out.desarrollador.includes('admin')) out.desarrollador.push('admin'); // candado
+    return out;
+  }
+
   async function cargarEmpresa() {
     try {
       const snap = await getDoc(doc(db, 'config', 'empresa'));
@@ -706,6 +777,8 @@
       productos  = d.productos  || [];
       lineas     = d.lineas     || [];
       inductoras = d.inductoras || [];
+      rolesModulosData = d.rolesModulos || null;
+      renderMatrizRoles();
       renderProductos();
       renderLineas();
       renderInductoras();
@@ -735,9 +808,10 @@
         productos:  productos.filter(p => p.id || p.nombre),
         lineas:     lineas.filter(l => l.id || l.nombre),
         inductoras: inductoras.filter(ind => ind.id || ind.nombre),
+        rolesModulos: leerMatrizRoles(),
         updatedAt:  serverTimestamp(),
         updatedBy:  currentUser?.uid || 'admin',
-      });
+      }, { merge: true });   // merge:true — nunca pisar campos que esta pantalla no maneja
       toast('✓ Configuración guardada en Firestore');
     } catch(e) {
       toast('Error al guardar: ' + e.message, 'err');
@@ -886,6 +960,7 @@
     document.getElementById('tb-user-info').textContent = user.email.split('@')[0] + ' · desarrollador';
   }
 
+  renderMatrizRoles();
   await cargarEmpresa();
 
   // ── Purga remota (dataEpoch) ──
