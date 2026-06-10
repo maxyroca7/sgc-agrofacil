@@ -270,7 +270,7 @@ select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px
   table { display:table !important; width:100% !important; font-size:8.5px; border-collapse:collapse; table-layout:fixed; }
   thead { display:table-header-group !important; }
   #tBody { display:table-row-group !important; }
-  #tBody tr { display:table-row !important; background:transparent !important; border:none !important; border-radius:0 !important; padding:0 !important; margin:0 !important; }
+  #tBody tr { display:table-row !important; background:transparent !important; border:none !important; border-radius:0 !important; padding:0 !important; margin:0 !important; page-break-inside:avoid !important; break-inside:avoid !important; }
   #tBody td, td { display:table-cell !important; max-width:none !important; overflow:visible !important; }
   #tBody td[data-label] { display:table-cell !important; max-width:none !important; overflow:visible !important; width:auto !important; }
   #tBody td[data-label]::before { display:none !important; }
@@ -311,8 +311,11 @@ select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px
   .c5b[data-detec="CONTROL LÍNEA"]::after  { content: "C.LÍNEA"; font-size:7.5px; }
   .c5b[data-detec="CONTROL FINAL"]::after  { content: "C.FINAL"; font-size:7.5px; }
   .c5b[data-detec="CONTROL INGRESO"]::after { content: "C.ING."; font-size:7.5px; }
-  /* Ocultar Acción Correctiva en print */
-  .c9 { display:none !important; }
+  /* Ocultar Acción Correctiva en print
+     IMPORTANTE: #tBody td.c9 es necesario porque #tBody td { display:table-cell !important }
+     le gana en especificidad a .c9 solo. Sin esto, el tbody muestra 14 celdas bajo un
+     thead de 13 columnas y todo se desalinea (bug texto vertical en Verif. Efic.) */
+  .c9, #tBody td.c9, #tBody td.c9[data-label] { display:none !important; }
   /* Ocultar card-header mobile — crea celda anónima que desalinea columnas */
   .nc-card-hdr { display:none !important; }
   /* Ocultar badges: c11/c15 usan data-val::after, el badge queda redundante */
@@ -324,7 +327,7 @@ select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px
   .c3  { width:9%  !important; }   /* Producto     ~24mm */
   .c4  { width:13% !important; }   /* Tipo Desvío  ~35mm */
   .c5b { width:5%  !important; }   /* Detección    ~13mm */
-  .c6  { width:26% !important; word-wrap:break-word !important; white-space:normal !important; }  /* Descripción ~69mm */
+  .c6  { width:24% !important; word-wrap:break-word !important; white-space:normal !important; }  /* Descripción ~64mm — suma total columnas = 100% */
   .c7  { width:4%  !important; }   /* L. NC        ~11mm */
   .c8  { width:4%  !important; }   /* L. Tot.      ~11mm */
   .c10 { width:6%  !important; }   /* Plazo        ~16mm */
