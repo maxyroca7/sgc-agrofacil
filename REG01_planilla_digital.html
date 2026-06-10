@@ -2534,18 +2534,24 @@ function _qrBadgeHTML(qrCode, urlCargada) {
   return '<span class="qr-url-badge qr-url-unk">sin verificar</span>';
 }
 
+async function _resolverURLDestino(shortUrl) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 7000);
+  try {
+    const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(shortUrl), { signal: ctrl.signal });
+    clearTimeout(timer);
+    if (!r.ok) return null;
+    const j = await r.json();
+    const finalUrl = j && j.status && j.status.url;
+    return (finalUrl && finalUrl !== shortUrl) ? finalUrl : null;
+  } catch (e) {
+    clearTimeout(timer);
+    return null;
+  }
+}
+
 function _mostrarModalQR(rawVal, label, onConfirm) {
   const isUrl = typeof rawVal === 'string' && rawVal.startsWith('http');
-  let shortVal = rawVal;
-  if (isUrl) {
-    try {
-      const u = new URL(rawVal);
-      const full = u.hostname + u.pathname + (u.search || '');
-      shortVal = full.length > 40 ? full.slice(0, 40) + '…' : full;
-    } catch(e) {
-      shortVal = rawVal.length > 40 ? rawVal.slice(0, 40) + '…' : rawVal;
-    }
-  }
   function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   const ov = document.createElement('div');
   ov.id = 'qr-modal-overlay';
@@ -2555,8 +2561,8 @@ function _mostrarModalQR(rawVal, label, onConfirm) {
       <button id="qr-mx" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:0 4px;line-height:1">✕</button>
     </div>
     <div class="qr-modal-body">
-      <div><div class="qr-modal-label">URL completa</div><div class="qr-modal-val">${esc(rawVal)}</div></div>
-      ${isUrl ? `<div><div class="qr-modal-label">URL corta</div><div class="qr-modal-val">${esc(shortVal)}</div></div>` : ''}
+      <div><div class="qr-modal-label">URL escaneada</div><div class="qr-modal-val">${esc(rawVal)}</div></div>
+      ${isUrl ? `<div><div class="qr-modal-label">URL completa</div><div class="qr-modal-val" id="qr-dest" style="word-break:break-all">⏳ Resolviendo…</div></div>` : ''}
       ${isUrl ? `<button id="qr-abrir" style="align-self:flex-start;background:rgba(96,165,250,.12);color:#60a5fa;border:1px solid #60a5fa;border-radius:var(--r);padding:6px 12px;font-size:12px;cursor:pointer">🔗 Abrir</button>` : ''}
       <hr class="qr-modal-sep">
       <div class="qr-modal-q">¿URL cargada en el sistema?</div>
@@ -2571,9 +2577,25 @@ function _mostrarModalQR(rawVal, label, onConfirm) {
   function cerrar(){ const el=document.getElementById('qr-modal-overlay');if(el)el.remove(); }
   document.getElementById('qr-mx').addEventListener('click', cerrar);
   document.getElementById('qr-cancelar').addEventListener('click', cerrar);
-  if (isUrl) document.getElementById('qr-abrir').addEventListener('click', () => window.open(rawVal, '_blank'));
   document.getElementById('qr-cargada').addEventListener('click', () => { cerrar(); onConfirm(rawVal, true); });
   document.getElementById('qr-nocargada').addEventListener('click', () => { cerrar(); onConfirm(rawVal, false); });
+
+  if (isUrl) {
+    let urlDestino = null;
+    document.getElementById('qr-abrir').addEventListener('click', () => window.open(urlDestino || rawVal, '_blank'));
+    _resolverURLDestino(rawVal).then(dest => {
+      const el = document.getElementById('qr-dest');
+      if (!el) return;
+      if (dest) {
+        urlDestino = dest;
+        el.textContent = dest;
+        el.style.color = 'var(--green)';
+      } else {
+        el.textContent = '(sin conexión — usá Abrir para verla)';
+        el.style.color = 'var(--text3)';
+      }
+    });
+  }
 }
 
 function scanQR(palletIdx) {
