@@ -589,7 +589,7 @@ main{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:2rem 1.2
   const user = await authGuard();
   const rol  = await getRol(user.uid);
   document.body.dataset.rol = rol;
-  if (rol !== 'coordinadora') { window.location.replace('REG01_planilla_digital.html'); }
+  if (rol !== 'coordinadora' && rol !== 'desarrollador') { window.location.replace('REG01_planilla_digital.html'); }
 
   // ── Nombre empresa + cfg ──
   let cfg = { ...CFG_DEFAULT };

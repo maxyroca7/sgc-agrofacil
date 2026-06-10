@@ -1,10 +1,10 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v34
-//  Cambio v34: print-lote.js (sin Rango ind., CL ancho completo,
-//              ID Pallet en CF) + header print unificado registro_nc
+//  sw.js — Agrofacil SGC · v35
+//  Cambio v35: roles dinámicos (config/empresa.rolesModulos),
+//              card Panel de Coordinación, acceso dev a coordinadora
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v34';
+const CACHE_NAME = 'agrofacil-v35';
 const ASSETS = [
   '/login.html',
   '/home.html',
@@ -28,12 +28,12 @@ const ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW v34] Precacheando assets...');
+      console.log('[SW v35] Precacheando assets...');
       // addAll individual tolerante: si un asset falla, no rompe el resto
       return Promise.all(
         ASSETS.map((url) =>
           cache.add(url).catch((err) =>
-            console.warn('[SW v34] No se pudo cachear:', url, err.message)
+            console.warn('[SW v35] No se pudo cachear:', url, err.message)
           )
         )
       );
@@ -51,7 +51,7 @@ self.addEventListener('activate', (event) => {
         keys
           .filter((key) => key !== CACHE_NAME)
           .map((key) => {
-            console.log('[SW v34] Eliminando caché viejo:', key);
+            console.log('[SW v35] Eliminando caché viejo:', key);
             return caches.delete(key);
           })
       )

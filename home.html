@@ -259,6 +259,7 @@
     .mc-nc     { --card-color: var(--warn); }
     .mc-hist   { --card-color: var(--blue); }
     .mc-admin  { --card-color: var(--muted2); }
+    .mc-coord  { --card-color: var(--teal2, var(--blue)); }
     .mc-capa      { --card-color: var(--muted); }
     .mc-dashboard { --card-color: var(--muted); }
     .mc-locked {
@@ -569,6 +570,22 @@
       </div>
     </a>
 
+    <a href="coordinadora.html" class="modulo-card mc-coord" id="card-coord" style="display:none">
+      <span class="card-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </span>
+      <div class="card-code">COORDINACIÓN</div>
+      <div class="card-title">Panel de Coordinación</div>
+      <div class="card-desc">Resumen de lotes activos y retenidos. KPIs, revisión de controles y cambio de dictamen.</div>
+      <div class="card-footer">
+        <div class="card-stat">Vista: <span>Coordinación SGC</span></div>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
     <a href="admin.html" class="modulo-card mc-admin" id="card-admin" style="display:none">
       <span class="card-icon">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -687,7 +704,7 @@
 ══════════════════════════════════════ -->
 <script type="module">
   import { auth, db, authGuard, cerrarSesion, getRol } from './firebase-init.js';
-  import { ROLES_CONFIG } from './roles.js';
+  import { getRolesConfig } from './roles.js';
   import { collection, getDoc, setDoc, doc, onSnapshot }
     from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
@@ -717,30 +734,35 @@
   };
   document.getElementById('user-name').textContent = LABEL_ROL[rol] || 'Usuario';
 
-  /* ── Módulos visibles por rol ── */
-  const MODULE_TO_CARD = {
-    reg01: 'reg01', registro_nc: 'nc', historial: 'hist',
-    admin: 'admin', capa: 'capa', dashboard: 'dashboard',
-  };
-  const modulos = ROLES_CONFIG[rol] || ['reg01', 'registro_nc'];
-  const visibles = new Set(modulos.map(m => MODULE_TO_CARD[m]).filter(Boolean));
-  ['reg01', 'nc', 'hist', 'admin', 'capa', 'dashboard'].forEach(id => {
-    const el = document.getElementById('card-' + id);
-    if (el) el.style.display = visibles.has(id) ? '' : 'none';
-  });
-
-  /* ── Nombre empresa desde config/empresa ── */
+  /* ── Config empresa: nombre + matriz dinámica de roles ── */
+  let empresaCfgData = {};
   try {
     const snapEmp = await getDoc(doc(db, 'config', 'empresa'));
-    if (snapEmp.exists() && snapEmp.data().nombre) {
+    if (snapEmp.exists()) empresaCfgData = snapEmp.data();
+    if (empresaCfgData.nombre) {
       const el = document.getElementById('tb-empresa');
-      el.textContent = snapEmp.data().nombre;
+      el.textContent = empresaCfgData.nombre;
       el.classList.add('loaded');
     }
   } catch (_) {}
 
+  /* ── Módulos visibles por rol (config/empresa.rolesModulos > defaults de roles.js) ── */
+  const MODULE_TO_CARD = {
+    reg01: 'reg01', registro_nc: 'nc', historial: 'hist',
+    coordinacion: 'coord', admin: 'admin', capa: 'capa', dashboard: 'dashboard',
+  };
+  const rolesConfig = getRolesConfig(empresaCfgData);
+  const modulos = rolesConfig[rol] || ['reg01', 'registro_nc'];
+  const visibles = new Set(modulos.map(m => MODULE_TO_CARD[m]).filter(Boolean));
+  ['reg01', 'nc', 'hist', 'coord', 'admin', 'capa', 'dashboard'].forEach(id => {
+    const el = document.getElementById('card-' + id);
+    if (el) el.style.display = visibles.has(id) ? '' : 'none';
+  });
+
   /* ── Ruteo por rol ── */
   if (rol === 'coordinadora') {
+    const cc = document.getElementById('card-coord');
+    if (cc) cc.style.display = 'none';   // su card REG01 ya se re-rutea al panel
     const card = document.getElementById('card-reg01');
     if (card) {
       card.setAttribute('href', 'coordinadora.html');
