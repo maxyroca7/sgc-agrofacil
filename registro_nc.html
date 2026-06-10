@@ -313,6 +313,10 @@ select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px
   .c5b[data-detec="CONTROL INGRESO"]::after { content: "C.ING."; font-size:7.5px; }
   /* Ocultar Acción Correctiva en print */
   .c9 { display:none !important; }
+  /* Ocultar card-header mobile — crea celda anónima que desalinea columnas */
+  .nc-card-hdr { display:none !important; }
+  /* Ocultar badges: c11/c15 usan data-val::after, el badge queda redundante */
+  #tBody .badge { display:none !important; }
   /* Columnas rebalanceadas A4 landscape — % fijos, suma=100% */
   .c0  { width:2%  !important; display:table-cell !important; }
   .c1  { width:6%  !important; }   /* Fecha det.   ~16mm */
@@ -907,12 +911,14 @@ function mkSelect(opts,val,cb){
   s.onchange=cb; return s;
 }
 function renderEfBadge(td,val){
+  td.dataset.val = val || 'Pendiente';
   let b=td.querySelector('.badge');
   if(!b){b=document.createElement('span');td.appendChild(b);}
   b.className='badge '+(EF_BADGES[val]||'b-efpend');
   b.textContent=val||'Pendiente';
 }
 function renderEstBadge(td,val){
+  td.dataset.val = val || 'Pendiente';
   let b=td.querySelector('.badge');
   if(!b){b=document.createElement('span');td.appendChild(b);}
   b.className='badge '+(BADGES[val]||'b-pend');b.textContent=val||'Pendiente';
