@@ -54,9 +54,7 @@ export function buildPrintBody(l, cfg) {
         <td style="padding:3px 6px;border:1px solid #ddd;background:#f7f7f7;font-weight:700">Línea</td>
         <td style="padding:3px 6px;border:1px solid #ddd">${cab.linea||'—'}</td>
         <td style="padding:3px 6px;border:1px solid #ddd;background:#f7f7f7;font-weight:700">Inductora</td>
-        <td style="padding:3px 6px;border:1px solid #ddd">${indLbl}</td>
-        <td style="padding:3px 6px;border:1px solid #ddd;background:#f7f7f7;font-weight:700">Rango ind.</td>
-        <td style="padding:3px 6px;border:1px solid #ddd">${rango}</td>
+        <td style="padding:3px 6px;border:1px solid #ddd" colspan="3">${indLbl}</td>
       </tr>
       <tr>
         <td style="padding:3px 6px;border:1px solid #ddd;background:#f7f7f7;font-weight:700">Peso mín. pico</td>
@@ -95,7 +93,7 @@ export function buildPrintBody(l, cfg) {
       <td style="text-align:center">${_st(p.packOK,p.packRepro)}</td>
       <td style="text-align:center">${_st(p.pltOK,p.pltRepro)}</td>
     </tr>
-    ${p.obs?`<tr><td colspan="19" style="padding:2px 8px 4px 28px;font-size:7.5px;color:#444;font-style:italic;border-top:none">↳ Obs: ${p.obs.replace(/</g,'&lt;')}</td></tr>`:''}`;
+    ${p.obs?`<tr><td colspan="17" style="padding:2px 8px 4px 28px;font-size:7.5px;color:#444;font-style:italic;border-top:none">↳ Obs: ${p.obs.replace(/</g,'&lt;')}</td></tr>`:''}`;
   }).join('');
   const clHtml=`
   <div class="card" style="margin-bottom:8px;border:1px solid #ccc">
@@ -144,7 +142,7 @@ export function buildPrintBody(l, cfg) {
     <div class="tw"><table class="ft" style="width:100%;table-layout:fixed"><thead>
       <tr>
         <th>#</th>
-        <th>N° Pallet</th>
+        <th>ID Pallet</th>
         <th>Trazabilidad / QR</th>
         <th>Estado pallet</th>
         <th>Inducción CF</th>
