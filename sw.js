@@ -1,10 +1,10 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v32
-//  Cambio v32: roles completos + admin protegido + dataEpoch
-//              Fuerza invalidación de caché v31
+//  sw.js — Agrofacil SGC · v33
+//  Cambio v33: ROLES_CONFIG (roles.js), cards capa/dashboard,
+//              fix imports admin.html, fix print c15 registro_nc
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v32';
+const CACHE_NAME = 'agrofacil-v33';
 
 const ASSETS = [
   '/login.html',
@@ -14,6 +14,7 @@ const ASSETS = [
   '/coordinadora.html',
   '/historial.html',
   '/firebase-init.js',
+  '/roles.js',
   '/sync.js',
   '/cfg-loader.js',
   '/print-lote.js',
