@@ -267,7 +267,7 @@ select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px
   input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none; appearance:none; margin:0; }
   input[type="number"] { -moz-appearance:textfield; appearance:textfield; }
   /* ── Reset mobile card layout para print ── */
-  table { display:table !important; width:100% !important; font-size:8.5px; border-collapse:collapse; }
+  table { display:table !important; width:100% !important; font-size:8.5px; border-collapse:collapse; table-layout:fixed; }
   thead { display:table-header-group !important; }
   #tBody { display:table-row-group !important; }
   #tBody tr { display:table-row !important; background:transparent !important; border:none !important; border-radius:0 !important; padding:0 !important; margin:0 !important; }
@@ -301,7 +301,7 @@ select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px
   }
   /* Hacer las celdas más compactas en impresión */
   td { padding:1px 2px !important; font-size:8px !important; color:#000 !important; background:#fff !important; border:1px solid #ccc !important; overflow:visible !important; white-space:normal !important; word-break:break-word !important; }
-  th { font-size:7.5px; padding:3px 2px; background:#2a6a6a !important; color:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  th { font-size:7.5px; padding:3px 2px; background:#2a6a6a !important; color:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; white-space:normal !important; word-break:break-word !important; overflow-wrap:break-word !important; vertical-align:top; }
   /* Ocultar todos los inputs y selects — mostrar el valor via data-val */
   select, input { display:none !important; }
   td[data-val]::after { content: attr(data-val); font-size:8px; color:#000; }
@@ -313,20 +313,20 @@ select:focus, input:focus { outline:1.5px solid var(--accent); border-radius:2px
   .c5b[data-detec="CONTROL INGRESO"]::after { content: "C.ING."; font-size:7.5px; }
   /* Ocultar Acción Correctiva en print */
   .c9 { display:none !important; }
-  /* Columnas rebalanceadas A4 landscape */
-  .c0 {width:14px !important; display:table-cell !important;}
-  .c1 {width:44px}   /* Fecha det. DD/MM/YY */
-  .c2 {width:60px}   /* N° Lote */
-  .c3 {width:65px}   /* Producto */
-  .c4 {width:100px}  /* Tipo de Desvío */
-  .c5b{width:34px}   /* Detección */
-  .c6 {width:195px}  /* Descripción */
-  .c7 {width:26px}   /* Litros NC */
-  .c8 {width:26px}   /* Litros Tot. */
-  .c10{width:44px}   /* Plazo DD/MM/YY */
-  .c11{width:46px}   /* Estado */
-  .c12{width:44px}   /* Fecha cierre DD/MM/YY */
-  .c15{width:36px; text-align:center} /* Verif. Eficacia */
+  /* Columnas rebalanceadas A4 landscape — % fijos, suma=100% */
+  .c0  { width:2%  !important; display:table-cell !important; }
+  .c1  { width:6%  !important; }   /* Fecha det.   ~16mm */
+  .c2  { width:8%  !important; }   /* N° Lote      ~21mm */
+  .c3  { width:9%  !important; }   /* Producto     ~24mm */
+  .c4  { width:13% !important; }   /* Tipo Desvío  ~35mm */
+  .c5b { width:5%  !important; }   /* Detección    ~13mm */
+  .c6  { width:26% !important; word-wrap:break-word !important; white-space:normal !important; }  /* Descripción ~69mm */
+  .c7  { width:4%  !important; }   /* L. NC        ~11mm */
+  .c8  { width:4%  !important; }   /* L. Tot.      ~11mm */
+  .c10 { width:6%  !important; }   /* Plazo        ~16mm */
+  .c11 { width:7%  !important; }   /* Estado       ~19mm */
+  .c12 { width:6%  !important; }   /* Fecha cierre ~16mm */
+  .c15 { width:4%  !important; text-align:center !important; }  /* Verif. Efic. ~11mm */
   .badge { font-size:7px; padding:1px 3px; }
   .sev-badge { font-size:7px; }
   @page { size: A4 landscape; margin: 8mm; }
@@ -566,13 +566,13 @@ html.coordinadora #tBody select { pointer-events:none; opacity:.6; }
         <th class="c4">Tipo de Desvío<br><span class="kpi-tag">AQ-IND-03</span></th>
         <th class="c5b">Detección<br><span class="kpi-tag">EXCEL</span></th>
         <th class="c6">Descripción de la NC</th>
-        <th class="c7">Litros NC<br><span class="kpi-tag">AQ-IND-02</span></th>
-        <th class="c8">Litros Tot.<br>Lote<br><span class="kpi-tag">AQ-IND-02</span></th>
+        <th class="c7">L. NC<br><span class="kpi-tag">AQ-IND-02</span></th>
+        <th class="c8">L. Tot.<br><span class="kpi-tag">AQ-IND-02</span></th>
         <th class="c9 no-print">Acción Correctiva /<br>Disposición</th>
         <th class="c10">Plazo<br>Reproceso<br><span class="kpi-tag">AQ-IND-04</span></th>
         <th class="c11">Estado<br><span class="kpi-tag">AQ-IND-01/04</span></th>
         <th class="c12">Fecha<br>Cierre<br><span class="kpi-tag">AQ-IND-04</span></th>
-        <th class="c15">Verif.<br>Eficacia<br><span class="kpi-tag">ISO 10.2.2</span></th>
+        <th class="c15">Verif. Efic.<br><span class="kpi-tag">ISO 10.2.2</span></th>
       </tr>
     </thead>
     <tbody id="tBody"></tbody>
