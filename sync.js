@@ -1,17 +1,23 @@
 // ════════════════════════════════════════════
-//  SGC Agrofacil — sync.js  v1.0
+//  SGC Agrofacil — sync.js  v1.1
 //  Capa de sincronización: localStorage + IndexedDB → Firestore
 //  Offline-first: si no hay red, Firestore encola y sincroniza solo
+//  v1.1 (11/06/2026): NCs unificadas al doc único nc/registro.
+//    - pushNC/pullNC/escucharNC ahora operan sobre nc/registro {rows[], _ts}
+//    - Eliminado parche IndexedDB (apuntaba a store inexistente "nc_records";
+//      registro_nc.html ya sincroniza por su cuenta contra nc/registro)
+//    - Colección nc_records DESCONTINUADA (queda huérfana en Firestore;
+//      se puede borrar manualmente desde Console cuando quieras)
 // ════════════════════════════════════════════
 
 import { db } from './firebase-init.js';
 import {
-  collection, doc, setDoc, getDocs, onSnapshot, deleteDoc
+  collection, doc, setDoc, getDoc, getDocs, onSnapshot, deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
-// ─── Colecciones Firestore ────────────────
+// ─── Referencias Firestore ────────────────
 const COL_LOTES = 'lotes';
-const COL_NC    = 'nc_records';
+const NC_DOC    = () => doc(db, 'nc', 'registro');   // doc único con rows[]
 
 // ─── Key localStorage de lotes ───────────
 // ⚠️  Verificar que coincida con el valor en cargarLotes() / guardarLotes()
@@ -88,43 +94,47 @@ export function escucharLotes(onCambio) {
 }
 
 // ════════════════════════════════════════
-//  NC RECORDS  (Registro NC ↔ Firestore)
+//  NC  (Registro NC ↔ Firestore)
+//  Fuente de verdad: documento único nc/registro → { rows: [...], _ts }
+//  (mismo esquema que usa registro_nc.html)
 // ════════════════════════════════════════
 
-/** Push: escribe un NC record en Firestore */
-export async function pushNC(nc) {
-  if (!nc?.id) return;
+/** Push: escribe el array COMPLETO de NCs en nc/registro.
+ *  Reemplaza el documento entero a propósito (sin merge):
+ *  rows[] siempre se sube completo. */
+export async function pushNC(rows) {
+  if (!Array.isArray(rows)) {
+    console.warn('[sync] pushNC abortado: se esperaba un array de rows', rows);
+    return;
+  }
   try {
-    await setDoc(doc(db, COL_NC, String(nc.id)), {
-      ...nc,
-      _ts: Date.now()
-    });
+    await setDoc(NC_DOC(), { rows, _ts: Date.now() });
+    console.log('[sync] pushNC OK —', rows.length, 'NCs');
   } catch (e) {
     console.warn('[sync] pushNC error:', e.message);
   }
 }
 
-/** Pull: trae todos los NC records de Firestore */
+/** Pull: trae el array de NCs desde nc/registro. Devuelve [] si no existe. */
 export async function pullNC() {
   try {
-    const snap = await getDocs(collection(db, COL_NC));
-    const records = [];
-    snap.forEach(d => records.push(d.data()));
-    return records;
+    const snap = await getDoc(NC_DOC());
+    if (!snap.exists()) return [];
+    const data = snap.data();
+    return Array.isArray(data.rows) ? data.rows : [];
   } catch (e) {
     console.warn('[sync] pullNC error:', e.message);
     return [];
   }
 }
 
-/** Listener en tiempo real para NC */
+/** Listener en tiempo real sobre nc/registro.
+ *  onCambio recibe el array rows[] completo cada vez que cambia. */
 export function escucharNC(onCambio) {
-  return onSnapshot(collection(db, COL_NC), (snap) => {
-    snap.docChanges().forEach(change => {
-      if (change.type === 'added' || change.type === 'modified') {
-        if (onCambio) onCambio(change.doc.data());
-      }
-    });
+  return onSnapshot(NC_DOC(), (snap) => {
+    if (!snap.exists()) return;
+    const data = snap.data();
+    if (onCambio) onCambio(Array.isArray(data.rows) ? data.rows : []);
   });
 }
 
@@ -151,28 +161,10 @@ const _setRaw = localStorage.setItem.bind(localStorage);
   console.log('[sync] localStorage parcheado para key:', LS_KEY);
 })();
 
-/** Parche IndexedDB — detecta escrituras en store "nc_records" */
-;(function patchIDB() {
-  const _put = IDBObjectStore.prototype.put;
-  const _add = IDBObjectStore.prototype.add;
+// NOTA v1.1: se eliminó el parche de IndexedDB.
+// Interceptaba un store llamado "nc_records" que no existe
+// (el store real es agrofacil_nc_v6 → "data", key "rows"),
+// por lo que nunca se ejecutó. registro_nc.html sincroniza
+// directamente contra nc/registro, así que no hace falta.
 
-  function intercept(store, value) {
-    if (store.name === 'nc_records' && value && typeof value === 'object') {
-      pushNC(value);
-    }
-  }
-
-  IDBObjectStore.prototype.put = function (value, key) {
-    intercept(this, value);
-    return _put.call(this, value, key);
-  };
-
-  IDBObjectStore.prototype.add = function (value, key) {
-    intercept(this, value);
-    return _add.call(this, value, key);
-  };
-
-  console.log('[sync] IndexedDB parcheado para store: nc_records');
-})();
-
-console.log('[sync] Capa de sincronización activa — SGC Agrofacil v1');
+console.log('[sync] Capa de sincronización activa — SGC Agrofacil v1.1');
