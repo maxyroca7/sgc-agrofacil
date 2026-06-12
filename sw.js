@@ -1,10 +1,11 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v35
-//  Cambio v35: roles dinámicos (config/empresa.rolesModulos),
-//              card Panel de Coordinación, acceso dev a coordinadora
+//  sw.js — Agrofacil SGC · v36
+//  Cambio v36: fix resolución QR bit.ly→SENASA (parseo de contents
+//              de allorigins + fallback unshorten.me) y sync.js v1.1
+//              (NCs unificadas a nc/registro, parche IDB eliminado)
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v35';
+const CACHE_NAME = 'agrofacil-v36';
 const ASSETS = [
   '/login.html',
   '/home.html',
@@ -28,12 +29,12 @@ const ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW v35] Precacheando assets...');
+      console.log('[SW v36] Precacheando assets...');
       // addAll individual tolerante: si un asset falla, no rompe el resto
       return Promise.all(
         ASSETS.map((url) =>
           cache.add(url).catch((err) =>
-            console.warn('[SW v35] No se pudo cachear:', url, err.message)
+            console.warn('[SW v36] No se pudo cachear:', url, err.message)
           )
         )
       );
@@ -51,7 +52,7 @@ self.addEventListener('activate', (event) => {
         keys
           .filter((key) => key !== CACHE_NAME)
           .map((key) => {
-            console.log('[SW v35] Eliminando caché viejo:', key);
+            console.log('[SW v36] Eliminando caché viejo:', key);
             return caches.delete(key);
           })
       )

@@ -2557,20 +2557,66 @@ function _qrBadgeHTML(qrCode, urlCargada) {
   return '<span class="qr-url-badge qr-url-unk">sin verificar</span>';
 }
 
-async function _resolverURLDestino(shortUrl) {
+// Resuelve un short URL (bit.ly) a su destino SENASA.
+// allorigins NO devuelve la URL final en status.url (devuelve la pedida),
+// pero SÍ trae el HTML de la página destino en contents → la extraemos de ahí.
+// Cascada: allorigins (4 sub-estrategias) → unshorten.me → null.
+function _decodEnt(s){ return s.replace(/&amp;/g,'&').replace(/&#0*38;/g,'&'); }
+
+async function _resolverViaAllorigins(shortUrl) {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 7000);
+  const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
     const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(shortUrl), { signal: ctrl.signal });
     clearTimeout(timer);
-    if (!r.ok) return null;
+    if (!r.ok) { console.log('[QR] allorigins HTTP', r.status); return null; }
     const j = await r.json();
-    const finalUrl = j && j.status && j.status.url;
-    return (finalUrl && finalUrl !== shortUrl) ? finalUrl : null;
+    // a) por si el proxy algún día reporta la URL final
+    const rep = j && j.status && j.status.url;
+    if (rep && rep !== shortUrl && !/bit\.ly/i.test(rep)) return rep;
+    const html = (j && j.contents) || '';
+    if (!html) { console.log('[QR] allorigins sin contents'); return null; }
+    // b) URL SENASA completa dentro del HTML destino
+    let m = html.match(/https?:\/\/aps2\.senasa\.go[bv]\.ar\/agrotraza[^"'<>\s\\]+/i);
+    if (m) return _decodEnt(m[0]);
+    // c) canonical / og:url de la página destino
+    m = html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i)
+     || html.match(/<meta[^>]+property=["']og:url["'][^>]+content=["']([^"']+)["']/i);
+    if (m && m[1] && m[1] !== shortUrl) return _decodEnt(m[1]);
+    // d) reconstruir desde productCode + batchId sueltos en el HTML
+    const pc = html.match(/productCode["'=:\s]+(\d+)/i);
+    const bi = html.match(/batchId["'=:\s]+([\w.\-\/]+)/i);
+    if (pc && bi) return 'https://aps2.senasa.gov.ar/agrotraza/src/app/?action=showDetailPublicProduct&productCode=' + pc[1] + '&batchId=' + encodeURIComponent(bi[1]);
+    console.log('[QR] allorigins OK pero sin URL destino en HTML (', html.length, 'bytes )');
+    return null;
   } catch (e) {
     clearTimeout(timer);
+    console.log('[QR] allorigins falló:', e.message);
     return null;
   }
+}
+
+async function _resolverViaUnshorten(shortUrl) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    // API pública (límite ~10 consultas/hora por IP — fallback, no vía principal)
+    const r = await fetch('https://unshorten.me/json/' + shortUrl, { signal: ctrl.signal });
+    clearTimeout(timer);
+    if (!r.ok) return null;
+    const j = await r.json();
+    return (j && j.success && j.resolved_url && j.resolved_url !== shortUrl) ? j.resolved_url : null;
+  } catch (e) {
+    clearTimeout(timer);
+    console.log('[QR] unshorten.me falló:', e.message);
+    return null;
+  }
+}
+
+async function _resolverURLDestino(shortUrl) {
+  const a = await _resolverViaAllorigins(shortUrl);
+  if (a) return a;
+  return await _resolverViaUnshorten(shortUrl);
 }
 
 function _mostrarModalQR(rawVal, label, onConfirm) {
@@ -2614,7 +2660,7 @@ function _mostrarModalQR(rawVal, label, onConfirm) {
         el.textContent = dest;
         el.style.color = 'var(--green)';
       } else {
-        el.textContent = '(sin conexión — usá Abrir para verla)';
+        el.textContent = '⚠ No se pudo resolver — tocá Abrir para verla en el navegador';
         el.style.color = 'var(--text3)';
       }
     });
