@@ -560,11 +560,13 @@
   async function cargarNCs(nLote){
     const el=document.getElementById('m-nc-list');el.textContent='Buscando...';
     try{
-      const q=query(collection(db,'nc_records'),where('nLote','==',nLote));
-      const s=await getDocs(q);
-      if(s.empty){el.textContent='✓ Sin NCs para este lote.';el.style.color='var(--green2)';return;}
+      const snap=await getDoc(doc(db,'nc','registro'));
+      const rows=snap.exists()?(snap.data().rows||[]):[];
+      const ln=(nLote||'').toString().toLowerCase();
+      const ncs=rows.filter(n=>n&&ln&&(n.lote||'').toString().toLowerCase()===ln);
+      if(!ncs.length){el.textContent='✓ Sin NCs para este lote.';el.style.color='var(--green2)';return;}
       el.style.color='var(--muted)';
-      el.innerHTML=s.docs.map(d=>{const n=d.data();return`<div style="display:flex;gap:.4rem;align-items:center;padding:.28rem 0;border-bottom:1px solid var(--border)"><span class="badge ${n.estado==='Finalizado'?'b-APR':'b-PAR'}" style="font-size:.56rem">${n.estado||'Pendiente'}</span><span style="font-size:.72rem">${n.tipoDesvio||'—'}</span><span style="font-size:.65rem;color:var(--muted);margin-left:auto">${n.gravedad||''}</span></div>`;}).join('');
+      el.innerHTML=ncs.map(n=>{const est=n.est||'Pendiente';const cls=est==='Finalizado'?'b-APR':'b-PAR';return`<div style="display:flex;gap:.4rem;align-items:center;padding:.28rem 0;border-bottom:1px solid var(--border)"><span class="badge ${cls}" style="font-size:.56rem">${est}</span><span style="font-size:.72rem">${n.tipo||'—'}</span><span style="font-size:.65rem;color:var(--muted);margin-left:auto">${n.sev||''}</span></div>`;}).join('');
     }catch{el.innerHTML=`<a href="registro_nc.html" style="color:var(--teal-lit);font-size:.72rem">Ver Registro NC →</a>`;}
   }
 

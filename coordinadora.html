@@ -651,7 +651,7 @@ main{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:2rem 1.2
     const ahora=new Date(),mes=ahora.getMonth(),anio=ahora.getFullYear();
     const delMes=_lotes.filter(l=>{try{const ts=loteTs(l);return ts&&new Date(ts).getMonth()===mes&&new Date(ts).getFullYear()===anio;}catch{return false;}});
     const total=delMes.length,apr=delMes.filter(l=>l.estado==='aprobado').length,ret=delMes.filter(l=>['retenido','reproceso'].includes(l.estado||'')).length;
-    const pend=_ncs.filter(n=>{const e=(n.est||n.estado||'').toLowerCase();return e!=='finalizado'&&e!=='cerrada'&&e!=='anulado';}).length;
+    const pend=_ncs.filter(n=>{const real=n.lote||n.prod||n.tipo;const e=(n.est||'').toLowerCase();return real&&e!=='finalizado'&&e!=='anulado';}).length;
     document.getElementById('s-lotes').textContent=total;
     document.getElementById('s-ret').textContent=ret;
     document.getElementById('s-pct').textContent=total?Math.round(apr/total*100)+'%':'—';
@@ -793,9 +793,10 @@ main{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:2rem 1.2
     _lotes=mergeById(snap.docs.map(d=>({id:d.id,...d.data()})),'reg01_lotes_v3');render();
   },()=>{try{_lotes=JSON.parse(localStorage.getItem('reg01_lotes_v3')||'[]');}catch{_lotes=[];}render();});
 
-  onSnapshot(collection(db,'nc_records'),snap=>{
-    _ncs=mergeById(snap.docs.map(d=>({id:d.id,...d.data()})),'nc_records');renderKPIs();
-  },()=>{try{_ncs=JSON.parse(localStorage.getItem('nc_records')||'[]');}catch{_ncs=[];}renderKPIs();});
+  onSnapshot(doc(db,'nc','registro'),snap=>{
+    _ncs = snap.exists() ? (snap.data().rows||[]) : [];
+    renderKPIs();
+  },()=>{ renderKPIs(); });
 </script>
 </body>
 </html>

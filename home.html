@@ -809,8 +809,9 @@
     const apr     = delMes.filter(l => l.estado === 'aprobado').length;
     const ret     = delMes.filter(l => ['retenido','reproceso'].includes(l.estado||'')).length;
     const pending = _ncs.filter(n => {
-      const est = (n.est || n.estado || '').toLowerCase();
-      return est !== 'finalizado' && est !== 'cerrada';
+      const real = n.lote || n.prod || n.tipo;        // ignora filas en blanco
+      const est  = (n.est || '').toLowerCase();
+      return real && est !== 'finalizado' && est !== 'anulado';
     }).length;
 
     document.getElementById('s-lotes').textContent = total;
@@ -860,11 +861,12 @@
     renderKPIs();
   });
 
-  onSnapshot(collection(db,'nc_records'), snap => {
-    _ncs = mergeById(snap.docs.map(d => ({id:d.id,...d.data()})), 'nc_records');
+  // NCs: documento único nc/registro { rows[], _ts }. Firestore sirve de
+  // su caché persistente cuando no hay red, así que el fallback solo re-renderiza.
+  onSnapshot(doc(db,'nc','registro'), snap => {
+    _ncs = snap.exists() ? (snap.data().rows || []) : [];
     renderKPIs();
   }, () => {
-    try { _ncs = JSON.parse(localStorage.getItem('nc_records')||'[]'); } catch {}
     renderKPIs();
   });
 
