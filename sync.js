@@ -1,7 +1,20 @@
 // ════════════════════════════════════════════
-//  SGC Agrofacil — sync.js  v1.1
+//  SGC Agrofacil — sync.js  v1.2
 //  Capa de sincronización: localStorage + IndexedDB → Firestore
 //  Offline-first: si no hay red, Firestore encola y sincroniza solo
+//
+//  v1.2 (14/06/2026): conflict-resolution de LOTES por lastModified.
+//    - pushLote ya NO re-estampa _ts=Date.now() en cada guardado:
+//      usa lote.lastModified (marca real de edición por lote).
+//      Así el re-push masivo (guardarLotes empuja TODO el array) deja
+//      de pisar versiones más nuevas con timestamps sintéticos.
+//    - escucharLotes ahora pisa la copia local SOLO si el remoto es
+//      más nuevo (antes sobreescribía incondicionalmente → clobber).
+//    - pullLotes compara por lastModified/_ts de forma consistente.
+//    ⚠️ Residual: el orden depende del reloj de cada dispositivo.
+//       Tener "fecha y hora automática (red)" activada en TODOS los
+//       equipos. Endurecimiento futuro: serverTimestamp().
+//
 //  v1.1 (11/06/2026): NCs unificadas al doc único nc/registro.
 //    - pushNC/pullNC/escucharNC ahora operan sobre nc/registro {rows[], _ts}
 //    - Eliminado parche IndexedDB (apuntaba a store inexistente "nc_records";
@@ -24,6 +37,13 @@ const NC_DOC    = () => doc(db, 'nc', 'registro');   // doc único con rows[]
 //     de REG01_planilla_digital.html
 const LS_KEY = 'reg01_lotes_v3';
 
+// Marca de "última edición real" de un lote, en orden de confianza:
+//   lastModified (REG01 lo setea solo al editar ESE lote) > _ts > 0
+// Se usa como árbitro de conflictos (last-write-wins por lote).
+function loteTs(l) {
+  return (l && (l.lastModified || l._ts)) || 0;
+}
+
 // ════════════════════════════════════════
 //  LOTES  (REG-01 ↔ Firestore)
 // ════════════════════════════════════════
@@ -42,9 +62,9 @@ export async function pullLotes() {
     const mapa    = {};
     locales.forEach(l => { mapa[l.id] = l; });
 
-    // Remoto gana si tiene timestamp más nuevo
+    // Remoto gana solo si su edición real es más nueva (lastModified/_ts)
     Object.entries(remotos).forEach(([id, r]) => {
-      if (!mapa[id] || (r._ts && (!mapa[id]._ts || r._ts > mapa[id]._ts))) {
+      if (!mapa[id] || loteTs(r) > loteTs(mapa[id])) {
         mapa[id] = r;
       }
     });
@@ -57,14 +77,18 @@ export async function pullLotes() {
   }
 }
 
-/** Push: escribe un lote en Firestore */
+/** Push: escribe un lote en Firestore.
+ *  _ts = marca de edición REAL del lote (lastModified). No re-estampar
+ *  Date.now() en cada guardado: si lo hiciéramos, un lote sin cambios
+ *  re-pusheado (guardarLotes empuja TODO el array cada 60s) pisaría
+ *  versiones más nuevas de otros dispositivos. */
 export async function pushLote(lote) {
-  console.log('[sync] pushLote llamado, id:', lote?.id);
+  console.log('[sync] pushLote llamado, id:', lote?.id, '| ts:', loteTs(lote));
   if (!lote?.id) { console.warn('[sync] pushLote abortado: lote sin id', lote); return; }
   try {
     await setDoc(doc(db, COL_LOTES, String(lote.id)), {
       ...lote,
-      _ts: Date.now()
+      _ts: loteTs(lote) || Date.now()   // fallback solo si nunca tuvo marca
     });
   } catch (e) {
     console.warn('[sync] pushLote error:', e.message);
@@ -76,7 +100,10 @@ export async function deleteLote(loteId) {
   await deleteDoc(doc(db, COL_LOTES, String(loteId)));
 }
 
-/** Listener en tiempo real: actualiza localStorage cuando otro dispositivo cambia un lote */
+/** Listener en tiempo real: actualiza localStorage cuando otro dispositivo
+ *  cambia un lote. Solo pisa la copia local si el remoto es MÁS NUEVO
+ *  (last-write-wins por lastModified/_ts), para no clobberear una edición
+ *  local más reciente con un re-push viejo de otro equipo. */
 export function escucharLotes(onCambio) {
   return onSnapshot(collection(db, COL_LOTES), (snap) => {
     snap.docChanges().forEach(change => {
@@ -85,6 +112,8 @@ export function escucharLotes(onCambio) {
         const raw  = localStorage.getItem(LS_KEY);
         const arr  = raw ? JSON.parse(raw) : [];
         const idx  = arr.findIndex(l => l.id === lote.id);
+        // Si ya existe local y el remoto NO es más nuevo, ignorar.
+        if (idx >= 0 && loteTs(lote) < loteTs(arr[idx])) return;
         if (idx >= 0) arr[idx] = lote; else arr.push(lote);
         _setRaw(LS_KEY, JSON.stringify(arr));
         if (onCambio) onCambio(lote);
