@@ -419,15 +419,55 @@ html.coordinadora #tBody select { pointer-events:none; opacity:.6; }
 <script type="module">
   import { authGuard, getRol, db } from './firebase-init.js';
   import './sync.js';
-  import { doc, setDoc, onSnapshot }
+  import { doc, setDoc, getDoc, onSnapshot, runTransaction }
     from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
 
   const NC_REF = doc(db, 'nc', 'registro');
 
-  // Escritura a Firestore — llamada desde scheduleSave() del script regular
+  // ── Merge por id: une remoto + local sin perder altas concurrentes.
+  //    Para filas en ambos lados, gana la de _m (lastModified) más nuevo.
+  //    Es ADITIVO: nunca descarta una fila remota que no esté en local
+  //    (por eso las NC se ANULAN, no se borran individualmente).
+  function _ncMergeById(remote, local){
+    const nid = () => (window._ncNewId ? window._ncNewId() : ('nc_'+Date.now()+'_'+Math.random().toString(36).slice(2,8)));
+    const byId = new Map();
+    (remote||[]).forEach(r => { if(r){ if(!r.id) r.id = nid(); byId.set(r.id, r); } });
+    (local||[]).forEach(r => {
+      if(!r) return;
+      if(!r.id) r.id = nid();
+      const ex = byId.get(r.id);
+      if(!ex || (r._m||0) >= (ex._m||0)) byId.set(r.id, r);
+    });
+    return Array.from(byId.values());
+  }
+
+  // Escritura a Firestore — transacción: lee lo último, mergea, escribe.
+  // Así un guardado desde un array desactualizado (tablet que estuvo
+  // offline) ya NO pisa NCs agregadas en otro dispositivo.
   window._firestoreSave = function(rows){
+    runTransaction(db, async (tx) => {
+      const snap = await tx.get(NC_REF);
+      const remote = snap.exists() ? (snap.data().rows || []) : [];
+      const merged = _ncMergeById(remote, rows);
+      tx.set(NC_REF, { rows: merged, _ts: Date.now() });
+      return merged;
+    })
+    .then(merged => {
+      // Reflejar el merge en local (puede traer NCs de otros equipos)
+      if (Array.isArray(merged) && window._ncSetRows) {
+        const cur = window._ncGetRows ? window._ncGetRows() : [];
+        if (merged.length !== cur.length) window._ncSetRows(merged);
+      }
+    })
+    .catch(e => console.error('[nc] Firestore tx error:', e));
+  };
+
+  // Reset total (vaciar) — SOLO desde "Borrar todo" con doble confirmación.
+  // Sobrescribe el documento entero, sin merge (es lo que queremos al
+  // reiniciar el mes / empezar de cero).
+  window._firestoreReset = function(rows){
     setDoc(NC_REF, { rows, _ts: Date.now() })
-      .catch(e => console.error('[nc] Firestore write error:', e));
+      .catch(e => console.error('[nc] Firestore reset error:', e));
   };
 
   authGuard().then(u => getRol(u.uid)).then(rol => {
@@ -550,8 +590,8 @@ html.coordinadora #tBody select { pointer-events:none; opacity:.6; }
     <div class="toolbar-row">
       <button class="btn btn-add"   onclick="addRow()">+ Agregar fila</button>
       <button class="btn" style="background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700" onclick="scheduleSave();showToast('💾 Guardando datos...')">💾 Guardar</button>
-      <select id="sel-del-row" class="btn" style="min-width:90px;cursor:pointer" title="Seleccionar fila a eliminar"></select>
-      <button class="btn btn-del"   onclick="delRowSel()">− Eliminar fila</button>
+      <select id="sel-del-row" class="btn" style="min-width:90px;cursor:pointer" title="Seleccionar NC a anular"></select>
+      <button class="btn btn-del"   onclick="delRowSel()">⊘ Anular NC</button>
       <button class="btn btn-print" onclick="window.print()">🖨 Imprimir / PDF</button>
       <button class="btn btn-export" onclick="exportarExcel()">⬇ Descargar Excel</button>
     </div>
@@ -686,7 +726,7 @@ let rows = [], saveTimer = null, db;
 let _cardExpanded = null; // null = sin inicializar; array bool por índice de fila
 // Puentes para el bloque módulo (módulos no comparten scope con scripts regulares)
 window._ncGetRows = function(){ return rows; };
-window._ncSetRows = function(r){ rows=r; render(); idbSet('rows',JSON.stringify(r),null); };
+window._ncSetRows = function(r){ rows=_ncEnsureIds(r||[]); render(); idbSet('rows',JSON.stringify(rows),null); };
 
 function openDB(cb){
   if(db){cb(db);return;}
@@ -711,6 +751,7 @@ function setSave(state){
   if(state==='error')  msg.textContent='⚠ Error al guardar. Usá Copiar datos como respaldo.';
 }
 function scheduleSave(){
+  _ncStampActive();
   setSave('saving');
   clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>{
@@ -727,8 +768,30 @@ function scheduleSave(){
 // Campos exportados a Power BI: fecha, prod, cliente, litTot,
 // lote, tipo, litNC, pallets, detec, horas calculadas, est
 // ════════════════════════════════════════════
+// Genera un id estable por NC. Permite merge por fila entre dispositivos.
+function _ncNewId(){
+  return (window.crypto && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : ('nc_' + Date.now() + '_' + Math.random().toString(36).slice(2,8));
+}
+window._ncNewId = _ncNewId;
+// Asegura id + _m en filas viejas (migración de datos previos sin id).
+function _ncEnsureIds(arr){
+  (arr||[]).forEach(r => { if(r){ if(!r.id) r.id=_ncNewId(); if(!r._m) r._m=Date.now(); } });
+  return arr;
+}
+// Sella _m (lastModified) en la fila que se está editando (foco activo),
+// para que el merge sepa cuál versión es la más nueva.
+function _ncStampActive(){
+  const ae=document.activeElement;
+  if(ae&&ae.closest&&ae.closest('#tBody')){
+    const tr=ae.closest('tr');
+    const idx=tr&&tr.dataset.rowIdx!==undefined?parseInt(tr.dataset.rowIdx):-1;
+    if(idx>=0&&rows[idx]) rows[idx]._m=Date.now();
+  }
+}
 function newRow(){
-  return {fecha:'',lote:'',cliente:'',prod:'',tipo:'',sev:'',detec:'',desc:'',litNC:'',litTot:'',ac:'',plazo:'',est:'Pendiente',cierre:'',pallets:'',resp:'',eficacia:'Pendiente'};
+  return {id:_ncNewId(),_m:Date.now(),fecha:'',lote:'',cliente:'',prod:'',tipo:'',sev:'',detec:'',desc:'',litNC:'',litTot:'',ac:'',plazo:'',est:'Pendiente',cierre:'',pallets:'',resp:'',eficacia:'Pendiente'};
 }
 function addRow(){
   rows.push(newRow());
@@ -744,9 +807,10 @@ function delRowSel(){
   if(!sel||rows.length===0)return;
   const idx=parseInt(sel.value);
   if(isNaN(idx)||idx<0||idx>=rows.length)return;
-  if(!confirm("\u00bfEliminar la fila N\u00b0"+(idx+1)+"? Esta acci\u00f3n no se puede deshacer."))return;
-  rows.splice(idx,1);
-  if(_cardExpanded) _cardExpanded.splice(idx,1);
+  if(rows[idx].est==='Anulado'){ alert('Esa NC ya está anulada.'); return; }
+  if(!confirm("\u00bfAnular la NC N\u00b0"+(idx+1)+"? Queda registrada con estado \"Anulado\" (no se borra).\n\nPara eliminar definitivamente usá \uD83D\uDDD1 Borrar todo (reinicio de mes)."))return;
+  rows[idx].est='Anulado';
+  rows[idx]._m=Date.now();
   render();
   scheduleSave();
 }
@@ -767,7 +831,10 @@ function updateDelSelector(){
 }
 
 function clearData(){
-  if(!confirm('¿Borrar todos los datos? Esta acción no se puede deshacer.')) return;
+  // Doble confirmación: esta acción borra TODO (reinicio de mes / empezar de cero)
+  if(!confirm('⚠ BORRAR TODO\n\nEsto elimina TODAS las NC del registro en todos los dispositivos. Se usa solo para reiniciar el mes o empezar de cero.\n\n¿Continuar?')) return;
+  const txt = prompt('Para confirmar, escribí la palabra BORRAR (en mayúsculas):');
+  if(txt !== 'BORRAR'){ document.getElementById('saveMsg').textContent='Borrado cancelado.'; return; }
   openDB(db=>{
     const tx=db.transaction('data','readwrite');
     tx.objectStore('data').delete('rows');
@@ -775,7 +842,8 @@ function clearData(){
       rows=[]; _cardExpanded=null; for(let i=0;i<3;i++) rows.push(newRow());
       render();
       document.getElementById('saveMsg').textContent='Datos borrados.';
-      if(window._firestoreSave) window._firestoreSave(rows);
+      // Reset REAL en Firestore (overwrite, sin merge), solo desde acá
+      if(window._firestoreReset) window._firestoreReset(rows);
     };
   });
 }
@@ -824,14 +892,16 @@ function render(){
       if(r.prod){const s=document.createElement('span');s.className='nc-hdr-prod';s.textContent=r.prod;hdr.appendChild(s);}
       if(r.sev){const s=document.createElement('span');s.className='sev-badge '+(SEV_CLS[r.sev]||'');s.textContent=(SEV_ICON[r.sev]||'')+' '+r.sev;hdr.appendChild(s);}
       const btnDel=document.createElement('button');
-      btnDel.textContent='×';
-      btnDel.setAttribute('style','background:none;border:none;color:#ef4444;font-size:16px;padding:0 6px;cursor:pointer;line-height:1');
+      btnDel.textContent=(r.est==='Anulado')?'⦸':'⊘';
+      btnDel.title=(r.est==='Anulado')?'NC anulada':'Anular NC';
+      btnDel.setAttribute('style','background:none;border:none;color:#f59e0b;font-size:16px;padding:0 6px;cursor:pointer;line-height:1');
       btnDel.addEventListener('click',e=>{
         e.stopPropagation();
+        if(r.est==='Anulado'){ alert('Esta NC ya está anulada.'); return; }
         const label='#'+(i+1)+(r.lote?' ('+r.lote+')':'');
-        if(!confirm('¿Eliminar NC '+label+'?'))return;
-        rows.splice(i,1);
-        if(_cardExpanded) _cardExpanded.splice(i,1);
+        if(!confirm('¿Anular NC '+label+'? Queda con estado "Anulado" (no se borra).'))return;
+        rows[i].est='Anulado';
+        rows[i]._m=Date.now();
         scheduleSave(); render();
       });
       hdr.appendChild(btnDel);

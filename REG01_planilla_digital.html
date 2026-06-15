@@ -252,6 +252,10 @@ input, textarea, select{touch-action:manipulation}
 /* ── OK/NOK ── */
 .on{display:flex;gap:3px;justify-content:center;align-items:center}
 .on button{min-width:40px;height:34px;border-radius:4px;border:1px solid var(--border2);font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;background:var(--bg3);color:var(--text3);transition:.1s;flex-shrink:0;padding:0 6px;touch-action:manipulation}
+/* Clúster de checks completo sin doble-tap-zoom: evita que el navegador
+   se "coma" un toque interpretándolo como zoom cuando se tocan los
+   botones OK/NOK rápido en la tablet. */
+.cl-check-row,.cl-check-row .on,.cl-checks{touch-action:manipulation}
 /* ── Clase helper para touch-action en todos los elementos táctiles ──
    Reemplaza los 20 estilos inline touch-action:manipulation
    Se aplica automáticamente a botones y inputs via selector global */
@@ -1459,14 +1463,20 @@ function innerChecksHTML(p,i){
     const isNOK=p[c.field]===false, isRepro=!!p[c.repField];
     const rowCls=isNOK&&!isRepro?'cl-check-row row-nok':isRepro?'cl-check-row row-repro':'cl-check-row';
     const urlBadge=c.field==='qrLineaOK'?_qrBadgeHTML(p.qrCode,p.qrUrlCargada):'';
-    return `<div class="${rowCls}">
+    // Toggle manual de "URL cargada / no cargada" (sin reescanear)
+    const urlToggle=c.field==='qrLineaOK'
+      ? `<button class="ok${p.qrUrlCargada===true?' active':''}" data-act="url-ok" onclick="setQrUrl(${i},true)" title="Marcar URL como cargada">URL✓</button>`
+        +`<button class="nk${p.qrUrlCargada===false?' active':''}" data-act="url-no" onclick="setQrUrl(${i},false)" title="Marcar URL como NO cargada">URL✗</button>`
+      : '';
+    return `<div class="${rowCls}" data-field="${c.field}">
       <span class="cl-check-label">${c.label}</span>
       <div class="on">
-        ${c.scanFn&&_bdSupported?`<button class="sc" onclick="${c.scanFn}" title="Escanear QR"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button>`:''}
+        ${c.scanFn&&_bdSupported?`<button class="sc" data-act="scan" onclick="${c.scanFn}" title="Escanear QR"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button>`:''}
         ${urlBadge}
-        <button class="ok${p[c.field]===true?' active':''}" onclick="${c.okFn}">OK</button>
-        <button class="nk${p[c.field]===false?' active':''}" onclick="${c.nokFn}">NOK</button>
-        ${isNOK?`<button class="rp${isRepro?' active':''}" onclick="${c.rpFn}">REPRO</button>`:''}
+        ${urlToggle}
+        <button class="ok${p[c.field]===true?' active':''}" data-act="ok" onclick="${c.okFn}">OK</button>
+        <button class="nk${p[c.field]===false?' active':''}" data-act="nok" onclick="${c.nokFn}">NOK</button>
+        <button class="rp${isRepro?' active':''}" data-act="repro" onclick="${c.rpFn}"${isNOK?'':' style="display:none"'}>REPRO</button>
       </div></div>`;
   }).join('');
 }
@@ -1497,31 +1507,78 @@ function patchCLCard(i){
     badge.remove();
   }
 }
+// ── _refreshCLCard: actualiza una tarjeta CL EN SITIO, sin reconstruir
+//    los botones (evita la carrera de toques en tablet donde un tap caía
+//    sobre un botón que se estaba reconstruyendo). Solo cambia clases y
+//    visibilidad. Si no existe la tarjeta (layout tabla), cae a patchCLCard.
+function _refreshCLCard(i){
+  const l=getLote();if(!l||!l.linea[i])return;
+  const p=l.linea[i];
+  const card=document.getElementById('cl-pallet-'+i);
+  if(!card){ patchCLCard(i); return; }
+  const tieneNOK=(p.indOK===false&&!p.repro)||(p.qrLineaOK===false&&!p.qrRepro)||(p.packOK===false&&!p.packRepro)||(p.pltOK===false&&!p.pltRepro)||p.pesoOK===false;
+  const tieneRepro=p.repro||p.qrRepro||p.packRepro||p.pltRepro;
+  card.className=tieneNOK?'pcard nok-card':tieneRepro?'pcard repro-card':'pcard';
+  const repMap={indOK:'repro',qrLineaOK:'qrRepro',packOK:'packRepro',pltOK:'pltRepro'};
+  card.querySelectorAll('.cl-check-row').forEach(row=>{
+    const f=row.dataset.field; if(!f)return;
+    const isNOK=p[f]===false, isRepro=!!p[repMap[f]];
+    const okB=row.querySelector('[data-act="ok"]');
+    const nkB=row.querySelector('[data-act="nok"]');
+    const rpB=row.querySelector('[data-act="repro"]');
+    if(okB) okB.classList.toggle('active',p[f]===true);
+    if(nkB) nkB.classList.toggle('active',p[f]===false);
+    if(rpB){ rpB.style.display=isNOK?'':'none'; rpB.classList.toggle('active',isRepro); }
+    row.className='cl-check-row'+(isNOK&&!isRepro?' row-nok':isRepro?' row-repro':'');
+    if(f==='qrLineaOK'){
+      const uOk=row.querySelector('[data-act="url-ok"]');
+      const uNo=row.querySelector('[data-act="url-no"]');
+      if(uOk) uOk.classList.toggle('active',p.qrUrlCargada===true);
+      if(uNo) uNo.classList.toggle('active',p.qrUrlCargada===false);
+      const badge=row.querySelector('.qr-url-badge');
+      if(badge){ const h=_qrBadgeHTML(p.qrCode,p.qrUrlCargada); if(h) badge.outerHTML=h; }
+    }
+  });
+  // Badge global de repro
+  let badge=card.querySelector('.repro-badge');
+  if(tieneRepro&&!badge){
+    badge=document.createElement('span');badge.className='repro-badge';badge.textContent='✓ REPROCESADO';
+    const header=card.querySelector('.pcard-header');if(header)header.insertAdjacentElement('afterend',badge);
+  } else if(!tieneRepro&&badge){ badge.remove(); }
+}
 function setIO(i,v){
   const l=getLote();if(!l)return;
   l.linea[i].indOK=l.linea[i].indOK===v?null:v;
   if(v===true)l.linea[i].repro=false;
   marcarPendiente();
-  patchCLCard(i);
+  _refreshCLCard(i);
 }
 function setLinea(i,k,v){
   const l=getLote();if(!l)return;
   l.linea[i][k]=l.linea[i][k]===v?null:v;
   if(v===true){const rf={qrLineaOK:'qrRepro',packOK:'packRepro',pltOK:'pltRepro'}[k];if(rf)l.linea[i][rf]=false;}
   marcarPendiente();
-  patchCLCard(i);
+  _refreshCLCard(i);
+}
+// Toggle manual del estado "URL cargada" del QR (CL), sin reescanear.
+// Tres estados: true (cargada) → false (no cargada) → null (sin marcar).
+function setQrUrl(i,v){
+  const l=getLote();if(!l||!l.linea[i])return;
+  l.linea[i].qrUrlCargada = (l.linea[i].qrUrlCargada===v) ? null : v;
+  marcarPendiente();
+  _refreshCLCard(i);
 }
 function setRepro(i){
   const l=getLote();if(!l)return;
   l.linea[i].repro=!l.linea[i].repro;
   marcarPendiente();
-  patchCLCard(i);
+  _refreshCLCard(i);
 }
 function setLineaRepro(i,field){
   const l=getLote();if(!l)return;
   l.linea[i][field]=!l.linea[i][field];
   marcarPendiente();
-  patchCLCard(i);
+  _refreshCLCard(i);
 }
 function addPallet(){
   const l=getLote();if(!l)return;
@@ -2508,6 +2565,7 @@ async function _openScanner(label, onSuccess) {
     <div class="scan-hdr"><span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Escanear — ${label}</span>
       <button onclick="cerrarScan()">✕</button></div>
     <video id="scan-video" autoplay playsinline muted></video>
+    <button id="scan-torch" style="display:none;margin:8px auto 0;background:rgba(245,158,11,.14);color:#f59e0b;border:1px solid #f59e0b;border-radius:var(--r);padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;touch-action:manipulation">🔦 Linterna</button>
     <div id="scan-status">Apuntá la cámara al código QR o de barras…</div>
   </div>`;
   document.body.appendChild(ov);
@@ -2516,11 +2574,38 @@ async function _openScanner(label, onSuccess) {
     const vid = document.getElementById('scan-video');
     vid.srcObject = _scanStream;
     await vid.play();
+    _setupTorch();
     _scanLoopCb(vid, onSuccess);
   } catch(e) {
     cerrarScan();
     mostrarToast('⚠ Sin acceso a cámara: ' + e.message);
   }
+}
+
+// Linterna: solo si el track de cámara expone la capacidad "torch"
+// (Android/Chrome la soportan; iOS Safari no). Si no, el botón no aparece.
+let _torchOn = false;
+function _setupTorch() {
+  _torchOn = false;
+  const btn = document.getElementById('scan-torch');
+  if (!btn || !_scanStream) return;
+  const track = _scanStream.getVideoTracks()[0];
+  if (!track || !track.getCapabilities) return;
+  let caps = {};
+  try { caps = track.getCapabilities(); } catch(e) { return; }
+  if (!caps.torch) return;           // dispositivo sin linterna controlable
+  btn.style.display = 'block';
+  btn.addEventListener('click', async () => {
+    _torchOn = !_torchOn;
+    try {
+      await track.applyConstraints({ advanced: [{ torch: _torchOn }] });
+      btn.style.background = _torchOn ? 'rgba(245,158,11,.30)' : 'rgba(245,158,11,.14)';
+      btn.textContent = _torchOn ? '🔦 Linterna (ON)' : '🔦 Linterna';
+    } catch(e) {
+      _torchOn = false;
+      mostrarToast('⚠ No se pudo encender la linterna');
+    }
+  });
 }
 
 async function _scanLoopCb(vid, onSuccess) {
@@ -2557,66 +2642,20 @@ function _qrBadgeHTML(qrCode, urlCargada) {
   return '<span class="qr-url-badge qr-url-unk">sin verificar</span>';
 }
 
-// Resuelve un short URL (bit.ly) a su destino SENASA.
-// allorigins NO devuelve la URL final en status.url (devuelve la pedida),
-// pero SÍ trae el HTML de la página destino en contents → la extraemos de ahí.
-// Cascada: allorigins (4 sub-estrategias) → unshorten.me → null.
-function _decodEnt(s){ return s.replace(/&amp;/g,'&').replace(/&#0*38;/g,'&'); }
-
-async function _resolverViaAllorigins(shortUrl) {
+async function _resolverURLDestino(shortUrl) {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 8000);
+  const timer = setTimeout(() => ctrl.abort(), 7000);
   try {
     const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(shortUrl), { signal: ctrl.signal });
     clearTimeout(timer);
-    if (!r.ok) { console.log('[QR] allorigins HTTP', r.status); return null; }
-    const j = await r.json();
-    // a) por si el proxy algún día reporta la URL final
-    const rep = j && j.status && j.status.url;
-    if (rep && rep !== shortUrl && !/bit\.ly/i.test(rep)) return rep;
-    const html = (j && j.contents) || '';
-    if (!html) { console.log('[QR] allorigins sin contents'); return null; }
-    // b) URL SENASA completa dentro del HTML destino
-    let m = html.match(/https?:\/\/aps2\.senasa\.go[bv]\.ar\/agrotraza[^"'<>\s\\]+/i);
-    if (m) return _decodEnt(m[0]);
-    // c) canonical / og:url de la página destino
-    m = html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i)
-     || html.match(/<meta[^>]+property=["']og:url["'][^>]+content=["']([^"']+)["']/i);
-    if (m && m[1] && m[1] !== shortUrl) return _decodEnt(m[1]);
-    // d) reconstruir desde productCode + batchId sueltos en el HTML
-    const pc = html.match(/productCode["'=:\s]+(\d+)/i);
-    const bi = html.match(/batchId["'=:\s]+([\w.\-\/]+)/i);
-    if (pc && bi) return 'https://aps2.senasa.gov.ar/agrotraza/src/app/?action=showDetailPublicProduct&productCode=' + pc[1] + '&batchId=' + encodeURIComponent(bi[1]);
-    console.log('[QR] allorigins OK pero sin URL destino en HTML (', html.length, 'bytes )');
-    return null;
-  } catch (e) {
-    clearTimeout(timer);
-    console.log('[QR] allorigins falló:', e.message);
-    return null;
-  }
-}
-
-async function _resolverViaUnshorten(shortUrl) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 8000);
-  try {
-    // API pública (límite ~10 consultas/hora por IP — fallback, no vía principal)
-    const r = await fetch('https://unshorten.me/json/' + shortUrl, { signal: ctrl.signal });
-    clearTimeout(timer);
     if (!r.ok) return null;
     const j = await r.json();
-    return (j && j.success && j.resolved_url && j.resolved_url !== shortUrl) ? j.resolved_url : null;
+    const finalUrl = j && j.status && j.status.url;
+    return (finalUrl && finalUrl !== shortUrl) ? finalUrl : null;
   } catch (e) {
     clearTimeout(timer);
-    console.log('[QR] unshorten.me falló:', e.message);
     return null;
   }
-}
-
-async function _resolverURLDestino(shortUrl) {
-  const a = await _resolverViaAllorigins(shortUrl);
-  if (a) return a;
-  return await _resolverViaUnshorten(shortUrl);
 }
 
 function _mostrarModalQR(rawVal, label, onConfirm) {
@@ -2660,7 +2699,7 @@ function _mostrarModalQR(rawVal, label, onConfirm) {
         el.textContent = dest;
         el.style.color = 'var(--green)';
       } else {
-        el.textContent = '⚠ No se pudo resolver — tocá Abrir para verla en el navegador';
+        el.textContent = '(sin conexión — usá Abrir para verla)';
         el.style.color = 'var(--text3)';
       }
     });
