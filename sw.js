@@ -1,14 +1,15 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v36
-//  Cambio v36:
-//    - sync.js v1.1: NCs unificadas al doc único nc/registro
-//      (pushNC/pullNC/escucharNC) + eliminado parche IndexedDB muerto
-//    - REG01: resolver QR multi-estrategia (_resolverURLDestino en
-//      cascada: allorigins /get → corsproxy → allorigins /raw)
+//  sw.js — Agrofacil SGC · v37
+//  Cambio v37:
+//    - sync.js v1.2: conflict-resolution de LOTES por lastModified
+//      (pushLote ya no re-estampa Date.now(); escucharLotes/pullLotes
+//       solo aceptan el remoto si es más nuevo) → corrige el bug de
+//       "guardé en la tablet y no se reflejó / se pisó" en lotes.
+//  (v36: sync.js v1.1 NCs a nc/registro + resolver QR multi-estrategia)
 //  (v35: roles dinámicos, card Panel de Coordinación, acceso dev a coordinadora)
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v36';
+const CACHE_NAME = 'agrofacil-v37';
 const ASSETS = [
   '/login.html',
   '/home.html',
@@ -32,12 +33,12 @@ const ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW v36] Precacheando assets...');
+      console.log('[SW v37] Precacheando assets...');
       // addAll individual tolerante: si un asset falla, no rompe el resto
       return Promise.all(
         ASSETS.map((url) =>
           cache.add(url).catch((err) =>
-            console.warn('[SW v36] No se pudo cachear:', url, err.message)
+            console.warn('[SW v37] No se pudo cachear:', url, err.message)
           )
         )
       );
@@ -55,7 +56,7 @@ self.addEventListener('activate', (event) => {
         keys
           .filter((key) => key !== CACHE_NAME)
           .map((key) => {
-            console.log('[SW v36] Eliminando caché viejo:', key);
+            console.log('[SW v37] Eliminando caché viejo:', key);
             return caches.delete(key);
           })
       )
@@ -82,15 +83,11 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((networkResponse) => {
-          // Actualiza el caché con la versión fresca
           const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
           return networkResponse;
         })
-        .catch(() => {
-          // Offline fallback: sirve desde caché
-          return caches.match(request);
-        })
+        .catch(() => caches.match(request))
     );
   } else {
     // Cache-first para JS, CSS, imágenes, manifest
