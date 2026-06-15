@@ -1,8 +1,11 @@
 // ============================================================
 //  sw.js — Agrofacil SGC · v36
-//  Cambio v36: fix resolución QR bit.ly→SENASA (parseo de contents
-//              de allorigins + fallback unshorten.me) y sync.js v1.1
-//              (NCs unificadas a nc/registro, parche IDB eliminado)
+//  Cambio v36:
+//    - sync.js v1.1: NCs unificadas al doc único nc/registro
+//      (pushNC/pullNC/escucharNC) + eliminado parche IndexedDB muerto
+//    - REG01: resolver QR multi-estrategia (_resolverURLDestino en
+//      cascada: allorigins /get → corsproxy → allorigins /raw)
+//  (v35: roles dinámicos, card Panel de Coordinación, acceso dev a coordinadora)
 // ============================================================
 
 const CACHE_NAME = 'agrofacil-v36';
