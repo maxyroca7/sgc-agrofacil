@@ -975,8 +975,21 @@ function render(){
 }
 
 function _toggleCard(idx){
-  if(_cardExpanded) _cardExpanded[idx]=!_cardExpanded[idx];
-  render();
+  if(!_cardExpanded) return;
+  const willExpand = !_cardExpanded[idx];
+  const prevY = window.scrollY;          // posición actual del scroll
+  _cardExpanded[idx]=!_cardExpanded[idx];
+  render();                              // reconstruye la lista (resetea el scroll)
+  // Tras re-renderizar: si abrí la tarjeta, la traigo a la vista (no salto a la
+  // última fila). Si la cerré, mantengo donde estaba.
+  requestAnimationFrame(()=>{
+    const tr=document.querySelector('#tBody tr[data-row-idx="'+idx+'"]');
+    if(willExpand && tr){
+      tr.scrollIntoView({block:'center'});
+    } else {
+      window.scrollTo(0, prevY);
+    }
+  });
 }
 
 function mkTdEl(tr,cls,label){ const el=document.createElement('td');el.className=cls;if(label)el.dataset.label=label;tr.appendChild(el);return el; }
