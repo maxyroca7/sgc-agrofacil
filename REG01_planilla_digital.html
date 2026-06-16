@@ -491,7 +491,7 @@ body[data-rol="coordinadora"] .ba-sav              { display: none !important; }
 
 <script type="module">
   import { authGuard, getRol, db } from './firebase-init.js';
-  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+  import { doc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
   import { pullLotes, escucharLotes } from './sync.js';
   import { aplicarEmpresaCfg } from './cfg-loader.js';
   import { buildPrintBody } from './print-lote.js';
@@ -547,6 +547,13 @@ body[data-rol="coordinadora"] .ba-sav              { display: none !important; }
     cargarLotes();
     renderTabs();
     escucharLotes(() => { cargarLotes(); renderTabs(); });
+    // Estado de sincronización REAL con la nube: hasPendingWrites = hay
+    // escrituras locales que el servidor todavía no confirmó; fromCache =
+    // los datos vienen de la caché (sin conexión / aún no llegó al server).
+    onSnapshot(collection(db,'lotes'), { includeMetadataChanges:true }, snap => {
+      if (window.__setCloudState)
+        window.__setCloudState(snap.metadata.hasPendingWrites, snap.metadata.fromCache);
+    });
   });
 </script>
 
@@ -877,17 +884,44 @@ function fmtPeso(inp){
 let lotes=[],loteActivo=null,pendiente=false,_resetScroll=false;
 const CL_PAGE_SIZE=3;const clPages={};const CF_PAGE_SIZE=3;const cfPages={};
 function cargarLotes(){try{const s=localStorage.getItem(LOTES_KEY);if(s)lotes=JSON.parse(s).filter(l=>!l._archivadoApp);}catch(e){lotes=[];}}
+// ── Indicador de estado (local + nube) ──────────────────────
+// Tres estados, en orden de prioridad:
+//   ⚠ Sin guardar           → hay cambios locales sin guardar (apretá Guardar)
+//   📲 En la tablet…         → guardado local, falta subir (sin conexión o subiendo)
+//   ☁ Sincronizado HH:MM     → confirmado en la nube
+let _cloudPending = false;   // hasPendingWrites de Firestore
+let _fromCache    = true;    // datos sirviéndose de caché (offline/aún no en server)
+let _lastSaveTime = '';
+function actualizarEstado(){
+  const stxt=document.getElementById('stxt');
+  const sdot=document.getElementById('sdot');
+  if(!stxt) return;
+  if(pendiente){
+    stxt.textContent='⚠ Sin guardar';
+    if(sdot) sdot.style.background='#f5b14b';
+  } else if(_cloudPending || _fromCache){
+    stxt.textContent='📲 En la tablet — falta subir';
+    if(sdot) sdot.style.background='#f5b14b';
+  } else {
+    stxt.textContent='☁ Sincronizado'+(_lastSaveTime?' '+_lastSaveTime:'');
+    if(sdot) sdot.style.background='#00c896';
+  }
+}
+// Llamado desde el listener de metadata del script módulo.
+window.__setCloudState=function(pending,fromCache){
+  _cloudPending=!!pending; _fromCache=!!fromCache; actualizarEstado();
+};
 function guardarLotes(silent=true){
   try{localStorage.setItem(LOTES_KEY,JSON.stringify(lotes));}catch(e){}
   pendiente=false;
-  const now=new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('stxt').textContent='Guardado '+now;
+  _lastSaveTime=new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  actualizarEstado();
   if(!silent)mostrarToast('💾 Guardado',1400);
 }
 function guardarManual(){guardarLotes(false);}
 function marcarPendiente(){
   pendiente=true;
-  document.getElementById('stxt').textContent='⚠ Sin guardar';
+  actualizarEstado();
   const l=getLote();if(l)l.lastModified=Date.now();
   clearTimeout(marcarPendiente._t);
   marcarPendiente._t=setTimeout(()=>{if(pendiente&&lotes.length)guardarLotes(true);},1500);
@@ -2642,20 +2676,66 @@ function _qrBadgeHTML(qrCode, urlCargada) {
   return '<span class="qr-url-badge qr-url-unk">sin verificar</span>';
 }
 
+// Resuelve un short-link (bit.ly, etc.) a su URL final.
+// Cascada: la primera estrategia que devuelve algo gana.
+// Cada una tiene su propio timeout y loguea su resultado en consola.
 async function _resolverURLDestino(shortUrl) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 7000);
-  try {
-    const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(shortUrl), { signal: ctrl.signal });
-    clearTimeout(timer);
-    if (!r.ok) return null;
-    const j = await r.json();
-    const finalUrl = j && j.status && j.status.url;
-    return (finalUrl && finalUrl !== shortUrl) ? finalUrl : null;
-  } catch (e) {
-    clearTimeout(timer);
-    return null;
+  if (typeof shortUrl !== 'string' || !/^https?:\/\//i.test(shortUrl)) return null;
+
+  const SENASA_RE = /https?:\/\/aps2\.senasa\.gov\.ar\/[^\s"'<>\\]+/i;
+
+  const conTimeout = (ms) => {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms);
+    return { signal: ctrl.signal, done: () => clearTimeout(t) };
+  };
+
+  const estrategias = [
+    // 1) allorigins /get: status.url y, si no sirve, buscar SENASA en el contenido
+    async () => {
+      const tk = conTimeout(6000);
+      try {
+        const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(shortUrl), { signal: tk.signal });
+        if (!r.ok) return null;
+        const j = await r.json();
+        const u = j && j.status && j.status.url;
+        if (u && u !== shortUrl && /^https?:/i.test(u)) return u;
+        const m = j && typeof j.contents === 'string' && j.contents.match(SENASA_RE);
+        return m ? m[0] : null;
+      } catch { return null; } finally { tk.done(); }
+    },
+    // 2) corsproxy.io: sigue el redirect del lado del server
+    async () => {
+      const tk = conTimeout(6000);
+      try {
+        const r = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(shortUrl), { signal: tk.signal });
+        if (!r.ok) return null;
+        if (SENASA_RE.test(r.url)) return r.url.match(SENASA_RE)[0];
+        const txt = await r.text();
+        const m = txt.match(SENASA_RE);
+        return m ? m[0] : null;
+      } catch { return null; } finally { tk.done(); }
+    },
+    // 3) allorigins /raw: cuerpo crudo (último recurso)
+    async () => {
+      const tk = conTimeout(6000);
+      try {
+        const r = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(shortUrl), { signal: tk.signal });
+        if (!r.ok) return null;
+        const txt = await r.text();
+        const m = txt.match(SENASA_RE);
+        return m ? m[0] : null;
+      } catch { return null; } finally { tk.done(); }
+    },
+  ];
+
+  for (let i = 0; i < estrategias.length; i++) {
+    const dest = await estrategias[i]();
+    console.log('[qr] estrategia ' + (i + 1) + ' →', dest || 'sin resultado');
+    if (dest) return dest;
   }
+  console.warn('[qr] ninguna estrategia resolvió la URL:', shortUrl);
+  return null;
 }
 
 function _mostrarModalQR(rawVal, label, onConfirm) {
