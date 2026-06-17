@@ -609,6 +609,9 @@ body[data-rol="coordinadora"] .ba-sav              { display: none !important; }
     <button id="btn-nl" onclick="abrirModalLote()">+ Lote</button>
     <button id="btn-srch" onclick="abrirBusqueda()" title="Buscar lote"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>
     <button id="btn-home" onclick="location.href='home.html'" title="Inicio"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
+    <button id="btn-backup" onclick="exportarRespaldo()" title="Descargar respaldo de TODOS los lotes (funciona sin internet)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg></button>
+    <button id="btn-import" onclick="document.getElementById('file-import').click()" title="Importar un respaldo (.json)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg></button>
+    <input type="file" id="file-import" accept="application/json,.json" style="display:none" onchange="importarRespaldo(this)">
   </div>
   <div class="coord-banner">
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg> Vista Coordinadora — Solo lectura · Exportar disponible
@@ -945,6 +948,52 @@ function guardarLotes(silent=true){
   if(!silent)mostrarToast('💾 Guardado',1400);
 }
 function guardarManual(){guardarLotes(false);}
+
+// ── Respaldo (exportar / importar) — salvavidas sin depender de Firebase ──
+function exportarRespaldo(){
+  try{
+    const arr = JSON.parse(localStorage.getItem(LOTES_KEY) || '[]');
+    const blob = new Blob([JSON.stringify(arr,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const st = new Date(); const p=n=>String(n).padStart(2,'0');
+    a.href = url;
+    a.download = 'respaldo-lotes-'+st.getFullYear()+p(st.getMonth()+1)+p(st.getDate())+'-'+p(st.getHours())+p(st.getMinutes())+'.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),3000);
+    mostrarToast('💾 Respaldo descargado ('+arr.length+' lotes)',2600);
+  }catch(e){ alert('No se pudo generar el respaldo: '+e.message); }
+}
+window.exportarRespaldo = exportarRespaldo;
+
+function importarRespaldo(input){
+  const file = input.files && input.files[0];
+  if(!file){ return; }
+  const rd = new FileReader();
+  rd.onload = ()=>{
+    try{
+      const imp = JSON.parse(rd.result);
+      if(!Array.isArray(imp)){ alert('El archivo no es un respaldo válido.'); return; }
+      const byId = {};
+      lotes.forEach(l=>{ if(l && l.id!=null) byId[l.id]=l; });
+      let nuevos=0, actualizados=0;
+      imp.forEach(l=>{
+        if(!l || l.id==null) return;
+        const ex = byId[l.id];
+        if(!ex){ byId[l.id]=l; nuevos++; }
+        else if((l.lastModified||0) > (ex.lastModified||0)){ byId[l.id]=l; actualizados++; }
+      });
+      lotes = Object.values(byId);
+      guardarLotes(false);                 // guarda local y dispara subida a la nube
+      if(typeof renderTabs==='function') renderTabs();
+      if(typeof cargarLotes==='function') cargarLotes();
+      alert('Respaldo importado:\n\u2022 '+nuevos+' lote(s) nuevo(s)\n\u2022 '+actualizados+' actualizado(s)\n\nDesde este dispositivo se van a subir a la nube. Esperá el puntito verde.');
+    }catch(e){ alert('No se pudo leer el respaldo: '+e.message); }
+    finally{ input.value=''; }
+  };
+  rd.readAsText(file);
+}
+window.importarRespaldo = importarRespaldo;
 function marcarPendiente(){
   pendiente=true;
   actualizarEstado();
