@@ -597,6 +597,7 @@ html.coordinadora #tBody select { pointer-events:none; opacity:.6; }
     </div>
     <div class="toolbar-row">
       <button class="btn btn-clear" onclick="clearData()">🗑 Borrar todo</button>
+      <button class="btn btn-clear" onclick="quitarDuplicados()">🧹 Quitar duplicados</button>
       <button class="btn" onclick="(function(){var p=document.getElementById('panel-codificacion');p.style.display=p.style.display==='block'?'none':'block';})()">⚙️ Codificación</button>
     </div>
   </div>
@@ -829,6 +830,40 @@ function updateDelSelector(){
   });
   sel.value=(!isNaN(prev)&&prev<rows.length)?prev:rows.length-1;
 }
+
+// ── Quitar duplicados ───────────────────────────────────────
+// Detecta NC con el MISMO contenido (mismo lote/prod/tipo/desc…) y deja una
+// sola de cada una. Usa _firestoreReset (overwrite) porque el guardado normal
+// es aditivo por id y volvería a traer el duplicado desde la nube.
+function _ncSig(r){
+  return ['fecha','lote','cliente','prod','tipo','sev','detec','desc','litNC','litTot','pallets']
+    .map(k=>(r[k]==null?'':(''+r[k])).trim().toLowerCase()).join('|');
+}
+function _ncTieneContenido(r){ return !!(r.lote||r.prod||r.tipo||r.desc||r.cliente); }
+function quitarDuplicados(){
+  const vistos=new Map(); const result=[]; let elim=0;
+  for(const r of rows){
+    if(!_ncTieneContenido(r)){ result.push(r); continue; } // filas en blanco, intactas
+    const sig=_ncSig(r);
+    if(!vistos.has(sig)){ vistos.set(sig,result.length); result.push(r); }
+    else {
+      // ya hay una con este contenido → es duplicado.
+      const idx=vistos.get(sig);
+      // si la que conservábamos está anulada y esta no, nos quedamos con la activa
+      if((result[idx].est||'')==='Anulado' && (r.est||'')!=='Anulado') result[idx]=r;
+      elim++;
+    }
+  }
+  if(elim===0){ showToast('No se encontraron duplicados ✓'); return; }
+  if(!confirm('Se encontraron '+elim+' NC duplicada/s.\n\nSe conserva una de cada una y se eliminan las repetidas en todos los dispositivos.\n\n¿Continuar?')) return;
+  rows=result; _cardExpanded=null;
+  render();
+  idbSet('rows', JSON.stringify(rows), null);
+  if(window._firestoreReset) window._firestoreReset(rows);
+  const sm=document.getElementById('saveMsg'); if(sm) sm.textContent=elim+' duplicada/s eliminada/s.';
+  showToast('🧹 '+elim+' duplicada/s eliminada/s');
+}
+window.quitarDuplicados=quitarDuplicados;
 
 function clearData(){
   // Doble confirmación: esta acción borra TODO (reinicio de mes / empezar de cero)

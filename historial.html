@@ -411,7 +411,7 @@
 
   // clave normalizada → array lotes; mapaDisplay → nombre original para mostrar
   const SIN = '—sin cliente—';
-  function normCli(raw){ return raw ? raw.trim().toLowerCase() : SIN; }
+  function normCli(raw){ return raw ? raw.trim().toLowerCase().replace(/\s+/g,' ') : SIN; }
   let _mapaDisplay = {}; // scope de módulo para que seleccionarCliente pueda acceder
   function renderClientes(busqueda=''){
     const mapa={};
