@@ -56,6 +56,8 @@ export async function pullLotes() {
 
     const remotos = {};
     snap.forEach(d => { remotos[d.id] = d.data(); });
+    // Sembrar firmas: lo que ya está en la nube no debe re-subirse.
+    Object.entries(remotos).forEach(([id, r]) => { _syncSig[id] = JSON.stringify(r); });
 
     const raw     = localStorage.getItem(LS_KEY);
     const locales = raw ? JSON.parse(raw) : [];
@@ -115,6 +117,7 @@ export function escucharLotes(onCambio) {
         // Si ya existe local y el remoto NO es más nuevo, ignorar.
         if (idx >= 0 && loteTs(lote) < loteTs(arr[idx])) return;
         if (idx >= 0) arr[idx] = lote; else arr.push(lote);
+        _syncSig[lote.id] = JSON.stringify(lote);   // vino de la nube: no re-subir
         _setRaw(LS_KEY, JSON.stringify(arr));
         if (onCambio) onCambio(lote);
       }
@@ -174,6 +177,11 @@ export function escucharNC(onCambio) {
 // Referencia al setItem original (sin parche)
 const _setRaw = localStorage.setItem.bind(localStorage);
 
+// v1.3 — Firma de la última versión SUBIDA de cada lote (id -> JSON).
+// Sirve para empujar SOLO el lote que cambió en cada guardado, en vez de
+// re-subir el array completo (que disparaba miles de escrituras de más).
+const _syncSig = {};
+
 /** Parche localStorage — detecta guardarLotes() automáticamente */
 ;(function patchLocalStorage() {
   localStorage.setItem = function (key, value) {
@@ -182,7 +190,14 @@ const _setRaw = localStorage.setItem.bind(localStorage);
       try {
         const lotes = JSON.parse(value);
         if (Array.isArray(lotes)) {
-          lotes.forEach(l => pushLote(l));
+          lotes.forEach(l => {
+            if (!l || l.id == null) return;
+            const sig = JSON.stringify(l);
+            if (_syncSig[l.id] !== sig) {   // empujar SOLO si cambió
+              _syncSig[l.id] = sig;
+              pushLote(l);
+            }
+          });
         }
       } catch {}
     }

@@ -1,15 +1,16 @@
 // ============================================================
-//  sw.js — Agrofacil SGC · v37
-//  Cambio v37:
-//    - sync.js v1.2: conflict-resolution de LOTES por lastModified
-//      (pushLote ya no re-estampa Date.now(); escucharLotes/pullLotes
-//       solo aceptan el remoto si es más nuevo) → corrige el bug de
-//       "guardé en la tablet y no se reflejó / se pisó" en lotes.
+//  sw.js — Agrofacil SGC · v38
+//  Cambio v38:
+//    - sync.js v1.3: el guardado empuja SOLO el lote que cambió
+//      (antes re-subía TODO el array en cada guardado → miles de
+//       escrituras de más, que reventaban la cuota diaria de Firestore).
+//      Firma por lote (_syncSig) sembrada desde la nube en pullLotes
+//      y en el listener para no re-subir lo que vino del servidor.
+//  (v37: sync.js v1.2 conflict-resolution de LOTES por lastModified)
 //  (v36: sync.js v1.1 NCs a nc/registro + resolver QR multi-estrategia)
-//  (v35: roles dinámicos, card Panel de Coordinación, acceso dev a coordinadora)
 // ============================================================
 
-const CACHE_NAME = 'agrofacil-v37';
+const CACHE_NAME = 'agrofacil-v38';
 const ASSETS = [
   '/login.html',
   '/home.html',
