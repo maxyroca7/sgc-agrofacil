@@ -1046,7 +1046,7 @@ function getLote(){return lotes.find(l=>l.id===loteActivo);}
 // ══ TABS ══
 function renderTabs(){
   const w=document.getElementById('tabs-wrap');w.innerHTML='';
-  lotes.forEach(l=>{
+  lotes.slice().reverse().forEach(l=>{
     const t=document.createElement('div');
     t.className='tab'+(loteActivo===l.id?' active':'');
     const falt=palletsFaltantes(l);
