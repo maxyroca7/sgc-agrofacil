@@ -307,6 +307,7 @@
         Ver NCs
       </button>
       <button class="m-btn pri" onclick="exportarPDFLote()">↓ PDF del lote</button>
+      <button class="m-btn" id="m-btn-react" style="display:none;border-color:rgba(0,200,150,.45);color:var(--green2)" onclick="reactivarLote()">↩ Reactivar en REG-01</button>
       <button class="m-btn" style="border-color:rgba(239,68,68,.35);color:var(--danger)" onclick="eliminarLoteDefinitivo()">🗑 Eliminar</button>
     </div>
   </div>
@@ -338,7 +339,7 @@
 <!-- FIREBASE + LÓGICA (100% idéntica a v1) -->
 <script type="module">
   import { auth, db, authGuard, cerrarSesion } from './firebase-init.js';
-  import { collection, onSnapshot, getDocs, where, query, deleteDoc, doc, getDoc }
+  import { collection, onSnapshot, getDocs, where, query, deleteDoc, doc, getDoc, setDoc }
     from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
   import { CFG_DEFAULT, aplicarEmpresaCfg } from './cfg-loader.js';
   import { buildPrintBody } from './print-lote.js';
@@ -373,7 +374,10 @@
     const map=new Map();
     fromLS.forEach(l=>{if(l.id!=null)map.set(String(l.id),l);});
     fromFS.forEach(l=>{if(l.id!=null)map.set(String(l.id),l);});
-    return[...map.values()].filter(l=>!l._archivadoApp);
+    // Mostramos TODOS los lotes, incluidos los que se quitaron de la vista
+    // activa de REG-01 (_archivadoApp). Historial es el registro permanente:
+    // sacar una pestaña no debe esconder el lote de acá.
+    return[...map.values()];
   }
   function palRes(p){return p.repro===true?'REPRO':p.indOK===true?'OK':p.indOK===false?'NOK':'PEND';}
 
@@ -544,6 +548,7 @@
 
   window.abrirModal=id=>{
     const l=todosLotes.find(x=>String(x.id)===String(id));if(!l)return;loteActual=l;
+    const br=document.getElementById('m-btn-react'); if(br) br.style.display=l._archivadoApp?'':'none';
     const dict=nd(l);
     document.getElementById('m-lote').textContent=`Lote ${l.cab?.lote||'—'}`;
     document.getElementById('m-sub').textContent=`${fmtF(loteTs(l))} · ${l.cab?.prod||'—'} · ${l.cab?.cliente||'Sin cliente'}`;
@@ -572,6 +577,19 @@
 
   window.cerrarModalClick=e=>{if(e.target===document.getElementById('modal-overlay'))cerrarModal();};
   window.cerrarModal=()=>{document.getElementById('modal-overlay').classList.remove('open');loteActual=null;};
+
+  // Reactivar: saca la marca _archivadoApp y sube lastModified para que REG-01
+  // lo vuelva a tomar (cargarLotes deja de filtrarlo) y reaparezca como pestaña.
+  window.reactivarLote=async ()=>{
+    const l=loteActual; if(!l) return;
+    if(!confirm(`¿Reactivar el lote ${l.cab?.lote||''} en REG-01?\n\nVa a volver a aparecer como pestaña activa para seguir trabajándolo. El dato no se modifica, solo vuelve a la vista.`)) return;
+    try{
+      await setDoc(doc(db,'lotes',String(l.id)), { _archivadoApp:false, lastModified:Date.now() }, { merge:true });
+      l._archivadoApp=false;
+      cerrarModal();
+      alert('✓ Lote reactivado.\n\nAbrí (o recargá) REG-01 y va a aparecer como pestaña activa.');
+    }catch(e){ alert('No se pudo reactivar: '+e.message); }
+  };
   window.irANCs=()=>{if(loteActual?.cab?.lote)window.location.href=`registro_nc.html#lote=${encodeURIComponent(loteActual.cab.lote)}`;};
 
   window.exportarXLSX=()=>{
