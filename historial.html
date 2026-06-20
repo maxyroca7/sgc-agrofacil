@@ -368,6 +368,12 @@
   function loteTs(l){return l._ts||l.lastModified||(typeof l.id==='number'?l.id:parseInt(l.id)||0);}
   function nd(l){const e=l.estado||'';if(e==='aprobado')return'APROBADO';if(e==='retenido'||e==='reproceso')return'RETENIDO';if(e==='aprobado_parcial')return'PARCIAL';return'OTRO';}
   function fmtF(raw){if(!raw)return'—';try{const d=typeof raw==='number'?new Date(raw):(raw.toDate?raw.toDate():new Date(raw));return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});}catch{return'—';}}
+  // Fecha+hora de creación del lote: el id ES el Date.now() del momento en que se creó.
+  function fmtCreado(l){
+    const n=Number(l&&l.id);
+    if(!n||n<1000000000000)return'—';
+    try{const d=new Date(n);return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'})+' '+d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});}catch{return'—';}
+  }
   function getBadge(d){if(d==='APROBADO')return'b-APR';if(d==='PARCIAL')return'b-PAR';if(d==='RETENIDO')return'b-RET';return'';}
   function mergeById(fromFS,lsKey){
     let fromLS=[];try{fromLS=JSON.parse(localStorage.getItem(lsKey)||'[]');}catch{}
@@ -552,7 +558,7 @@
     const dict=nd(l);
     document.getElementById('m-lote').textContent=`Lote ${l.cab?.lote||'—'}`;
     document.getElementById('m-sub').textContent=`${fmtF(loteTs(l))} · ${l.cab?.prod||'—'} · ${l.cab?.cliente||'Sin cliente'}`;
-    const campos=[['Producto',l.cab?.prod],['N° Lote',l.cab?.lote],['Cliente',l.cab?.cliente||'—'],['Línea',l.cab?.linea],['Checker',l.cab?.checker],['Dictamen',dict==='OTRO'?'—':dict],['Peso Min',l.cab?.pesoMin?l.cab.pesoMin+' kg':'—'],['Peso Max',l.cab?.pesoMax?l.cab.pesoMax+' kg':'—']];
+    const campos=[['Producto',l.cab?.prod],['N° Lote',l.cab?.lote],['Cliente',l.cab?.cliente||'—'],['Línea',l.cab?.linea],['Checker',l.cab?.checker],['Dictamen',dict==='OTRO'?'—':dict],['Creado',fmtCreado(l)],['Peso Min',l.cab?.pesoMin?l.cab.pesoMin+' kg':'—'],['Peso Max',l.cab?.pesoMax?l.cab.pesoMax+' kg':'—']];
     document.getElementById('m-campos').innerHTML=campos.map(([k,v])=>`<div class="mf"><label>${k}</label><span>${v||'—'}</span></div>`).join('');
     const pals=l.linea||[];
     document.getElementById('m-pallets').innerHTML=pals.length

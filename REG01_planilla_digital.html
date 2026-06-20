@@ -629,7 +629,7 @@ body[data-rol="coordinadora"] .ba-sav              { display: none !important; }
     <button class="ba ba-nc"   onclick="acNC()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg> Generar NC</button>
     <button class="ba ba-sav"  onclick="guardarManual()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar</button>
     <button class="ba" id="btn-forzar" onclick="window.__forzarSync&&window.__forzarSync()" title="Reconectar y subir a la nube lo que quedó pendiente"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Forzar subida</button>
-    <button class="ba" style="background:#1a3535;border:1px solid #8ab83c;color:#8ab83c" onclick="archivarLote()" title="Exportar PDF + JSON para carpeta de lotes cerrados"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg> Archivar</button>
+    <button class="ba" style="background:#1a3535;border:1px solid #8ab83c;color:#8ab83c" onclick="archivarLote()" title="Generar PDF del lote (estado actual, esté completo o no)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" x2="15" y1="13" y2="13"/><line x1="9" x2="15" y1="17" y2="17"/></svg> PDF</button>
     <button class="ba ba-cer" id="btn-cerrar" onclick="cerrar()">✕ Cerrar</button>
     <div id="sbar"><div id="sdot"></div><span id="stxt">OK</span></div>
   </div>
@@ -653,7 +653,7 @@ body[data-rol="coordinadora"] .ba-sav              { display: none !important; }
     <div class="fg"><label>Inductora</label>
       <select id="ml-ind" style="height:var(--touch)"></select></div>
     <div class="fg"><label>Fecha inicio (dd/mm/aaaa)</label>
-      <input id="ml-fecha" type="text" placeholder="dd/mm/aaaa" maxlength="10" style="height:var(--touch)" oninput="mskF(this)"></div>
+      <input id="ml-fecha" type="date" style="height:var(--touch)"></div>
     <div class="fg"><label>Pallets esperados</label>
       <input id="ml-npal" type="number" value="12" min="1" max="50" style="height:var(--touch)"></div>
     <div class="fg"><label>Peso mín. por pico (kg)</label>
@@ -872,6 +872,29 @@ function mskF(inp){
   if(v.length>2)v=v.slice(0,2)+'/'+v.slice(2);
   if(v.length>5)v=v.slice(0,5)+'/'+v.slice(5,9);
   inp.value=v;
+}
+
+// ── Conversión de fecha para el calendario nativo (type="date" usa ISO) ──
+// Almacenamos siempre dd/mm/aaaa (para no romper PDF/historial); convertimos
+// solo en el borde del input.
+function dmyToISO(s){
+  if(!s) return '';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;            // ya es ISO
+  const m=String(s).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(!m) return '';
+  return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+}
+function isoToDMY(s){
+  if(!s) return '';
+  const m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m) return s;                                       // ya viene dd/mm/aaaa
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+// Setea cab.fecha desde el calendario (recibe ISO, guarda dd/mm/aaaa)
+function updCabFecha(iso){
+  const l=getLote();if(!l)return;
+  l.cab.fecha=isoToDMY(iso);
+  renderTabs();marcarPendiente();
 }
 
 // ══ MÁSCARA HORA HH:MM (24h) ══
@@ -1111,7 +1134,7 @@ function mostrarVacio(){
 function abrirModalLote(){
   poblarSelectInd();
   const hoy=new Date();
-  document.getElementById('ml-fecha').value=`${String(hoy.getDate()).padStart(2,'0')}/${String(hoy.getMonth()+1).padStart(2,'0')}/${hoy.getFullYear()}`;
+  document.getElementById('ml-fecha').value=`${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(hoy.getDate()).padStart(2,'0')}`;
   ['prod','lote','cliente','linea','pesoMin','pesoMax'].forEach(k=>document.getElementById('ml-'+k).value='');
   document.getElementById('ml-npal').value=12;
   document.getElementById('mo-lote').classList.add('show');
@@ -1208,7 +1231,7 @@ function confirmarLote(){
     linea:document.getElementById('ml-linea').value.trim(),
     indId:document.getElementById('ml-ind').value,
     checker:'',
-    fecha:document.getElementById('ml-fecha').value,
+    fecha:isoToDMY(document.getElementById('ml-fecha').value),
     pesoMin:document.getElementById('ml-pesoMin').value,
     pesoMax:document.getElementById('ml-pesoMax').value};
   const np=parseInt(document.getElementById('ml-npal').value)||12;
@@ -1295,7 +1318,7 @@ function mkCabecera(l){
     ${fgH('N° de Lote','cab-lote',l.cab.lote,'text')}
     ${fgH('Cliente','cab-cliente',l.cab.cliente,'text')}
     ${fgH('Línea','cab-linea',l.cab.linea,'text')}
-    ${fgH('Fecha (dd/mm/aaaa)','cab-fecha',l.cab.fecha,'text','mskF(this)')}
+    ${`<div class="fg"><label>Fecha 📆</label><input id="cab-fecha" type="date" value="${dmyToISO(l.cab.fecha)}" style="height:var(--touch)" onchange="updCabFecha(this.value)"></div>`}
     <div class="fg"><label>Inductora</label>
       <select id="cab-indId" style="height:var(--touch)" onchange="updCab('indId',this.value);renderLote()">
         ${cfg.inductoras.map(i=>`<option value="${i.id}" ${l.cab.indId===i.id?'selected':''}>${i.nombre}</option>`).join('')}
